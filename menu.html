@@ -195,9 +195,14 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 .ocname{font-weight:700;font-size:12px;padding:6px 9px;line-height:1.3;}
 .or{align-self:center;font-size:10.5px;font-weight:800;color:var(--honey);text-transform:uppercase;letter-spacing:1px;background:var(--surface);padding:0 6px;margin:-3px 0;}
 /* footer */
-.foot{margin-top:46px;padding:20px 22px;border-radius:18px;background:var(--pine);color:#EAF3EC;display:flex;gap:16px;align-items:center;flex-wrap:wrap;box-shadow:var(--shadow);}
+.foot{margin-top:46px;padding:22px;border-radius:18px;background:var(--pine);color:#EAF3EC;display:flex;gap:18px;align-items:center;flex-wrap:wrap;box-shadow:var(--shadow);}
+.foot .fcol{flex:1;min-width:230px;}
 .foot .fw{font-weight:800;font-size:17px;color:#fff;} .foot .fw span{color:var(--honey);}
-.foot p{font-size:13px;opacity:.92;} .foot .cta{margin-left:auto;background:var(--honey);color:#3a2a00;font-weight:800;font-size:14px;padding:10px 18px;border-radius:12px;white-space:nowrap;}
+.foot p{font-size:13px;opacity:.92;margin:5px 0 9px;}
+.foot .fcontact{display:flex;flex-wrap:wrap;gap:8px 10px;font-size:13px;}
+.foot .fcontact span{background:rgba(255,255,255,.13);padding:6px 12px;border-radius:10px;} .foot .fcontact b{color:#fff;font-weight:800;}
+.foot .cta{margin-left:auto;background:var(--honey);color:#3a2a00;font-weight:800;font-size:14.5px;padding:13px 20px;border-radius:12px;white-space:nowrap;text-decoration:none;}
+@media(max-width:560px){ .foot .cta{margin-left:0;width:100%;text-align:center;} }
 @media (max-width:920px){ .dgrid,.d2wrap{grid-template-columns:repeat(2,1fr);} .goi{grid-template-columns:1fr;} }
 @media (max-width:560px){ .dgrid,.d2wrap{grid-template-columns:1fr 1fr;} .hero h1{font-size:26px;} .foot .cta{margin-left:0;} }
 </style>
@@ -592,9 +597,15 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 
   <div class="foot">
     <svg viewBox="0 0 100 100" width="30" height="30" style="display:block"><polygon points="6,52 34,44 30,70" fill="#2C6A4A"/><ellipse cx="50" cy="56" rx="30" ry="22" fill="#2C6A4A"/><circle cx="74" cy="40" r="15" fill="#2C6A4A"/><ellipse cx="46" cy="60" rx="17" ry="9" fill="#E0A32E" transform="rotate(18 46 60)"/><polygon points="87,36 100,41 87,47" fill="#E0A32E"/><circle cx="78" cy="37" r="3" fill="#F5F4ED"/></svg>
-    <div class="fw">Beeps <span>·</span> bếp của mẹ</div>
-    <p>Đặt gói / hỏi thực đơn tuần → nhắn Zalo, mẹ nấu & giao trưa mỗi ngày.</p>
-    <div class="cta">📱 Zalo 0941 751 999</div>
+    <div class="fcol">
+      <div class="fw">Beeps <span>·</span> bếp của mẹ</div>
+      <p>Đặt gói / hỏi thực đơn tuần → liên hệ Quang Anh, mẹ nấu & giao trưa mỗi ngày.</p>
+      <div class="fcontact">
+        <span>📱 Zalo / SĐT <b>0941 751 999</b></span>
+        <span>💬 Discord <b>AnhNQ</b></span>
+      </div>
+    </div>
+    <a class="cta" href="https://zalo.me/0941751999" target="_blank" rel="noopener">📱 Nhắn Zalo đặt ngay</a>
   </div>
 </div>
 </body></html>
