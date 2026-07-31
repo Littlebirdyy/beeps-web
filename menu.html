@@ -193,8 +193,8 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 .dpn{font-size:13px;color:var(--soft);margin:-2px 0 12px;}
 .dprowlb{font-size:12px;font-weight:800;color:var(--soft);margin:11px 0 6px;}
 .dprow{display:flex;gap:8px;}
-.dp{flex:1;padding:13px 4px;border:2px solid var(--line);border-radius:12px;background:var(--surface);font-weight:800;font-size:15px;color:var(--ink);cursor:pointer;font-family:inherit;}
-.dp.on{border-color:var(--pine);background:var(--pine);color:#fff;}
+.dayslot{flex:1;padding:13px 4px;border:2px solid var(--line);border-radius:12px;background:var(--surface);font-weight:800;font-size:15px;color:var(--ink);cursor:pointer;font-family:inherit;}
+.dayslot.on{border-color:var(--pine);background:var(--pine);color:#fff;}
 .daynote{margin-top:14px;background:var(--cream);border:1px solid var(--honey);border-radius:12px;padding:12px 14px;font-size:12.5px;color:#7a5a00;line-height:1.55;}
 .daynote b{color:var(--pine);}
 /* form */
@@ -250,11 +250,11 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
     <div class="dpn" id="dpn"></div>
     <div class="dprowlb">Tuần này</div>
     <div class="dprow">
-      <button class="dp" data-i="0" onclick="pickStart(0)">T2</button><button class="dp" data-i="1" onclick="pickStart(1)">T3</button><button class="dp" data-i="2" onclick="pickStart(2)">T4</button><button class="dp" data-i="3" onclick="pickStart(3)">T5</button><button class="dp" data-i="4" onclick="pickStart(4)">T6</button>
+      <button class="dayslot" data-i="0" onclick="pickStart(0)">T2</button><button class="dayslot" data-i="1" onclick="pickStart(1)">T3</button><button class="dayslot" data-i="2" onclick="pickStart(2)">T4</button><button class="dayslot" data-i="3" onclick="pickStart(3)">T5</button><button class="dayslot" data-i="4" onclick="pickStart(4)">T6</button>
     </div>
     <div class="dprowlb">Tuần sau</div>
     <div class="dprow">
-      <button class="dp" data-i="5" onclick="pickStart(5)">T2</button><button class="dp" data-i="6" onclick="pickStart(6)">T3</button><button class="dp" data-i="7" onclick="pickStart(7)">T4</button><button class="dp" data-i="8" onclick="pickStart(8)">T5</button><button class="dp" data-i="9" onclick="pickStart(9)">T6</button>
+      <button class="dayslot" data-i="5" onclick="pickStart(5)">T2</button><button class="dayslot" data-i="6" onclick="pickStart(6)">T3</button><button class="dayslot" data-i="7" onclick="pickStart(7)">T4</button><button class="dayslot" data-i="8" onclick="pickStart(8)">T5</button><button class="dayslot" data-i="9" onclick="pickStart(9)">T6</button>
     </div>
     <div class="daynote">📌 <b>Ăn liên tục</b> — vd gói 3 ngày là 3 ngày sát nhau (không chọn cách quãng T2 rồi T4). <b>Lỡ bận?</b> Đã đặt gói rồi, chỉ cần báo Beeps <b>trước 1 ngày</b> là dời suất đó sang hôm khác cho bạn, không mất suất.</div>
   </div>
@@ -320,7 +320,7 @@ function pickDur(d){
   if(!selGoi) return;
   selDur=d; selStart=null;
   var durs=document.querySelectorAll('.dur'); for(var i=0;i<durs.length;i++){ durs[i].classList.toggle('on', durs[i].getAttribute('data-d')===d); }
-  var slots=document.querySelectorAll('.dp'); for(var k=0;k<slots.length;k++){ slots[k].classList.remove('on'); }
+  var slots=document.querySelectorAll('.dayslot'); for(var k=0;k<slots.length;k++){ slots[k].classList.remove('on'); }
   var N=DURN[d];
   document.getElementById('dpn').textContent = (N===1?'Chọn 1 ngày bạn muốn ăn:':(N===10?'Gói 2 tuần = ăn cả 10 ngày liên tục (T2–T6 × 2 tuần). Bấm 1 ô để chốt:':'Bấm ngày BẮT ĐẦU — Beeps tự chọn '+N+' ngày liên tục:'));
   document.getElementById('dstep').hidden=false;
@@ -333,7 +333,7 @@ function pickStart(i){
   var N=DURN[selDur];
   var start=Math.min(i, 10-N); if(start<0) start=0;
   selStart=start;
-  var slots=document.querySelectorAll('.dp'); for(var k=0;k<slots.length;k++){ slots[k].classList.toggle('on', k>=start && k<start+N); }
+  var slots=document.querySelectorAll('.dayslot'); for(var k=0;k<slots.length;k++){ slots[k].classList.toggle('on', k>=start && k<start+N); }
   updateSum();
 }
 function daysLabel(){
