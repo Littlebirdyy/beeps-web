@@ -166,6 +166,8 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 .gemoji{font-size:20px;} .gnm{font-weight:800;font-size:18px;} .gtg{color:var(--honey);font-weight:700;font-size:12.5px;}
 .gwho{display:block;font-size:12.5px;color:var(--soft);margin-top:5px;line-height:1.45;}
 .gfr{display:block;font-size:12.5px;color:var(--soft);margin-top:7px;} .gfr b{color:var(--pine);font-size:16px;}
+.gsel.locked{opacity:.72;cursor:default;padding-left:15px;border-style:dashed;box-shadow:none;}
+.gsel.locked .lockbadge{position:absolute;top:-10px;right:14px;background:var(--honey);color:#3a2a00;font-size:11px;font-weight:800;padding:3px 11px;border-radius:999px;}
 /* info bar */
 .infobar{position:sticky;top:0;z-index:6;background:var(--pine);color:#fff;border-radius:12px;padding:11px 14px;font-size:13.5px;margin-bottom:13px;box-shadow:0 8px 20px -10px rgba(0,0,0,.5);}
 .infobar b{color:#F2C868;}
@@ -228,7 +230,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 
   <div class="step" id="step1">
     <div class="steph"><span class="stepn">1</span><h2>Chọn gói của bạn</h2></div>
-    <div class="gsels"><button type="button" class="gsel" data-goi="doni" onclick="pickGoi('doni')"><span class="gtick"></span><span class="grow"><span class="gemoji">📐</span><span class="gnm">Đo Ni</span><span class="gtg">Đo ni theo người</span></span><span class="gwho">Giảm mỡ · tăng cơ · kiểm soát khẩu phần chuẩn theo TDEE.</span><span class="gfr">chỉ từ <b>80k</b>/suất</span></button><button type="button" class="gsel" data-goi="vuaxinh" onclick="pickGoi('vuaxinh')"><span class="gtick"></span><span class="grow"><span class="gemoji">🍱</span><span class="gnm">Vừa Xinh</span><span class="gtg">Chuẩn cân đối</span></span><span class="gwho">Ăn lành mạnh, đủ chất mức tiêu chuẩn — không cần đo ni.</span><span class="gfr">chỉ từ <b>60k</b>/suất</span></button><button type="button" class="gsel" data-goi="anlanh" onclick="pickGoi('anlanh')"><span class="gtick"></span><span class="grow"><span class="gemoji">🍚</span><span class="gnm">Ăn Lành</span><span class="gtg">Ngon & no</span></span><span class="gwho">Cơm nhà quen thuộc, ngon–no–tiết kiệm, mỗi ngày chọn 1/2 món.</span><span class="gfr">chỉ từ <b>45k</b>/suất</span></button></div>
+    <div class="gsels"><button type="button" class="gsel" data-goi="doni" onclick="pickGoi('doni')"><span class="gtick"></span><span class="grow"><span class="gemoji">📐</span><span class="gnm">Đo Ni</span><span class="gtg">Đo ni theo người</span></span><span class="gwho">Giảm mỡ · tăng cơ · kiểm soát khẩu phần chuẩn theo TDEE.</span><span class="gfr">chỉ từ <b>80k</b>/suất</span></button><button type="button" class="gsel" data-goi="vuaxinh" onclick="pickGoi('vuaxinh')"><span class="gtick"></span><span class="grow"><span class="gemoji">🍱</span><span class="gnm">Vừa Xinh</span><span class="gtg">Chuẩn cân đối</span></span><span class="gwho">Ăn lành mạnh, đủ chất mức tiêu chuẩn — không cần đo ni.</span><span class="gfr">chỉ từ <b>60k</b>/suất</span></button><div class="gsel locked"><span class="lockbadge">🔒 Sắp mở bán</span><span class="grow"><span class="gemoji">🍚</span><span class="gnm">Ăn Lành</span><span class="gtg">Ngon & no</span></span><span class="gwho">Cơm nhà quen thuộc, ngon–no–tiết kiệm, mỗi ngày chọn 1/2 món.</span><span class="gfr">dự kiến từ <b>45k</b>/suất · <b>mở bán 10/08</b></span></div></div>
   </div>
 
   <div class="step" id="mstep" hidden>
@@ -287,12 +289,13 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 </div>
 
 <script>
-var GOIDATA = {"doni":{"name":"Đo Ni","mkey":"dinhduong","p":{"le":95,"ba":90,"hai":80}},"vuaxinh":{"name":"Vừa Xinh","mkey":"dinhduong","p":{"le":70,"ba":65,"hai":60}},"anlanh":{"name":"Ăn Lành","mkey":"anlanh","p":{"le":55,"ba":50,"hai":45}}};
+var GOIDATA = {"doni":{"name":"Đo Ni","mkey":"dinhduong","p":{"le":95,"ba":90,"hai":80},"locked":false},"vuaxinh":{"name":"Vừa Xinh","mkey":"dinhduong","p":{"le":70,"ba":65,"hai":60},"locked":false},"anlanh":{"name":"Ăn Lành","mkey":"anlanh","p":{"le":55,"ba":50,"hai":45},"locked":true}};
 var SLOTS=[{w:"Tuần này",d:"T2"},{w:"Tuần này",d:"T3"},{w:"Tuần này",d:"T4"},{w:"Tuần này",d:"T5"},{w:"Tuần này",d:"T6"},{w:"Tuần sau",d:"T2"},{w:"Tuần sau",d:"T3"},{w:"Tuần sau",d:"T4"},{w:"Tuần sau",d:"T5"},{w:"Tuần sau",d:"T6"}];
 var DURN={le:1,ba:3,hai:10};
 var DURNAME={le:"Mua lẻ",ba:"Gói 3 ngày",hai:"Gói 2 tuần"};
 var selGoi=null, selDur=null, selStart=null;
 function pickGoi(k){
+  if(GOIDATA[k]&&GOIDATA[k].locked){ return; }
   selGoi=k; selDur=null; selStart=null;
   var cards=document.querySelectorAll('.gsel'); for(var i=0;i<cards.length;i++){ cards[i].classList.toggle('on', cards[i].getAttribute('data-goi')===k); }
   var g=GOIDATA[k];
