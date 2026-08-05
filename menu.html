@@ -266,7 +266,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
       <div class="durs">
         <div class="dur" data-d="le" onclick="pickDur('le')"><div class="dl">Mua lẻ</div><div class="dp" id="p_le">–</div></div>
         <div class="dur" data-d="ba" onclick="pickDur('ba')"><div class="dl">Gói 3 ngày</div><div class="dp" id="p_ba">–</div></div>
-        <div class="dur" data-d="hai" onclick="pickDur('hai')"><div class="dl">Gói 2 tuần</div><div class="dp" id="p_hai">–</div></div>
+        <div class="dur" data-d="hai" onclick="pickDur('hai')"><div class="dl">Gói 2 tuần</div><div class="dp" id="p_hai">–</div><div class="db">rẻ nhất</div></div>
       </div>
     </div>
   </div>
@@ -313,7 +313,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 </div>
 
 <script>
-var GOIDATA = {"doni":{"name":"Đo Ni","mkey":"dinhduong","p":{"le":80,"ba":80,"hai":80},"locked":false},"vuaxinh":{"name":"Vừa Xinh","mkey":"dinhduong","p":{"le":60,"ba":60,"hai":60},"locked":false},"anlanh":{"name":"Ăn Lành","mkey":"anlanh","p":{"le":55,"ba":50,"hai":45},"locked":true}};
+var GOIDATA = {"doni":{"name":"Đo Ni","mkey":"dinhduong","p":{"le":95,"ba":90,"hai":80},"locked":false},"vuaxinh":{"name":"Vừa Xinh","mkey":"dinhduong","p":{"le":70,"ba":65,"hai":60},"locked":false},"anlanh":{"name":"Ăn Lành","mkey":"anlanh","p":{"le":55,"ba":50,"hai":45},"locked":true}};
 var SLOTS=[{w:"Tuần này",d:"T2"},{w:"Tuần này",d:"T3"},{w:"Tuần này",d:"T4"},{w:"Tuần này",d:"T5"},{w:"Tuần này",d:"T6"},{w:"Tuần sau",d:"T2"},{w:"Tuần sau",d:"T3"},{w:"Tuần sau",d:"T4"},{w:"Tuần sau",d:"T5"},{w:"Tuần sau",d:"T6"}];
 var DURN={le:1,ba:3,hai:10};
 var DURNAME={le:"Mua lẻ",ba:"Gói 3 ngày",hai:"Gói 2 tuần"};
