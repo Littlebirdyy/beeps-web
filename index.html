@@ -366,7 +366,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 
 <script>
 var GOIDATA = {"doni":{"name":"Đo Ni","mkey":"dinhduong","p":{"le":95,"ba":90,"hai":80},"locked":false},"vuaxinh":{"name":"Vừa Xinh","mkey":"dinhduong","p":{"le":70,"ba":65,"hai":60},"locked":false},"anlanh":{"name":"Ăn Lành","mkey":"anlanh","p":{"le":55,"ba":50,"hai":45},"locked":true}};
-var SHEET_URL="https://script.google.com/macros/s/AKfycbwN40lWvY2ubAsVLM4FsT2_mwBPWDlFZ-fNOejFpmg8ADd7CnmphglKg5lIrilMU_pE/exec";
+var SHEET_URL="https://script.google.com/macros/s/AKfycby1j5r6UuQ7SCEHATqZLA7tY9-cm6wKso0z874PwA0SRDxzbdxlpAowJvVK0FXtgNpokQ/exec";
 function WDVN(dow){ return ({1:'T2',2:'T3',3:'T4',4:'T5',5:'T6'})[dow]||''; }
 function weekMonday(d){ var x=new Date(d); var dw=(x.getDay()+6)%7; x.setDate(x.getDate()-dw); x.setHours(0,0,0,0); return x; }
 var WD=(function(){ var now=new Date(); var lead=(now.getHours()<20)?1:2; var c=new Date(); c.setHours(0,0,0,0); c.setDate(c.getDate()+lead); var a=[],g=0; while(a.length<55 && g<100){ var dow=c.getDay(); if(dow!==0&&dow!==6) a.push(new Date(c)); c.setDate(c.getDate()+1); g++; } return a; })();
