@@ -336,6 +336,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
       <form id="oform" onsubmit="return submitOrder(event)">
         <div class="ofield"><label>Tên của bạn</label><input id="f_ten" type="text" placeholder="VD: Nguyễn Văn A" autocomplete="name"></div>
         <div class="ofield"><label>Số điện thoại (Zalo)</label><input id="f_sdt" type="tel" inputmode="numeric" placeholder="VD: 09xx xxx xxx" autocomplete="tel"></div>
+        <div class="ofield"><label>Địa chỉ giao</label><input id="f_diachi" type="text" placeholder="Số nhà, đường, phường/quận…" autocomplete="street-address"></div>
         <div class="ofield"><label>Mong muốn / ghi chú (nếu có)</label><textarea id="f_mm" placeholder="VD: dị ứng tôm, không ăn cay, ít cơm, giao trước 12h…"></textarea></div>
         <button class="obtn" id="obtn" type="submit">Xem lại &amp; đặt →</button>
         <div class="oerr" id="oerr"></div>
@@ -352,7 +353,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
   </div>
 
   <form name="beeps-order" data-netlify="true" netlify-honeypot="bot-field" hidden>
-    <input type="text" name="ten"><input type="text" name="sdt"><input type="text" name="goi"><input type="text" name="thoihan"><input type="text" name="gia"><input type="text" name="ngayan"><textarea name="mongmuon"></textarea><input type="text" name="bot-field">
+    <input type="text" name="ten"><input type="text" name="sdt"><input type="text" name="diachi"><input type="text" name="goi"><input type="text" name="thoihan"><input type="text" name="gia"><input type="text" name="ngayan"><textarea name="mongmuon"></textarea><input type="text" name="bot-field">
   </form>
 
   <div class="foot">
@@ -463,19 +464,22 @@ function submitOrder(e){
   var err=document.getElementById('oerr');
   var ten=document.getElementById('f_ten').value.trim();
   var sdt=document.getElementById('f_sdt').value.trim();
+  var diachi=document.getElementById('f_diachi').value.trim();
   var mm=document.getElementById('f_mm').value.trim();
   if(!selGoi||!selDur){ err.textContent='Bạn chưa chọn gói hoặc thời hạn ở trên.'; err.style.display='block'; return false; }
   if(selStart===null){ err.textContent='Bạn chưa chọn ngày ăn ở bước 2.'; err.style.display='block'; return false; }
   if(ten.length<2){ err.textContent='Nhập tên giúp Beeps nhé.'; err.style.display='block'; return false; }
   if(sdt.replace(/[^0-9]/g,'').length<9){ err.textContent='Số điện thoại chưa đúng rồi.'; err.style.display='block'; return false; }
+  if(diachi.length<5){ err.textContent='Nhập địa chỉ giao giúp Beeps nhé.'; err.style.display='block'; return false; }
   err.style.display='none';
   var g=GOIDATA[selGoi], suat=DURN[selDur], total=g.p[selDur]*suat*1000;
-  PEND={ten:ten,sdt:sdt,mm:mm,goi:g.name,dur:DURNAME[selDur],gia:g.p[selDur],suat:suat,total:total,ngay:daysLabel()};
+  PEND={ten:ten,sdt:sdt,diachi:diachi,mm:mm,goi:g.name,dur:DURNAME[selDur],gia:g.p[selDur],suat:suat,total:total,ngay:daysLabel()};
   document.getElementById('ocrev').innerHTML=
     '<div><b>Gói:</b> '+esc2(g.name)+' · '+DURNAME[selDur]+'</div>'+
     '<div><b>Ngày ăn:</b> '+esc2(daysLabel())+'</div>'+
     '<div><b>Số suất:</b> '+suat+' × '+g.p[selDur]+'k</div>'+
     '<div><b>Tên:</b> '+esc2(ten)+' · <b>SĐT:</b> '+esc2(sdt)+'</div>'+
+    '<div><b>Giao tới:</b> '+esc2(diachi)+'</div>'+
     (mm?'<div><b>Ghi chú:</b> '+esc2(mm)+'</div>':'')+
     '<div style="margin-top:6px"><b>Tổng cộng:</b> <span class="big">'+total.toLocaleString('vi-VN')+'đ</span></div>';
   document.getElementById('oform').style.display='none';
@@ -487,7 +491,7 @@ function submitOrder(e){
 function editOrder(){ document.getElementById('oconfirm').hidden=true; document.getElementById('oform').style.display=''; document.getElementById('osum').style.display=''; document.getElementById('f_ten').scrollIntoView({behavior:'smooth',block:'center'}); }
 function confirmOrder(){
   var err=document.getElementById('oerr2');
-  var params='form-name=beeps-order&ten='+encodeURIComponent(PEND.ten)+'&sdt='+encodeURIComponent(PEND.sdt)+'&goi='+encodeURIComponent(PEND.goi)+'&thoihan='+encodeURIComponent(PEND.dur)+'&gia='+encodeURIComponent(PEND.gia+'k')+'&ngayan='+encodeURIComponent(PEND.ngay)+'&mongmuon='+encodeURIComponent(PEND.mm);
+  var params='form-name=beeps-order&ten='+encodeURIComponent(PEND.ten)+'&sdt='+encodeURIComponent(PEND.sdt)+'&diachi='+encodeURIComponent(PEND.diachi)+'&goi='+encodeURIComponent(PEND.goi)+'&thoihan='+encodeURIComponent(PEND.dur)+'&gia='+encodeURIComponent(PEND.gia+'k')+'&ngayan='+encodeURIComponent(PEND.ngay)+'&mongmuon='+encodeURIComponent(PEND.mm);
   var btn=document.getElementById('ocbtn'); btn.disabled=true; btn.textContent='Đang ghi nhận…';
   fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params})
     .then(function(){ showQR(); })
@@ -503,8 +507,9 @@ function showQR(){
     '<p style="font-size:13px;color:var(--soft);margin:6px 0 10px">Chuyển khoản theo mã dưới để Beeps <b>xác nhận suất</b>. Beeps nhắn Zalo lại sau khi nhận được.</p>'+
     '<div class="qrwrap"><img src="'+qr+'" alt="QR chuyển khoản VietQR"></div>'+
     '<div class="qrinfo"><div><b>Ngân hàng:</b> VPBank</div><div><b>Số TK:</b> 183037412</div><div><b>Chủ TK:</b> NGUYEN QUANG ANH</div><div><b>Số tiền:</b> '+PEND.total.toLocaleString('vi-VN')+'đ</div><div><b>Nội dung CK:</b> '+esc2(note)+'</div></div>'+
-    '<p style="font-size:12.5px;color:var(--soft)">Chuyển xong Beeps đối soát rồi nhắn Zalo xác nhận. Xem lại đơn/suất sau → <a href="app.html" style="color:var(--pine);font-weight:700">Đăng nhập bằng SĐT</a>.</p>'+
-    '<a class="obtn" style="display:block;text-align:center;text-decoration:none;margin-top:10px" href="https://zalo.me/0941751999" target="_blank" rel="noopener">📱 Nhắn Zalo cho Beeps</a>';
+    '<p style="font-size:12.5px;color:var(--soft)">Chuyển xong Beeps đối soát rồi nhắn Zalo xác nhận nhé.</p>'+
+    '<div class="qrinfo" style="border-color:var(--pine);border-style:solid;background:var(--cream)"><div style="font-weight:800;color:var(--pine);margin-bottom:3px">📲 Theo dõi suất của bạn</div><div style="font-size:12.5px;color:var(--soft);line-height:1.65">Sau khi Beeps xác nhận đơn, <b>đăng nhập bằng số '+esc2(PEND.sdt)+'</b> để xem: <b>hôm nay ăn gì · mai ăn gì · còn mấy suất</b>.</div><a class="obtn" style="display:block;text-align:center;text-decoration:none;margin-top:9px" href="app.html">📲 Mở trang đăng nhập</a></div>'+
+    '<a class="obtn ghost" style="display:block;text-align:center;text-decoration:none;margin-top:10px" href="https://zalo.me/0941751999" target="_blank" rel="noopener">📱 Nhắn Zalo cho Beeps</a>';
   od.scrollIntoView({behavior:'smooth',block:'start'});
 }
 (function(){ var bn=document.getElementById('bnrs'); if(!bn) return;
