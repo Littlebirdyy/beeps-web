@@ -212,9 +212,11 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 /* chọn ngày */
 .dpn{font-size:13px;color:var(--soft);margin:-2px 0 12px;}
 .dprowlb{font-size:12px;font-weight:800;color:var(--soft);margin:11px 0 6px;}
-.dprow{display:flex;gap:8px;}
-.dayslot{flex:1;padding:13px 4px;border:2px solid var(--line);border-radius:12px;background:var(--surface);font-weight:800;font-size:15px;color:var(--ink);cursor:pointer;font-family:inherit;}
-.dayslot.on{border-color:var(--pine);background:var(--pine);color:#fff;}
+.dprow{display:flex;gap:6px;margin-bottom:5px;}
+.dayslot{flex:1;min-width:0;padding:9px 2px;border:2px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:1px;}
+.dayslot .dsd{font-size:12.5px;font-weight:800;} .dayslot .dsn{font-size:11.5px;font-weight:600;opacity:.8;}
+.dayslot.on{border-color:var(--pine);background:var(--pine);color:#fff;} .dayslot.on .dsn{opacity:.95;}
+.spill{background:var(--cream);border:1px solid var(--honey);border-radius:12px;padding:11px 14px;font-size:12.5px;color:#7a5a00;line-height:1.55;margin-top:10px;font-weight:600;}
 .daynote{margin-top:14px;background:var(--cream);border:1px solid var(--honey);border-radius:12px;padding:12px 14px;font-size:12.5px;color:#7a5a00;line-height:1.55;}
 .daynote b{color:var(--pine);}
 /* form */
@@ -322,15 +324,9 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
   <div class="step" id="dstep" hidden>
     <div class="steph"><span class="stepn">2</span><h2>Chọn ngày ăn</h2></div>
     <div class="dpn" id="dpn"></div>
-    <div class="dprowlb">Tuần này</div>
-    <div class="dprow">
-      <button class="dayslot" data-i="0" onclick="pickStart(0)">T2</button><button class="dayslot" data-i="1" onclick="pickStart(1)">T3</button><button class="dayslot" data-i="2" onclick="pickStart(2)">T4</button><button class="dayslot" data-i="3" onclick="pickStart(3)">T5</button><button class="dayslot" data-i="4" onclick="pickStart(4)">T6</button>
-    </div>
-    <div class="dprowlb">Tuần sau</div>
-    <div class="dprow">
-      <button class="dayslot" data-i="5" onclick="pickStart(5)">T2</button><button class="dayslot" data-i="6" onclick="pickStart(6)">T3</button><button class="dayslot" data-i="7" onclick="pickStart(7)">T4</button><button class="dayslot" data-i="8" onclick="pickStart(8)">T5</button><button class="dayslot" data-i="9" onclick="pickStart(9)">T6</button>
-    </div>
-    <div class="daynote">📌 <b>Ăn liên tục</b> — vd gói 3 ngày là 3 ngày sát nhau (không chọn cách quãng T2 rồi T4). <b>Lỡ bận?</b> Đã đặt gói rồi, chỉ cần báo Beeps <b>trước 1 ngày</b> là dời suất đó sang hôm khác cho bạn, không mất suất.</div>
+    <div id="dayrows"></div>
+    <div class="spill" id="spill" hidden></div>
+    <div class="daynote">📌 <b>Ăn liên tục</b> — vd gói 3 ngày là 3 ngày làm việc liền nhau (nhảy qua T7/CN). <b>Đặt trước:</b> chốt trước <b>20h hôm trước</b> ngày ăn. <b>Lỡ bận?</b> Báo Beeps trước 1 ngày là dời suất, không mất.</div>
   </div>
 
   <div class="step" id="ostep" hidden>
@@ -369,7 +365,9 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 
 <script>
 var GOIDATA = {"doni":{"name":"Đo Ni","mkey":"dinhduong","p":{"le":95,"ba":90,"hai":80},"locked":false},"vuaxinh":{"name":"Vừa Xinh","mkey":"dinhduong","p":{"le":70,"ba":65,"hai":60},"locked":false},"anlanh":{"name":"Ăn Lành","mkey":"anlanh","p":{"le":55,"ba":50,"hai":45},"locked":true}};
-var SLOTS=[{w:"Tuần này",d:"T2"},{w:"Tuần này",d:"T3"},{w:"Tuần này",d:"T4"},{w:"Tuần này",d:"T5"},{w:"Tuần này",d:"T6"},{w:"Tuần sau",d:"T2"},{w:"Tuần sau",d:"T3"},{w:"Tuần sau",d:"T4"},{w:"Tuần sau",d:"T5"},{w:"Tuần sau",d:"T6"}];
+function WDVN(dow){ return ({1:'T2',2:'T3',3:'T4',4:'T5',5:'T6'})[dow]||''; }
+function weekMonday(d){ var x=new Date(d); var dw=(x.getDay()+6)%7; x.setDate(x.getDate()-dw); x.setHours(0,0,0,0); return x; }
+var WD=(function(){ var now=new Date(); var lead=(now.getHours()<20)?1:2; var c=new Date(); c.setHours(0,0,0,0); c.setDate(c.getDate()+lead); var a=[],g=0; while(a.length<55 && g<100){ var dow=c.getDay(); if(dow!==0&&dow!==6) a.push(new Date(c)); c.setDate(c.getDate()+1); g++; } return a; })();
 var DURN={le:1,ba:3,hai:10};
 var DURNAME={le:"Mua lẻ",ba:"Gói 3 ngày",hai:"Gói 2 tuần"};
 var selGoi=null, selDur=null, selStart=null;
@@ -407,35 +405,56 @@ function pickDur(d){
   if(!selGoi) return;
   selDur=d; selStart=null;
   var durs=document.querySelectorAll('.dur'); for(var i=0;i<durs.length;i++){ durs[i].classList.toggle('on', durs[i].getAttribute('data-d')===d); }
-  var slots=document.querySelectorAll('.dayslot'); for(var k=0;k<slots.length;k++){ slots[k].classList.remove('on'); }
   var N=DURN[d];
-  document.getElementById('dpn').textContent = (N===1?'Chọn 1 ngày bạn muốn ăn:':(N===10?'Gói 2 tuần = ăn cả 10 ngày liên tục (T2–T6 × 2 tuần). Bấm 1 ô để chốt:':'Bấm ngày BẮT ĐẦU — Beeps tự chọn '+N+' ngày liên tục:'));
+  document.getElementById('dpn').innerHTML = (N===1?'Chọn 1 ngày bạn muốn ăn (giao T2-T6):':'Bấm ngày <b>BẮT ĐẦU</b> — Beeps tự lấy '+N+' ngày làm việc liên tục (nhảy qua T7/CN):');
+  renderDays();
   document.getElementById('dstep').hidden=false;
   document.getElementById('ostep').hidden=false;
   updateSum();
   document.getElementById('dstep').scrollIntoView({behavior:'smooth',block:'start'});
 }
-function pickStart(i){
+function renderDays(){
+  var host=document.getElementById('dayrows'); if(!host) return;
+  var SHOW=30, html='', lastWk=null;
+  for(var i=0;i<WD.length && i<SHOW;i++){
+    var d=WD[i], mon=weekMonday(d), wk=mon.getTime();
+    if(wk!==lastWk){ if(lastWk!==null) html+='</div>'; var fr=new Date(mon); fr.setDate(mon.getDate()+4); html+='<div class="dprowlb">Tuần '+mon.getDate()+'/'+(mon.getMonth()+1)+' – '+fr.getDate()+'/'+(fr.getMonth()+1)+'</div><div class="dprow">'; lastWk=wk; }
+    html+='<button type="button" class="dayslot" data-gi="'+i+'" onclick="pickStart('+i+')"><span class="dsd">'+WDVN(d.getDay())+'</span><span class="dsn">'+d.getDate()+'/'+(d.getMonth()+1)+'</span></button>';
+  }
+  if(lastWk!==null) html+='</div>';
+  host.innerHTML=html;
+}
+function pickStart(gi){
   if(!selDur) return;
   var N=DURN[selDur];
-  var start=Math.min(i, 10-N); if(start<0) start=0;
-  selStart=start;
-  var slots=document.querySelectorAll('.dayslot'); for(var k=0;k<slots.length;k++){ slots[k].classList.toggle('on', k>=start && k<start+N); }
+  if(gi+N>WD.length) gi=WD.length-N; if(gi<0) gi=0;
+  selStart=gi;
+  var slots=document.querySelectorAll('.dayslot'); for(var k=0;k<slots.length;k++){ var g=parseInt(slots[k].getAttribute('data-gi'),10); slots[k].classList.toggle('on', g>=gi && g<gi+N); }
   updateSum();
 }
 function daysLabel(){
   if(selStart===null||!selDur) return '';
-  var N=DURN[selDur], byW={}, order=[];
-  for(var k=selStart;k<selStart+N;k++){ var s=SLOTS[k]; if(!byW[s.w]){byW[s.w]=[];order.push(s.w);} byW[s.w].push(s.d); }
-  return order.map(function(w){return w+' ('+byW[w].join(', ')+')';}).join(' + ');
+  var N=DURN[selDur], arr=[];
+  for(var k=selStart;k<selStart+N && k<WD.length;k++){ var d=WD[k]; arr.push(WDVN(d.getDay())+' '+d.getDate()+'/'+(d.getMonth()+1)); }
+  return arr.join(', ');
+}
+function spillNote(){
+  if(selStart===null||!selDur) return '';
+  var N=DURN[selDur], a=WD[selStart], b=WD[Math.min(selStart+N-1, WD.length-1)];
+  if(a.getMonth()!==b.getMonth() || a.getFullYear()!==b.getFullYear()){
+    return '📅 Gói của bạn kéo sang tháng '+(b.getMonth()+1)+' (đến '+WDVN(b.getDay())+' '+b.getDate()+'/'+(b.getMonth()+1)+') — Beeps giữ đủ suất, không lo mất nhé.';
+  }
+  return '';
 }
 function updateSum(){
+  var sp=document.getElementById('spill'); if(sp){ var nt=spillNote(); sp.innerHTML=nt; sp.hidden=!nt; }
   var s=document.getElementById('osum'); if(!s) return;
   if(!selGoi){ s.innerHTML='Chọn gói, thời hạn & ngày ăn ở trên nhé.'; return; }
   var g=GOIDATA[selGoi];
   if(!selDur){ s.innerHTML='Gói <b>'+g.name+'</b> — chọn thời hạn ở trên.'; return; }
   if(selStart===null){ s.innerHTML='Gói <b>'+g.name+'</b> · '+DURNAME[selDur]+' · <b>'+g.p[selDur]+'k/suất</b> — chọn ngày ăn ở trên.'; return; }
-  s.innerHTML='Bạn chọn: <b>'+g.name+'</b> · '+DURNAME[selDur]+' · <b>'+g.p[selDur]+'k/suất</b><br>🗓️ Ăn: <b>'+daysLabel()+'</b>';
+  var suat=DURN[selDur], tong=(g.p[selDur]*suat).toLocaleString('vi-VN');
+  s.innerHTML='Bạn chọn: <b>'+g.name+'</b> · '+DURNAME[selDur]+' · <b>'+suat+' suất × '+g.p[selDur]+'k = '+tong+'k</b><br>🗓️ Ăn: <b>'+daysLabel()+'</b>';
 }
 function esc2(s){ return String(s).replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]; }); }
 var PEND={};
