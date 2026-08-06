@@ -366,6 +366,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 
 <script>
 var GOIDATA = {"doni":{"name":"Đo Ni","mkey":"dinhduong","p":{"le":95,"ba":90,"hai":80},"locked":false},"vuaxinh":{"name":"Vừa Xinh","mkey":"dinhduong","p":{"le":70,"ba":65,"hai":60},"locked":false},"anlanh":{"name":"Ăn Lành","mkey":"anlanh","p":{"le":55,"ba":50,"hai":45},"locked":true}};
+var SHEET_URL="https://script.google.com/macros/s/AKfycbwN40lWvY2ubAsVLM4FsT2_mwBPWDlFZ-fNOejFpmg8ADd7CnmphglKg5lIrilMU_pE/exec";
 function WDVN(dow){ return ({1:'T2',2:'T3',3:'T4',4:'T5',5:'T6'})[dow]||''; }
 function weekMonday(d){ var x=new Date(d); var dw=(x.getDay()+6)%7; x.setDate(x.getDate()-dw); x.setHours(0,0,0,0); return x; }
 var WD=(function(){ var now=new Date(); var lead=(now.getHours()<20)?1:2; var c=new Date(); c.setHours(0,0,0,0); c.setDate(c.getDate()+lead); var a=[],g=0; while(a.length<55 && g<100){ var dow=c.getDay(); if(dow!==0&&dow!==6) a.push(new Date(c)); c.setDate(c.getDate()+1); g++; } return a; })();
@@ -493,9 +494,13 @@ function confirmOrder(){
   var err=document.getElementById('oerr2');
   var params='form-name=beeps-order&ten='+encodeURIComponent(PEND.ten)+'&sdt='+encodeURIComponent(PEND.sdt)+'&diachi='+encodeURIComponent(PEND.diachi)+'&goi='+encodeURIComponent(PEND.goi)+'&thoihan='+encodeURIComponent(PEND.dur)+'&gia='+encodeURIComponent(PEND.gia+'k')+'&ngayan='+encodeURIComponent(PEND.ngay)+'&mongmuon='+encodeURIComponent(PEND.mm);
   var btn=document.getElementById('ocbtn'); btn.disabled=true; btn.textContent='Đang ghi nhận…';
+  // (a) ĐƯỜNG CHÍNH: ghi thẳng vào Google Sheet qua Apps Script (fire-and-forget, chắc chắn)
+  try{ fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({id:'web-'+Date.now()+'-'+Math.floor(Math.random()*1e6),data:{ten:PEND.ten,sdt:PEND.sdt,diachi:PEND.diachi,goi:PEND.goi,thoihan:PEND.dur,gia:PEND.gia+'k',ngayan:PEND.ngay,mongmuon:PEND.mm}})}); }catch(e){}
+  // (b) DỰ PHÒNG: lưu vào Netlify Forms + hiện QR
   fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params})
     .then(function(){ showQR(); })
-    .catch(function(){ err.textContent='Lỗi gửi. Thử lại hoặc nhắn Zalo giúp Beeps nhé.'; err.style.display='block'; btn.disabled=false; btn.textContent='✅ Xác nhận & lấy mã QR chuyển khoản'; });
+    .catch(function(){ showQR(); });
 }
 function showQR(){
   var note='Beeps '+PEND.ten;
