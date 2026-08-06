@@ -227,7 +227,14 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 .obtn{width:100%;background:var(--pine);color:#fff;font-weight:800;font-size:16px;border:none;border-radius:13px;padding:16px;cursor:pointer;font-family:inherit;}
 .obtn:disabled{opacity:.55;}
 .oerr{color:#C15B5B;font-size:12.5px;margin-top:9px;display:none;font-weight:600;}
-.odone{text-align:center;padding:14px 6px;font-size:15px;color:var(--pine);font-weight:700;line-height:1.5;}
+.odone{text-align:center;padding:8px 4px;line-height:1.5;}
+.obtn.ghost{background:transparent;color:var(--pine);border:1.5px solid var(--line);margin-top:9px;}
+.ocrev{background:var(--cream);border:1px solid var(--honey);border-radius:12px;padding:14px 16px;font-size:13.5px;line-height:1.75;margin-bottom:12px;text-align:left;}
+.ocrev b{color:var(--pine);} .ocrev .big{font-size:19px;font-weight:800;color:var(--pine);}
+.ocnote{font-size:12.5px;color:var(--soft);margin-bottom:12px;}
+.qrwrap{text-align:center;} .qrwrap img{width:230px;max-width:78%;border-radius:12px;border:1px solid var(--line);margin:8px auto;}
+.qrinfo{background:var(--paper);border:1px dashed var(--honey);border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.85;text-align:left;margin:10px 0;}
+.qrinfo b{color:var(--pine);}
 /* footer */
 .foot{margin-top:40px;padding:20px;border-radius:18px;background:var(--pine);color:#EAF3EC;box-shadow:var(--shadow);}
 .foot .fw{font-weight:800;font-size:16px;color:#fff;} .foot .fw span{color:var(--honey);}
@@ -265,7 +272,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 </style>
 
 <div class="doc">
-  <div class="mast"><svg viewBox="0 0 100 100" width="28" height="28" style="display:block"><polygon points="6,52 34,44 30,70" fill="#2C6A4A"/><ellipse cx="50" cy="56" rx="30" ry="22" fill="#2C6A4A"/><circle cx="74" cy="40" r="15" fill="#2C6A4A"/><ellipse cx="46" cy="60" rx="17" ry="9" fill="#E0A32E" transform="rotate(18 46 60)"/><polygon points="87,36 100,41 87,47" fill="#E0A32E"/><circle cx="78" cy="37" r="3" fill="#F5F4ED"/></svg><div class="wm">Beeps <span>·</span> bếp của mẹ</div><a class="loginlink" href="./">Đăng nhập →</a></div>
+  <div class="mast"><svg viewBox="0 0 100 100" width="28" height="28" style="display:block"><polygon points="6,52 34,44 30,70" fill="#2C6A4A"/><ellipse cx="50" cy="56" rx="30" ry="22" fill="#2C6A4A"/><circle cx="74" cy="40" r="15" fill="#2C6A4A"/><ellipse cx="46" cy="60" rx="17" ry="9" fill="#E0A32E" transform="rotate(18 46 60)"/><polygon points="87,36 100,41 87,47" fill="#E0A32E"/><circle cx="78" cy="37" r="3" fill="#F5F4ED"/></svg><div class="wm">Beeps <span>·</span> bếp của mẹ</div><a class="loginlink" href="app.html">Đăng nhập →</a></div>
   <div class="hero">
     <div class="eb">Ăn trưa cùng Quang Anh</div>
     <h1>Cơm mẹ nấu - đo từng gram đạm</h1>
@@ -334,10 +341,17 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
         <div class="ofield"><label>Tên của bạn</label><input id="f_ten" type="text" placeholder="VD: Nguyễn Văn A" autocomplete="name"></div>
         <div class="ofield"><label>Số điện thoại (Zalo)</label><input id="f_sdt" type="tel" inputmode="numeric" placeholder="VD: 09xx xxx xxx" autocomplete="tel"></div>
         <div class="ofield"><label>Mong muốn / ghi chú (nếu có)</label><textarea id="f_mm" placeholder="VD: dị ứng tôm, không ăn cay, ít cơm, giao trước 12h…"></textarea></div>
-        <button class="obtn" id="obtn" type="submit">Gửi đơn đặt →</button>
+        <button class="obtn" id="obtn" type="submit">Xem lại &amp; đặt →</button>
         <div class="oerr" id="oerr"></div>
       </form>
-      <div class="odone" id="odone" hidden>✅ Đã nhận đơn của bạn!<br>Beeps sẽ nhắn Zalo xác nhận sớm nhất nhé 🐦</div>
+      <div class="oconfirm" id="oconfirm" hidden>
+        <div class="ocrev" id="ocrev"></div>
+        <div class="ocnote">📌 Kiểm tra kỹ giúp Beeps nhé — bấm xác nhận là Beeps chuẩn bị suất cho bạn.</div>
+        <button class="obtn" id="ocbtn" type="button" onclick="confirmOrder()">✅ Xác nhận &amp; lấy mã QR chuyển khoản</button>
+        <button class="obtn ghost" type="button" onclick="editOrder()">← Sửa lại thông tin</button>
+        <div class="oerr" id="oerr2"></div>
+      </div>
+      <div class="odone" id="odone" hidden></div>
     </div>
   </div>
 
@@ -423,6 +437,8 @@ function updateSum(){
   if(selStart===null){ s.innerHTML='Gói <b>'+g.name+'</b> · '+DURNAME[selDur]+' · <b>'+g.p[selDur]+'k/suất</b> — chọn ngày ăn ở trên.'; return; }
   s.innerHTML='Bạn chọn: <b>'+g.name+'</b> · '+DURNAME[selDur]+' · <b>'+g.p[selDur]+'k/suất</b><br>🗓️ Ăn: <b>'+daysLabel()+'</b>';
 }
+function esc2(s){ return String(s).replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]; }); }
+var PEND={};
 function submitOrder(e){
   e.preventDefault();
   var err=document.getElementById('oerr');
@@ -430,17 +446,47 @@ function submitOrder(e){
   var sdt=document.getElementById('f_sdt').value.trim();
   var mm=document.getElementById('f_mm').value.trim();
   if(!selGoi||!selDur){ err.textContent='Bạn chưa chọn gói hoặc thời hạn ở trên.'; err.style.display='block'; return false; }
-  if(selStart===null){ err.textContent='Bạn chưa chọn ngày ăn ở bước 3.'; err.style.display='block'; return false; }
+  if(selStart===null){ err.textContent='Bạn chưa chọn ngày ăn ở bước 2.'; err.style.display='block'; return false; }
   if(ten.length<2){ err.textContent='Nhập tên giúp Beeps nhé.'; err.style.display='block'; return false; }
   if(sdt.replace(/[^0-9]/g,'').length<9){ err.textContent='Số điện thoại chưa đúng rồi.'; err.style.display='block'; return false; }
   err.style.display='none';
-  var g=GOIDATA[selGoi];
-  var params='form-name=beeps-order&ten='+encodeURIComponent(ten)+'&sdt='+encodeURIComponent(sdt)+'&goi='+encodeURIComponent(g.name)+'&thoihan='+encodeURIComponent(DURNAME[selDur])+'&gia='+encodeURIComponent(g.p[selDur]+'k')+'&ngayan='+encodeURIComponent(daysLabel())+'&mongmuon='+encodeURIComponent(mm);
-  var btn=document.getElementById('obtn'); btn.disabled=true; btn.textContent='Đang gửi…';
-  fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params})
-    .then(function(){ document.getElementById('oform').style.display='none'; document.getElementById('osum').style.display='none'; document.getElementById('odone').hidden=false; })
-    .catch(function(){ err.textContent='Lỗi gửi. Thử lại hoặc nhắn Zalo giúp Beeps nhé.'; err.style.display='block'; btn.disabled=false; btn.textContent='Gửi đơn đặt →'; });
+  var g=GOIDATA[selGoi], suat=DURN[selDur], total=g.p[selDur]*suat*1000;
+  PEND={ten:ten,sdt:sdt,mm:mm,goi:g.name,dur:DURNAME[selDur],gia:g.p[selDur],suat:suat,total:total,ngay:daysLabel()};
+  document.getElementById('ocrev').innerHTML=
+    '<div><b>Gói:</b> '+esc2(g.name)+' · '+DURNAME[selDur]+'</div>'+
+    '<div><b>Ngày ăn:</b> '+esc2(daysLabel())+'</div>'+
+    '<div><b>Số suất:</b> '+suat+' × '+g.p[selDur]+'k</div>'+
+    '<div><b>Tên:</b> '+esc2(ten)+' · <b>SĐT:</b> '+esc2(sdt)+'</div>'+
+    (mm?'<div><b>Ghi chú:</b> '+esc2(mm)+'</div>':'')+
+    '<div style="margin-top:6px"><b>Tổng cộng:</b> <span class="big">'+total.toLocaleString('vi-VN')+'đ</span></div>';
+  document.getElementById('oform').style.display='none';
+  document.getElementById('osum').style.display='none';
+  document.getElementById('oconfirm').hidden=false;
+  document.getElementById('oconfirm').scrollIntoView({behavior:'smooth',block:'start'});
   return false;
+}
+function editOrder(){ document.getElementById('oconfirm').hidden=true; document.getElementById('oform').style.display=''; document.getElementById('osum').style.display=''; document.getElementById('f_ten').scrollIntoView({behavior:'smooth',block:'center'}); }
+function confirmOrder(){
+  var err=document.getElementById('oerr2');
+  var params='form-name=beeps-order&ten='+encodeURIComponent(PEND.ten)+'&sdt='+encodeURIComponent(PEND.sdt)+'&goi='+encodeURIComponent(PEND.goi)+'&thoihan='+encodeURIComponent(PEND.dur)+'&gia='+encodeURIComponent(PEND.gia+'k')+'&ngayan='+encodeURIComponent(PEND.ngay)+'&mongmuon='+encodeURIComponent(PEND.mm);
+  var btn=document.getElementById('ocbtn'); btn.disabled=true; btn.textContent='Đang ghi nhận…';
+  fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params})
+    .then(function(){ showQR(); })
+    .catch(function(){ err.textContent='Lỗi gửi. Thử lại hoặc nhắn Zalo giúp Beeps nhé.'; err.style.display='block'; btn.disabled=false; btn.textContent='✅ Xác nhận & lấy mã QR chuyển khoản'; });
+}
+function showQR(){
+  var note='Beeps '+PEND.ten;
+  var qr='https://img.vietqr.io/image/970432-183037412-compact2.png?amount='+PEND.total+'&addInfo='+encodeURIComponent(note)+'&accountName='+encodeURIComponent('NGUYEN QUANG ANH');
+  document.getElementById('oconfirm').hidden=true;
+  var od=document.getElementById('odone'); od.hidden=false;
+  od.innerHTML=
+    '<div style="font-size:17px;font-weight:800;color:var(--pine)">✅ Đã ghi nhận đơn của bạn!</div>'+
+    '<p style="font-size:13px;color:var(--soft);margin:6px 0 10px">Chuyển khoản theo mã dưới để Beeps <b>xác nhận suất</b>. Beeps nhắn Zalo lại sau khi nhận được.</p>'+
+    '<div class="qrwrap"><img src="'+qr+'" alt="QR chuyển khoản VietQR"></div>'+
+    '<div class="qrinfo"><div><b>Ngân hàng:</b> VPBank</div><div><b>Số TK:</b> 183037412</div><div><b>Chủ TK:</b> NGUYEN QUANG ANH</div><div><b>Số tiền:</b> '+PEND.total.toLocaleString('vi-VN')+'đ</div><div><b>Nội dung CK:</b> '+esc2(note)+'</div></div>'+
+    '<p style="font-size:12.5px;color:var(--soft)">Chuyển xong Beeps đối soát rồi nhắn Zalo xác nhận. Xem lại đơn/suất sau → <a href="app.html" style="color:var(--pine);font-weight:700">Đăng nhập bằng SĐT</a>.</p>'+
+    '<a class="obtn" style="display:block;text-align:center;text-decoration:none;margin-top:10px" href="https://zalo.me/0941751999" target="_blank" rel="noopener">📱 Nhắn Zalo cho Beeps</a>';
+  od.scrollIntoView({behavior:'smooth',block:'start'});
 }
 (function(){ var bn=document.getElementById('bnrs'); if(!bn) return;
   var dots=[].slice.call(document.querySelectorAll('#bdots .bdot'));
