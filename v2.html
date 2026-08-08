@@ -205,11 +205,14 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 .orx{text-align:center;font-size:10px;font-weight:800;color:var(--honey);text-transform:uppercase;letter-spacing:1px;}
 /* thời hạn */
 .durlb{font-size:13px;font-weight:700;color:var(--ink);margin:18px 0 9px;}
-.durs{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;}
-.dur{text-align:center;border:2px solid var(--line);border-radius:14px;padding:12px 6px;cursor:pointer;background:var(--surface);}
-.dur:nth-child(5){grid-column:1/-1;}
+.durs{display:flex;flex-direction:column;gap:9px;}
+.dur{display:flex;align-items:center;gap:11px;text-align:left;border:2px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;background:var(--surface);}
 .dur.on{border-color:var(--pine);background:var(--cream);}
-.dur .dl{font-size:13px;color:var(--ink);font-weight:800;} .dur .dp{font-weight:800;font-size:19px;color:var(--pine);margin-top:2px;} .dur .dsu{font-size:10px;color:var(--soft);margin-top:2px;} .dur .db{font-size:9.5px;color:#7a5a00;background:var(--cream);border:1px solid var(--honey);border-radius:5px;padding:1px 6px;margin-top:4px;display:inline-block;font-weight:800;}
+.dur .drad{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:none;position:relative;}
+.dur.on .drad{border-color:var(--pine);} .dur.on .drad:after{content:"";position:absolute;width:10px;height:10px;border-radius:50%;background:var(--pine);left:3px;top:3px;}
+.dur .dinfo{flex:1;min-width:0;display:flex;flex-direction:column;}
+.dur .dl{font-size:15px;font-weight:800;color:var(--ink);} .dur .dsu{font-size:11.5px;color:var(--soft);margin-top:2px;}
+.dur .dprice{text-align:right;flex:none;} .dur .dtot{display:block;font-size:16px;font-weight:800;color:var(--pine);} .dur .dsave{display:block;font-size:10.5px;color:#7a5a00;background:var(--cream);border:1px solid var(--honey);border-radius:5px;padding:1px 5px;margin-top:3px;font-weight:800;white-space:nowrap;}
 .osum .osold{text-decoration:line-through;color:var(--soft);font-weight:600;font-size:14px;} .osum .osnew{color:var(--pine);font-weight:800;}
 .dayslot .dish{font-size:10.5px;color:var(--soft);line-height:1.25;margin-top:2px;} .dayslot.on .dish{color:#fff;opacity:.95;}
 .dsel{font-size:12.5px;font-weight:800;color:var(--pine);margin:2px 0 8px;}
@@ -312,7 +315,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
       <div class="cdcard"><div class="cdi">🍱</div><div class="cdt">1. Chọn gói &amp; ngày</div><div class="cds">Xem món từng ngày, chọn gói + ngày ăn</div></div>
       <div class="cdcard"><div class="cdi">✅</div><div class="cdt">2. Xác nhận &amp; CK</div><div class="cds">Quét QR chuyển khoản để chốt suất</div></div>
       <div class="cdcard"><div class="cdi">👩‍🍳</div><div class="cdt">3. Mẹ nấu trong ngày</div><div class="cds">Nấu buổi sáng, không nấu sẵn để tủ</div></div>
-      <div class="cdcard"><div class="cdi">🛵</div><div class="cdt">4. Giao tận nơi</div><div class="cds">Giao trưa · miễn phí ship</div></div>
+      <div class="cdcard"><div class="cdi">🛵</div><div class="cdt">4. Giao tận nơi</div><div class="cds">Giao trưa · phí ship tính riêng</div></div>
     </div>
   </div>
 
@@ -346,13 +349,13 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
     </div>
     <div class="gsels"><button type="button" class="gsel" data-goi="doni" onclick="pickGoi('doni')"><span class="gtick"></span><span class="grow"><span class="gemoji">📐</span><span class="gnm">Đo Ni</span><span class="gtg">Đo ni theo người</span></span><span class="gwho">Giảm mỡ · tăng cơ · kiểm soát khẩu phần chuẩn theo TDEE.</span><span class="gfr">chỉ từ <b>80k</b>/suất</span></button><button type="button" class="gsel" data-goi="vuaxinh" onclick="pickGoi('vuaxinh')"><span class="gtick"></span><span class="grow"><span class="gemoji">🍱</span><span class="gnm">Vừa Xinh</span><span class="gtg">Chuẩn cân đối</span></span><span class="gwho">Ăn lành mạnh, đủ chất mức tiêu chuẩn — không cần đo ni.</span><span class="gfr">chỉ từ <b>60k</b>/suất</span></button><div class="gsel locked"><span class="lockbadge">🔒 Tạm dừng</span><span class="grow"><span class="gemoji">🍚</span><span class="gnm">Ăn Lành</span><span class="gtg">Ngon & no</span></span><span class="gwho">Cơm nhà quen thuộc, ngon–no–tiết kiệm, mỗi ngày chọn 1/2 món.</span><span class="gfr">gói này đang <b>tạm dừng</b> — Beeps sẽ mở lại sau nhé</span></div></div>
     <div id="durwrap" hidden>
-      <div class="durlb">Chọn thời hạn (tích 1):</div>
+      <div class="durlb">Chọn thời hạn:</div>
       <div class="durs">
-        <div class="dur" data-d="le" onclick="pickDur('le')"><div class="dl">1 ngày</div><div class="dp" id="p_le">–</div><div class="dsu">1 suất</div></div>
-        <div class="dur" data-d="ba" onclick="pickDur('ba')"><div class="dl">3 ngày</div><div class="dp" id="p_ba">–</div><div class="dsu">3 suất · liên tục</div></div>
-        <div class="dur" data-d="tuan" onclick="pickDur('tuan')"><div class="dl">1 tuần</div><div class="dp" id="p_tuan">–</div><div class="dsu">5 suất · liên tục</div></div>
-        <div class="dur" data-d="hai" onclick="pickDur('hai')"><div class="dl">2 tuần</div><div class="dp" id="p_hai">–</div><div class="db">🎯 chọn ngày tự do</div></div>
-        <div class="dur" data-d="thang" onclick="pickDur('thang')"><div class="dl">1 tháng</div><div class="dp" id="p_thang">–</div><div class="db">tự do · huỷ 10 bữa</div></div>
+        <div class="dur" data-d="le" onclick="pickDur('le')"><span class="drad"></span><div class="dinfo"><span class="dl">1 ngày</span><span class="dsu">1 suất · ăn thử</span></div><div class="dprice"><span class="dtot" id="t_le">–</span></div></div>
+        <div class="dur" data-d="ba" onclick="pickDur('ba')"><span class="drad"></span><div class="dinfo"><span class="dl">3 ngày</span><span class="dsu">3 suất · ăn liên tục</span></div><div class="dprice"><span class="dtot" id="t_ba">–</span><span class="dsave" id="s_ba"></span></div></div>
+        <div class="dur" data-d="tuan" onclick="pickDur('tuan')"><span class="drad"></span><div class="dinfo"><span class="dl">1 tuần</span><span class="dsu">5 suất · ăn liên tục</span></div><div class="dprice"><span class="dtot" id="t_tuan">–</span><span class="dsave" id="s_tuan"></span></div></div>
+        <div class="dur" data-d="hai" onclick="pickDur('hai')"><span class="drad"></span><div class="dinfo"><span class="dl">2 tuần</span><span class="dsu">10 suất · 🎯 chọn ngày tự do</span></div><div class="dprice"><span class="dtot" id="t_hai">–</span><span class="dsave" id="s_hai"></span></div></div>
+        <div class="dur" data-d="thang" onclick="pickDur('thang')"><span class="drad"></span><div class="dinfo"><span class="dl">1 tháng</span><span class="dsu">20 suất · tự do · huỷ 10 bữa</span></div><div class="dprice"><span class="dtot" id="t_thang">–</span><span class="dsave" id="s_thang"></span></div></div>
       </div>
     </div>
   </div>
@@ -362,7 +365,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
     <div class="dpn" id="dpn"></div>
     <div id="dayrows"></div>
     <div class="spill" id="spill" hidden></div>
-    <div class="daynote">🚚 <b>Miễn phí giao</b> (Beeps chưa tính phí ship). <b>Đặt trước:</b> chốt trước <b>20h hôm trước</b> ngày ăn. <b>Lỡ bận?</b> Báo Beeps trước 1 ngày là dời suất, không mất.</div>
+    <div class="daynote">🚚 <b>Giá suất chưa gồm phí ship</b> (phí giao tính riêng theo khu vực). <b>Đặt trước:</b> chốt trước <b>20h hôm trước</b> ngày ăn. <b>Lỡ bận?</b> Báo Beeps trước 1 ngày là dời suất, không mất.</div>
   </div>
 
   <div class="step" id="ostep" hidden>
@@ -437,7 +440,7 @@ function pickGoi(k){
   document.getElementById('menu_anlanh').hidden = (g.mkey!=='anlanh');
   if(g.mkey==='dinhduong'){ markWeek(); }
   document.getElementById('infobar').innerHTML='👆 Bấm vào 1 món để xem đang là ngày nào — món gì.';
-  ['le','ba','tuan','hai','thang'].forEach(function(k){ var el=document.getElementById('p_'+k); if(el) el.textContent=g.p[k]+'k'; });
+  ['le','ba','tuan','hai','thang'].forEach(function(k){ var tot=g.p[k]*DURN[k], sv=(g.p.le-g.p[k])*DURN[k]; var te=document.getElementById('t_'+k); if(te) te.textContent=tot.toLocaleString('vi-VN')+'đ'; var se=document.getElementById('s_'+k); if(se) se.textContent=sv>0?('tiết kiệm '+sv.toLocaleString('vi-VN')+'đ'):''; });
   var durs=document.querySelectorAll('.dur'); for(var j=0;j<durs.length;j++){ durs[j].classList.remove('on'); }
   updateSum();
   document.getElementById('durwrap').scrollIntoView({behavior:'smooth',block:'start'});
