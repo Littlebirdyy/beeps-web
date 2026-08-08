@@ -262,6 +262,9 @@ const DAYS=[
 ];
 let PEOPLE = [];          // set khi owner đăng nhập (production) / gán sẵn (preview)
 let CUR_TAB="home", FB_SEL=null, FB_NGON=null, CURP=null, IS_ADMIN=false, IS_OWNER=false, SHOW_ADMIN=false, ADM_DAY=0, SHOW_LOGIN=true, WEBORD=null, EXPIRED=null, CANH_SCOPE="today", LIVEMENU=null;
+var UPG_OPEN=false, UPG_TAB='tier', UPG_SUATDUR='tuan', UPG_CANH='nho', UPG_CANHSCOPE='all', UPG_DONE=null;
+var UPGP={doni:{le:99,ba:89,tuan:85,hai:85,thang:80}, vuaxinh:{le:79,ba:69,tuan:65,hai:65,thang:60}};
+var UDURN={le:1,ba:3,tuan:5,hai:10,thang:20}, UDLB={le:'1 ngày',ba:'3 ngày',tuan:'1 tuần',hai:'2 tuần',thang:'1 tháng'};
 function phoneNorm(p){ var d=String(p||"").replace(/[^0-9]/g,""); if(d.slice(0,2)==="84") d=d.slice(2); if(d.charAt(0)==="0") d=d.slice(1); return d; }
 function dam(P){ return P.damFix || Math.max(70, Math.round((P.kg*P.pf - 13)/0.26/5)*5); } // thịt/cá chín theo cân nặng; damFix = chốt tay khi sàn 70g làm tổng đạm <25g
 function computeMeal(P, di){
@@ -529,7 +532,7 @@ function webCustView(){
   h+='<details open style="'+box+';margin-top:2px"><summary style="font-weight:800;font-size:14px;cursor:pointer;color:var(--pine,#2C6A4A)">🍱 Thực đơn tuần này</summary><div style="margin-top:8px">'+weekMenuHtml(monday, days, todayT)+'</div></details>';
   h+='<details style="'+box+';margin-top:2px"><summary style="font-weight:800;font-size:14px;cursor:pointer;color:var(--pine,#2C6A4A)">🍱 Thực đơn tuần sau</summary><div style="margin-top:8px">'+weekMenuHtml(nextMon, days, todayT)+'</div></details>';
 
-  h+='<a href="./" style="display:block;text-align:center;text-decoration:none;background:var(--pine,#2C6A4A);color:#fff;font-weight:800;font-size:15px;padding:13px;border-radius:12px;margin:14px 0 4px">➕ Đặt thêm / gia hạn</a>';
+  h+='<button onclick="openUpg()" style="display:block;width:100%;text-align:center;background:var(--honey,#E0A32E);color:#3a2a00;font-weight:800;font-size:15px;padding:13px;border-radius:12px;margin:14px 0 4px;border:none;cursor:pointer">⬆️ Nâng gói / mua thêm suất</button>';
   h+=foot()+'</div></div>';
   return h;
 }
@@ -569,12 +572,70 @@ function submitFb(){
   fetch("/",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:body}).then(done).catch(done);
 }
 
+function upGoiKey(g){ return String(g||'').indexOf('Đo')>=0?'doni':'vuaxinh'; }
+function upDurKey(th){ th=String(th||''); if(th.indexOf('2 tu')>=0)return 'hai'; if(th.indexOf('1 tu')>=0)return 'tuan'; if(th.indexOf('3 ng')>=0)return 'ba'; if(th.indexOf('tháng')>=0)return 'thang'; return (th.indexOf('1 ng')>=0||th.indexOf('lẻ')>=0)?'le':'hai'; }
+function upRemain(){ var now=new Date(); now.setHours(0,0,0,0); var t=now.getTime(); var seen={},c=0; if(WEBORD) WEBORD.list.forEach(function(o){ parseVNDates(o.ngayan).forEach(function(d){ if(d.getTime()>=t&&!seen[d.getTime()]){seen[d.getTime()]=1;c++;} }); }); return c; }
+function upgQR(amt,note){ return 'https://img.vietqr.io/image/970432-183037412-compact2.png?amount='+amt+'&addInfo='+encodeURIComponent(note)+'&accountName='+encodeURIComponent('NGUYEN QUANG ANH'); }
+function openUpg(){ UPG_OPEN=true; UPG_DONE=null; UPG_TAB='tier'; route(); }
+function closeUpg(){ UPG_OPEN=false; UPG_DONE=null; route(); }
+function upgTab(t){ UPG_TAB=t; route(); }
+function setUpgDur(d){ UPG_SUATDUR=d; route(); }
+function setUpgCanh(c){ UPG_CANH=c; route(); }
+function setUpgCanhScope(s){ UPG_CANHSCOPE=s; route(); }
+function upgAmount(){
+  var g=WEBORD.list[0], gk=upGoiKey(g.goi), dk=upDurKey(g.thoihan), rem=upRemain();
+  if(UPG_TAB==='tier'){ var diff=(UPGP.doni[dk]-UPGP.vuaxinh[dk]); return {amt:diff*rem, note:'Beeps '+(WEBORD.ten||'')+' nang goi', detail:'Nâng Vừa Xinh → Đo Ni cho '+rem+' suất còn lại (+'+diff+'k/suất)'}; }
+  if(UPG_TAB==='suat'){ var n=UDURN[UPG_SUATDUR], pr=UPGP[gk][UPG_SUATDUR]; return {amt:pr*n, note:'Beeps '+(WEBORD.ten||'')+' mua them suat', detail:'Mua thêm '+UDLB[UPG_SUATDUR]+' — '+n+' suất × '+pr+'k'}; }
+  var cz=(UPG_CANH==='to'?12:7); var nd=(UPG_CANHSCOPE==='one'?1:rem); return {amt:cz*nd, note:'Beeps '+(WEBORD.ten||'')+' them canh', detail:'Thêm canh '+(UPG_CANH==='to'?'to 12k':'nhỏ 7k')+'/bữa × '+nd+(UPG_CANHSCOPE==='one'?' bữa (bữa kế tiếp)':' ngày còn lại')};
+}
+function confirmUpg(){ var a=upgAmount(); var d=new Date(); d.setHours(0,0,0,0); postAction('upg_'+UPG_TAB, actISO(d), a.detail+' = '+a.amt+'k'); UPG_DONE={amt:a.amt*1000, note:a.note, detail:a.detail}; route(); }
+function upgradeSheet(){
+  var W=WEBORD; var g=W.list[0], gk=upGoiKey(g.goi), rem=upRemain();
+  var head='<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px"><div><div style="font-size:17px;font-weight:800;color:var(--pine,#2C6A4A)">⬆️ Nâng gói / mua thêm</div><div style="font-size:12.5px;color:var(--soft,#5A645D);margin-top:2px">Đang có: '+esc(g.goi)+' · còn '+rem+' suất</div></div><button onclick="closeUpg()" style="background:none;border:none;font-size:22px;color:var(--soft,#5A645D);cursor:pointer;line-height:1;padding:0 2px">✕</button></div>';
+  var content;
+  if(UPG_DONE){
+    content='<div style="text-align:center;padding:4px 0 2px"><div style="font-size:17px;font-weight:800;color:var(--pine,#2C6A4A)">✅ Đã ghi nhận yêu cầu</div>'+
+      '<div style="font-size:13px;color:var(--soft,#5A645D);margin:7px 0 12px">'+esc(UPG_DONE.detail)+'</div>'+
+      '<img src="'+upgQR(UPG_DONE.amt, UPG_DONE.note)+'" alt="QR chuyển khoản" style="width:220px;max-width:80%;border-radius:12px">'+
+      '<div style="font-size:14px;margin-top:10px">Chuyển <b style="color:var(--pine,#2C6A4A)">'+UPG_DONE.amt.toLocaleString('vi-VN')+'đ</b><br>VPBank <b>183037412</b> · NGUYEN QUANG ANH</div>'+
+      '<div class="note">Chuyển xong Beeps đối soát rồi nâng/thêm suất cho bạn + nhắn Zalo xác nhận. Áp từ bữa kế tiếp (chốt trước 20h hôm trước).</div>'+
+      '<button onclick="closeUpg()" style="display:block;width:100%;margin-top:8px;background:var(--honey,#E0A32E);color:#3a2a00;font-weight:800;font-size:14px;padding:12px;border-radius:11px;border:none;cursor:pointer">Xong</button></div>';
+  } else {
+    var tab=function(k,lbl){ return '<button onclick="upgTab(\''+k+'\')" style="flex:1;padding:10px 4px;border-radius:9px;border:1.5px solid '+(UPG_TAB===k?'var(--pine,#2C6A4A)':'rgba(0,0,0,.15)')+';background:'+(UPG_TAB===k?'var(--pine,#2C6A4A)':'#fff')+';color:'+(UPG_TAB===k?'#fff':'var(--ink,#1b241d)')+';font-weight:800;font-size:12px;cursor:pointer">'+lbl+'</button>'; };
+    var chip=function(on){ return 'flex:1;min-width:56px;padding:9px 4px;border-radius:9px;border:1.5px solid '+(on?'var(--pine,#2C6A4A)':'rgba(0,0,0,.15)')+';background:'+(on?'var(--pine,#2C6A4A)':'#fff')+';color:'+(on?'#fff':'var(--ink,#1b241d)')+';font-weight:800;font-size:12px;cursor:pointer'; };
+    var a=upgAmount();
+    content='<div style="display:flex;gap:6px;margin-bottom:14px">'+(gk==='vuaxinh'?tab('tier','⬆️ Lên Đo Ni'):'')+tab('suat','➕ Thêm suất')+tab('canh','🍲 Thêm canh')+'</div>';
+    if(UPG_TAB==='tier'){
+      if(gk==='doni') content+='<div style="font-size:14px;line-height:1.7;padding:8px 0">Bạn đang ở gói cao nhất (<b>Đo Ni</b>) rồi 👍<br>Muốn thêm suất hay canh thì chọn tab bên cạnh nhé.</div>';
+      else content+='<div style="font-size:14px;line-height:1.7;padding:6px 0">Nâng <b>'+rem+' suất còn lại</b> từ Vừa Xinh lên <b>Đo Ni</b> — đo khẩu phần đạm chuẩn theo cân nặng của bạn.<br><br><span style="font-size:16px">Chênh lệch: <b style="color:var(--pine,#2C6A4A)">+'+a.amt.toLocaleString('vi-VN')+'k</b></span></div>';
+    } else if(UPG_TAB==='suat'){
+      content+='<div style="font-size:12.5px;color:var(--soft,#5A645D);margin-bottom:9px">Mua thêm gói (gói của bạn: '+esc(g.goi)+'):</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+['le','ba','tuan','hai','thang'].map(function(d){ return '<button onclick="setUpgDur(\''+d+'\')" style="'+chip(UPG_SUATDUR===d)+'">'+UDLB[d]+'</button>'; }).join('')+'</div>'+
+         '<div style="margin-top:12px;font-size:15px">'+UDLB[UPG_SUATDUR]+' = '+UDURN[UPG_SUATDUR]+' suất × '+UPGP[gk][UPG_SUATDUR]+'k = <b style="color:var(--pine,#2C6A4A)">'+a.amt.toLocaleString('vi-VN')+'k</b></div>';
+    } else {
+      content+='<div style="font-size:12.5px;color:var(--soft,#5A645D);margin-bottom:9px">Thêm canh — chọn phạm vi:</div>'+
+         '<div style="display:flex;gap:6px;margin-bottom:8px">'+
+           '<button onclick="setUpgCanhScope(\'one\')" style="'+chip(UPG_CANHSCOPE==='one')+'">Bữa kế tiếp</button>'+
+           '<button onclick="setUpgCanhScope(\'all\')" style="'+chip(UPG_CANHSCOPE==='all')+'">Cả '+rem+' ngày còn lại</button>'+
+         '</div>'+
+         '<div style="display:flex;gap:6px">'+
+           '<button onclick="setUpgCanh(\'nho\')" style="'+chip(UPG_CANH==='nho')+'">Canh nhỏ 7k</button><button onclick="setUpgCanh(\'to\')" style="'+chip(UPG_CANH==='to')+'">Canh to 12k</button></div>'+
+         '<div style="margin-top:12px;font-size:15px">'+(UPG_CANH==='to'?'12k':'7k')+' × '+(UPG_CANHSCOPE==='one'?1:rem)+(UPG_CANHSCOPE==='one'?' bữa':' ngày')+' = <b style="color:var(--pine,#2C6A4A)">'+a.amt.toLocaleString('vi-VN')+'k</b></div>'+
+         '<div style="font-size:11px;color:var(--soft,#5A645D);margin-top:7px">Canh là tuỳ chọn — suất Beeps đã đủ chuẩn; giảm mỡ thì nên canh nhỏ hoặc bỏ.</div>';
+    }
+    var canConfirm = !(UPG_TAB==='tier'&&gk==='doni') && a.amt>0 && rem>0;
+    if(canConfirm) content+='<button onclick="confirmUpg()" style="display:block;width:100%;margin-top:16px;background:var(--honey,#E0A32E);color:#3a2a00;font-weight:800;font-size:15px;padding:13px;border-radius:11px;border:none;cursor:pointer">Xác nhận & lấy QR chuyển khoản →</button>';
+    else if(rem<=0) content+='<div class="note">Hết suất rồi — dùng "Thêm suất" để đặt tiếp nhé.</div>';
+  }
+  var handle='<div style="width:44px;height:5px;border-radius:99px;background:rgba(0,0,0,.15);margin:2px auto 12px"></div>';
+  var sheet='<div onclick="event.stopPropagation()" style="width:100%;max-width:480px;background:var(--surface,#fff);border-radius:22px 22px 0 0;padding:12px 18px 26px;max-height:90vh;overflow:auto;box-shadow:0 -14px 44px rgba(0,0,0,.3)">'+handle+head+content+'</div>';
+  return '<div onclick="closeUpg()" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:60;display:flex;align-items:flex-end;justify-content:center">'+sheet+'</div>';
+}
 function route(){
   const root = document.getElementById("root");
   if (IS_ADMIN || (IS_OWNER && SHOW_ADMIN)) root.innerHTML = adminView();
   else if (IS_OWNER) root.innerHTML = ownerHome();
   else if (CURP) root.innerHTML = custView(CURP);
-  else if (WEBORD) root.innerHTML = webCustView();
+  else if (WEBORD) root.innerHTML = webCustView() + (UPG_OPEN ? upgradeSheet() : '');
   else if (EXPIRED) root.innerHTML = expiredView(EXPIRED);
   else root.innerHTML = gateView();
 }
@@ -587,10 +648,10 @@ function expiredView(o){
     '<button class="gback" onclick="logout()">← Về đầu</button>'+
     '<p class="gtag">🔒 cơm mẹ nấu, vốn dĩ đã lành</p></div>';
 }
-function logout(){ try{ localStorage.removeItem("beeps_phone"); }catch(e){} CURP=null; WEBORD=null; EXPIRED=null; IS_ADMIN=false; IS_OWNER=false; SHOW_ADMIN=false; CUR_TAB="home"; route(); }
+function logout(){ try{ localStorage.removeItem("beeps_phone"); }catch(e){} CURP=null; WEBORD=null; EXPIRED=null; IS_ADMIN=false; IS_OWNER=false; SHOW_ADMIN=false; CUR_TAB="home"; UPG_OPEN=false; UPG_DONE=null; route(); }
 function doLoginKey(e){ if(e.key==="Enter") doLogin(); }
 
-const BLOBS = [{"s":"x2nZaVa+BudQgvZMyG/COQ==","iv":"sozx6VJ92x++gp7u","ct":"sZUwlYQP0tqOlaaRQX3Y9JPfeWipiV8vMtdjOtTUuM5nh7H+nkOV/aCMSbwdvn3K7qThuTcbM7eQIc8fuUJ89rufA379YB0ks0b0PYG/Uf1mYsGujgqv4pw7hiOZAZZlGxKaEL5Ikgrn3/AYrTh9Cz+wutPGuxNIxuShZrCdxZU="},{"s":"j07Pgion11QtmjEeuj8oNQ==","iv":"rg+iDpWKDMpapKVB","ct":"p2Q7bBxWQsequA95uMnnxFO1hUF/cZ/qVdGo2NSIshLih5Ys+VBOTwCNQPu4Xrtys8be1p8q/mMIU3Cnwy47ZfOULMA75vzkvYk3GjGv64NPsUMOs+AYMQ/K4szBTo6cfJuYE5sVMs0r/CGxUPBGb4qL4SXbJatcOHWhGRR9f2d7Bv3ELMPh+wvwrvez"},{"s":"bUb5NpYO2cNWtwpHljk1CQ==","iv":"7C5yo49MNywjIB0r","ct":"9A+E9HnYJ44Nvpxgwrbyho2zUzkfpQWRqdJ6n0c1x2Cso5/IkqCE+NECD39YxFMtw6LOhyxAyQioWaOUePXYMj4HZjsnoAZfWDS9ySAZwX+qCf3sQrrX3rS0HFgd6IdwhQ6we5jx6kih6bzouhmrW1HsUQ2WapkpOqTPE0VSIk0zhARTYiKeZbazKT6FyFId"},{"s":"HSpQ52DdLZJOPPXD0yglGA==","iv":"dFjXz48Tkxqp+MCQ","ct":"E7kLRcP+6miMmm7Vve+Y1Yj3wtypn5gBr4h9EGb2IBV4OVT12a6BJy2ATp/sJJe2FbG+tfEB8dtZvOTZZJKMhquCEBmVxW5HD6D4MEyb3WJNYPptPQqEGCKGxMiAtA7CsAyBY20TZjN0aeh1/JEpD2ueBb+h"},{"s":"7ZfMnusg6y9WgU4sdesP1Q==","iv":"JzAnL1GkNo7M0njb","ct":"94AKs1/CEBqP6yHpBPR0id3XC+DtUmB0a1evqNQqmzSiGKygX/1Qa0DJ0b/KaxZCh5kPaVUKKQUDwuRzVYN1pMElSH4b+mZ5pjU+mihQkiTspRu/Yu/2a8QbxMrQ5gMBIk3Ed6HQVQDyB9Y3VVED7lgX+zg1n7WUx1eN+Y6KxJ1mgfJ5YW1KINIAGXh55ebWChpgNGFjwJ59JATYXIL+Gl0aMrsDaAqlSBGUOOKg/kdLMSfdKp8="},{"s":"QykdGk9QT/e611qGwFP01Q==","iv":"qvpwmU66qn90fhVQ","ct":"Th6zvSjZL1Sf9EnuUqQV3pF7SRjlugY7Kg33Vjw1njZ24wnTLZIcBfT3aXPMyGAEf6VW8aN712l3T600Mxfa5mWhJFvd566dOI19kWbLdxN+xzP8wqYDXkN4nzBzXxctxLuLTy3cLDm0ozpzi+S8rjS0Off1JmGzsGJLdJw3hiLtgnRygYQytGME78hFohV9kvMA8QEoJmjzIBGrtpHeAA=="},{"s":"DsAwE9zjyGr1NPZ4x0bnTw==","iv":"Ge3/mcIzOSlJSB2l","ct":"Yyv952M9Dd+nG2FuTm/g0KuCRZ7+RTsvPUi39yRl9Z24Zx8PZWAfCFeJjBvLbbW6ZnJmFJOHW9Yg4RIgD8Q+WK6Ym8uMOOSGOnYn+aZjbl6lzQ0145xnJZ8l057F5eAhsFzUmPjurBJYHo4aUY21umpoOJg6VMH6odGXxib7/URYMP95o73j"},{"s":"JHCYFX5kmvIzR47L+ME+MA==","iv":"EK5FAdwoXTfzX4Dq","ct":"ipO8ph261a0cB3AdsNRdWhc5gas+fjC4DBxsFBwGKSpk0kvO1ePqhOWtKwaOcbh2IIfsRUyG2VvXV6zLCXDKbeW2dqWp1gG5hdgxTGFh3S6lf3GpD3DRlf+jv7J+W4umPnvZYK5s2icFD7+RnF+9siiKrXc+jTnWd7Ecfw839w4ZIGaNa+/vAIyx92/wmxYY+9PnPZPtRiYhhmmbe/g/VTofoE9cp0ppYkGM/V6uRkcY1NIzU5VjiJy3ubPu+Y/BXWvs1+VEYRo41KvOTO7N5nt7sRu3Hz8JfI7n57Z+XmOKIRKfCRMalyOpeHbQyXKmG8h2cnD+RbGEz/C6BpDkMuzv8m/zcSRL39RQ8SGq9eUWT9RKTl/3N+y6GMTzfqfBIJkO7/XMB/cT+BbD+TUcbQjRO1C/tbcoTGKuVNtUsTAMp4uPY20Dy9fwHNB4MYRPNAOTgV9ClIkLps74C5fWI0POJJxO3x0OV0bDP1bN1BlQHZhwF4jBQ/qSpo+YwJCPgbzEnPmpl0NM8SmTNs6iRZV2KhS96TlK24uaFOQXMTy3i+m01J/8hbhra6AzuN6I8CjZ4gpvq23k6b9XzeEfTSvkM9p4Ejd+dVjSD5gdKo5ArcArCzCpnLRze59DfyvZGPFJnu0Sa3nm+02TijIzvJJ/8B4YRublzRFSQM5HUIedBq8wT4r518LkFem6DbhWV0lb0OrLFpt/dLYNq1Ou0k7NAoVefW+BwhD01xmQJBan/AWRzgZJoj/bT0ki9LnjG3J480mfCPUTalvM2NXZ9iEY3WMhbTVpRbQQBmknnire1ffs3zg+ndMNUw1RKqwUWEOHdWFcOtC66Gecrw=="},{"s":"oNcFzH73EmyRodhyb/wBxA==","iv":"C3NZk9K8jQYXLysS","ct":"+acN8VGZzRI+VGclw6FUg75wy8ybRxH2EWWYY7rSeprfVDDsDbo+CsSKHC5Fh/jjRUDjmiY5TGFZ2NNDrDUYpoA/JD6N24OCiNYUL2VOo+x/+SyxBtkQ5qPRVevU23WPA1fMaaZnv6tab9lv3MJ0yvOZBMlaSI1ymQB24dIl2KNbSTJBy1WRn+czbmX7MbeK+g=="},{"s":"UKDmYxFJONYu0XWQt1oCyw==","iv":"Db39fb7WqQ6rYkPd","ct":"TSfB2PkEhqjb9vBrELeflG+bGwZ1pZZqtWIDtRgItbXaXpy5R1RdlAYj4Yjn61sSHg6nq5mNloamEJgh2erZsQzRte8vnTBiS/JVUYuZekpjC+Q+qnwtAVc7rSnMwioKXuu9VEs0xx7xvsj2ZvWJgBnVmElFtc2UJD78X8DLWx5B/VI+93dDBQ=="},{"s":"71Fwz6vAmkVnS1jG/xXc5Q==","iv":"RLO27r3eYTnyRX2h","ct":"0zGcgJZBQFm+Vw5EAXxerYIi+eZAOBEA/Gx2V3rKAeuETYxuPuoEzbiS2RJ6z/K0oYWw6UWAurRmEOt+JnEutG93E3Y7osw6W7b6icFb9C111xAzVEe9bJRnfEDXwMZTuG4/lUkC1zYaM5yMEy5n/o3334h6ek6EqSeMQP82f/wgI8dKvbdaGlRw5+Td43+PQxof8hd3865NjpwtiodXHm+SUhnQpQRMbSjziA=="},{"s":"VAfFsyeSn0zjGJnX0QLjFw==","iv":"SyMBSJ/UKMzubPDn","ct":"gp9NHyYEPh+XESNflY7dtHH9TjmPhVP8YBd8sPIv0NRLt5TXNmH6wvKgrqWpuLcDL2/GSmFrMO5Vq8mNLN7T44zXexte+1gONrirhqx0Xk5AmMNKsnteTUm7WPrtfkc1JNJA1Ta+WjtqbTmoeY6UmZE2y2+7HoXc"},{"s":"bkJ3t1hLMgzqbDMn2LdI4w==","iv":"S1/KP9xh0hu8QE/a","ct":"x+OiQFtKtWoRHROBeAqFD6GuIAtaP4v2CHXI/8DFvUmHOFXeyRHZx9jQTxRQPvwkbG/hI4prx/SV8K5HA6uDmle8vyDorMseVsBkZWCov6Jmt13yDGRxMunD1RNefK983AgVpkVJ7zVkpjoBZFytC7ITqalSLw7oxLlUiW/+wBxk2Uk="}];
+const BLOBS = [{"s":"68iB5GuMAjBLsUZmNyY3lw==","iv":"Bei0FNuJURHjK0/K","ct":"XPGBb7MiBZnQqsyFquX4Lf5jBvd5ZxtJRM3WiPDBbKHNjd/6WxcofjkYsGoNmz6uQQM1QaHN1onr2IwwnNC2/kY6jF/PFLTaQzShwIU3Kt4wbQubgkIMJFkA9Jy83RW4p81Bjz4MVsyGdn6q0QFMjIDF01GO+ftmvm36CJ70PtlxLKEMrxD87wHNBgfe7WC8Bg=="},{"s":"YVY2O2k63MCz0NYGQpMKng==","iv":"XBEHU4fH4L6HIFt9","ct":"eMyLT/bMwVLk1R/+LsXsr4SWpMogrlFl5olFk9xs/bq80kGucM8op/+k7A42/L9t7bCq6izGSK9cLysa1FOAedUETHaROKbHRlOCBxSlKN1QcneSwlzZr90J7WlmcT4HGjUU9oo8xj2YPRjrWXX4fpxIt2KJ3cmlFv4RDsASa3isu0rAm540hayZ9bZrf/oCEOQivU3rKgheb8SG7tEgLcOHlFesHHPKPtWCAfOTRqPjTGfIwhw="},{"s":"yJrvWQaFpDqQI5jU4jDG1Q==","iv":"1IapZBn7jHrJBT0z","ct":"SOJRDCjqE4trI2bGWjovWl8eyGLxGw0itAjumQ/F783AhAsjrxO+zp5g09LXAVWsbZe5UIdWSi63+XuAnvcMH0wSL7rS+rKGc/HcEi6OkB/dLlF+2xG2u4GcYzzaXFrxl9NaNN2MYGX8AQXzO8mPSLXA0Pwq"},{"s":"rTDhI+RiqX9BB5iHXbycrA==","iv":"lu+RqLrv954uFUvt","ct":"k8Z87idEtwO69VA5wy+Ijy/izwkH5VrE+YvMH9uYMmvxbK+X2Q2/hTyWDQX+cDX+fXDyWZvwfC3XFt4/Jyj3G/0rud0T62N5ae84EryWiXstD6PKaPznTs6wmAL3Y0O7IVt4PI1PsJn6EsCYu1j1sP59tjoKArXCAF9nWaMqpoVHGralDi1hsNSVTxMWUxWubx4K4qoAvrXdBo5UJTMqOQ=="},{"s":"hpybVpIYKYeAlF/RTl2QFA==","iv":"DOzESkpFhAyE0XAa","ct":"lIAdCKpgLE7M4JqIxZySJWPTjE8ar5/ick8VWHwOrU8X+VcE6dmRV6nHgdgUY1m6uIPHqJevSMfXcAhefruFEprHI8XNz/WJFqTDnPDvQWgxE39OAaoKfO4U+UejnW6rETIOzrVHL4tBA9/06bF/Xle1dJI54ZzHm0InO/tBk5koQq8lmMumfKyG73GPZqQV9IgXHMRYTO2WFoZzePhe6rkmgiVznTzegXvPPw=="},{"s":"LTee90/Cfeb2wZIzc57ctg==","iv":"sRs582ARMh/9jYrP","ct":"KGShQ5fNGDAvRJOzx0Zvk/R5gHnkclmHQycsTjXQqjQqC6X/rMCezCpJqihWuv6fQRuBJ9Q/hTlCezD9S6bh8c8e6y5fatKV18F2XtZBL0F7ECRGU4g4wM8//RSt6Gfif2mP2x4IqSf+3CEFlm3BvxiWQq6hDKczp0xTpMCJFr0maqoSOwQPZA=="},{"s":"q4I+/x4XVWPRWjNF1W//8w==","iv":"Gy8yavt60xiLB0FK","ct":"Pvth/8+/657otwA9nHA6NqUQ2hHg8r4j5zj41rCCt9/c1gILFTR6Zjzwx2HzRwRDWXWOKjMO4UowtJYsy4FnsbgD6ZnjuqBtWlVwdqC0Z64SJBmCrEuYoUYBGaGmqjkaN2VNKu5pP14pgaHzhAAafAn4/ebomcfx"},{"s":"K2sW3mr9zXV0VmDuE34tvg==","iv":"rmZF334Kv8Gh2eIi","ct":"2eqo2JNptwZH9qEuAgDBRQi5/jZR1/pi7ml3APf+RMXQ3AMw/SYAfw0BtgsBu9RVyCJ7bhFezjNEMiPWBdhtaqsXSE5MKDOqceZFbwwgck69qY98YUV9HDg4Uu+FpIv1ibINg+oYwg9wyYQ49HrlRkGE1KWwwQdgz1FzJnhbOxfe3H8Qq4Jczfx5zaE3"},{"s":"lKr51yh+2nUs6xM5z+VCfg==","iv":"tWFCc1G21OY5sWGk","ct":"oEUHdyUD5eiGLzzmvfC2CK/2c2oK4nhZSETiWAwWIovozyXkEEamI5JaWo5Qym/NHXANqtPd5UGD7iCW3A/oLs26cCpTeBIMrRkZuXEps87T8TqhUozxzdqAkgqtzXD2iJP54gdVSK0P1yYtOqtu1FzNe6OXIG7CT887kfjVnkSNHtSnshTqg/L+9CZe9RgC"},{"s":"2DPxVlXWNt/prbqkPptdpg==","iv":"jhgozeIwOYiJyHch","ct":"HCKM87VamjL2sOWuNDFl/K9nx1a+DnvvftLFkgBcPp93lxi0S3kAjJSme6yKsqBM1k2fSq2/N29D0NvRca6r8F1+FkH5Tlc2VUmpl1AkLeKF5IDyrq7yTQ7YJxuiANiKAimtD8K+4y9zGDuEHbhf+NTDpXMV6uS3K9ibPQtQp8POnaM="},{"s":"0OqRxI42FvlvF46W01F9DQ==","iv":"m5psTm8DYupThgX7","ct":"RjaN6UQRK/bo6dZx45ng7ODn3L8LaOerr11LuBQc0Bouw4xGLh/NmoAO2SyOh7PUjd3k3+373aJj79imwHzhBHjVsFqsFRecH+tVUzW8QNR06cdCsTWFdM0pSnVcInUF3LVqMV5/WEVKkcNGPw9hKz7D2WNJtakVun8QYgDe6MM="},{"s":"SHLGHlu2kL5AqSZsyjqoFA==","iv":"OMHRP6Q3ewzNDE+3","ct":"5jrE5cZ6CvzvRoEoLORu0VXIY6K7HkOM8yiYTmhBB34t0Vx+SrJpXYxGUrMRHlCiQToi710pBjzV+1fpAU2z/+qwjriHpSQcX6LXU/9hXhSmND5PGYRNCwDn56wUAzPH4B62ewo31O4kwP4zdCoxjAVBD9OxYnEAyqtUIsXg2qh1Km3HTPaTGDqYEcN4m7OWJXrfJIjAnNkKfMiua4KcTXobaNqTLF/afBc+MRMPgY6gh5x+rwtnY6UudjbcYC8k11djA5nyXK+09FS7B23KuJj1rovMcUAtioj//1my/2YD0w1CIYNZq4KfjEN/3YFB8nzUN3Oj+fLTOtBGdYKjUQKQ1r1SnMXZoEqpRVZNgsenlbcHBMVmZKVgB0FUn4vrNs8GBL3SgoFeZ+Oxbp0QKYlgifSwilgo3GuPckPFQdLQpX+a3D++wlcKPb/bUMA2JC42MFFuqc8yL7HSz34tSXo+ae1I5Ldgybe464OrhIYIdG/W6w8ewV/PGB3YLAfN7Ob5Q58OrFH+RR8Jf11EinmOiTCevjb+UHaVsXfc5IV86mDLlYSlkHjIOi0EbbmjgRKuyXFd//BUoITh0HXv0G7HY9Yd6M71QksQrev4WwwKi5+mYUHNc4qQGEXsatr1a/39MYY40gRN3z7CLc8pj8K2496Kr+nlBn7cdhtffP3uo6X+vml2ev70N1LpFI2NiRcBvbizycUsLbgUet/6H9ibIpVa2fqKh3Is6/FQZ+2GYCOTVnoQyfJzyIPA9Zo2rHBGh192EVnMi/QNIV1NZsJKEQkRaVzuvfbdze9Bfx1DxSUNUkLu3GQ2ORE+S5t7B2RqYI8aG0zN/3j+Eg=="},{"s":"e2NGfeHaOD4qoY8Z1wxgRg==","iv":"UuXFeG8LUHOv3oUv","ct":"/BHG3xOHLC4SFUFjNrEcSFSJzehaecbMkCB5hs7TKQWjDUUBAetqQld8XZmO0oVKk+USUILIVxsZLTdVNTt/9MR2XUiLSOpiPfioeuioVic7DnkKSwMS1xrPENzv5QyaQxPJ5Y68PCv5f9g5udlilsh4rXlndbotb9KuqEwn2zWvyE1Uy1NN"}];
 const ITER = 100000;
 const te = new TextEncoder(), td = new TextDecoder();
 function b64d(s){ const bin=atob(s); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; }
