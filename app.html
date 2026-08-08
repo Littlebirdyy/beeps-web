@@ -261,7 +261,7 @@ const DAYS=[
   prodDam:"Heo nạc vai", prodRau:"Su su + đậu que", warn:"Mắm tỏi không cần ớt · Thịnh Suy chén riêng không ớt"},
 ];
 let PEOPLE = [];          // set khi owner đăng nhập (production) / gán sẵn (preview)
-let CUR_TAB="home", FB_SEL=null, FB_NGON=null, CURP=null, IS_ADMIN=false, IS_OWNER=false, SHOW_ADMIN=false, ADM_DAY=0, SHOW_LOGIN=true, WEBORD=null, EXPIRED=null, CANH_SCOPE="today";
+let CUR_TAB="home", FB_SEL=null, FB_NGON=null, CURP=null, IS_ADMIN=false, IS_OWNER=false, SHOW_ADMIN=false, ADM_DAY=0, SHOW_LOGIN=true, WEBORD=null, EXPIRED=null, CANH_SCOPE="today", LIVEMENU=null;
 function phoneNorm(p){ var d=String(p||"").replace(/[^0-9]/g,""); if(d.slice(0,2)==="84") d=d.slice(2); if(d.charAt(0)==="0") d=d.slice(1); return d; }
 function dam(P){ return P.damFix || Math.max(70, Math.round((P.kg*P.pf - 13)/0.26/5)*5); } // thịt/cá chín theo cân nặng; damFix = chốt tay khi sàn 70g làm tổng đạm <25g
 function computeMeal(P, di){
@@ -404,9 +404,9 @@ function parseVNDates(s){ var out=[]; if(!s) return out; var now=new Date(), cy=
     if(!dd||!mm) return; var yy=cy; if(mm<cm-1) yy=cy+1; var d=new Date(yy,mm-1,dd); d.setHours(0,0,0,0); out.push(d); });
   return out; }
 function dLabel(d){ return dWeekday(d)+' '+dDate(d); }
-function dishOf(d){ var A=new Date(2026,6,27); A.setHours(0,0,0,0); var dow=(d.getDay()+6)%7; if(dow>4) return 'Nghỉ cuối tuần';
-  var mon=new Date(d); mon.setDate(d.getDate()-dow); mon.setHours(0,0,0,0); var w=Math.round((mon-A)/604800000); var wi=(((w%4)+4)%4);
-  return (WMENU[wi]&&WMENU[wi][dow])||'—'; }
+function slotOf(d){ var A=new Date(2026,6,27); A.setHours(0,0,0,0); var dow=(d.getDay()+6)%7; if(dow>4) return null; var mon=new Date(d); mon.setDate(d.getDate()-dow); mon.setHours(0,0,0,0); var w=Math.round((mon-A)/604800000); return {wi:(((w%4)+4)%4),dow:dow}; }
+function dishOf(d){ var s=slotOf(d); if(!s) return 'Nghỉ cuối tuần'; if(LIVEMENU&&LIVEMENU.dish[s.wi]&&LIVEMENU.dish[s.wi][s.dow]) return LIVEMENU.dish[s.wi][s.dow]; return (WMENU[s.wi]&&WMENU[s.wi][s.dow])||'—'; }
+function caloForDate(d){ var s=slotOf(d); if(!s) return null; return (LIVEMENU&&LIVEMENU.calo[s.wi]&&LIVEMENU.calo[s.wi][s.dow])||null; }
 function ownerHome(){
   var hr=(new Date()).getHours(), hello=hr<11?'Chào buổi sáng':(hr<14?'Trưa rồi':'Chào');
   var box='border:1px solid rgba(0,0,0,.09);border-radius:16px;padding:16px;margin:10px 0;box-shadow:0 12px 26px -20px rgba(0,0,0,.5);background:var(--surface,#fff)';
@@ -430,8 +430,8 @@ function canhKey(sdt,d){ return 'beeps_canh_'+String(sdt||'')+'_'+d.getFullYear(
 function getCanh(sdt,d){ try{ return localStorage.getItem(canhKey(sdt,d))||'0'; }catch(e){ return '0'; } }
 function setCanhScope(s){ CANH_SCOPE=s; route(); }
 function applyCanh(size){ if(!WEBORD) return; try{
-    if(CANH_SCOPE==='all'){ var now=new Date(); now.setHours(0,0,0,0); WEBORD.list.forEach(function(o){ parseVNDates(o.ngayan).forEach(function(x){ if(x.getTime()>=now.getTime()) localStorage.setItem(canhKey(WEBORD.sdt,x), size); }); }); }
-    else { var d=new Date(); d.setHours(0,0,0,0); localStorage.setItem(canhKey(WEBORD.sdt,d), size); }
+    if(CANH_SCOPE==='all'){ var now=new Date(); now.setHours(0,0,0,0); WEBORD.list.forEach(function(o){ parseVNDates(o.ngayan).forEach(function(x){ if(x.getTime()>=now.getTime()){ localStorage.setItem(canhKey(WEBORD.sdt,x), size); postAction('canh', actISO(x), size); } }); }); }
+    else { var d=new Date(); d.setHours(0,0,0,0); localStorage.setItem(canhKey(WEBORD.sdt,d), size); postAction('canh', actISO(d), size); }
   }catch(e){} route(); }
 function weekMenuHtml(monday, days, todayT){
   var out='<div style="display:flex;flex-direction:column;gap:8px">';
@@ -485,7 +485,7 @@ function webCustView(){
   else if(firstUp){ h+='<div style="font-size:12.5px;color:var(--soft,#5A645D);font-weight:800">SUẤT SẮP TỚI</div><div style="font-size:18px;font-weight:800;color:var(--pine,#2C6A4A);margin-top:4px">'+dLabel(firstUp)+' · '+esc(cardDish)+'</div>'; }
   else { h+='<div style="font-size:15px;font-weight:800;color:var(--soft,#5A645D)">Hiện không có suất sắp tới</div>'; }
   if(doni && cardDish){
-    var dp=damPortion(doni.kg); var kc=caloEst(doni.goal);
+    var dp=damPortion(doni.kg); var kc=caloForDate(cardDate)||caloEst(doni.goal);
     h+='<div style="display:flex;gap:8px;margin-top:10px">'+
        '<div style="flex:1;text-align:center;background:var(--cream,#FDF3DC);border-radius:10px;padding:8px"><div style="font-size:17px;font-weight:900;color:var(--pine,#2C6A4A)">'+(dp?('~'+dp+'g'):'—')+'</div><div style="font-size:10.5px;color:var(--soft,#5A645D)">đạm (thịt/cá chín)</div></div>'+
        '<div style="flex:1;text-align:center;background:var(--cream,#FDF3DC);border-radius:10px;padding:8px"><div style="font-size:17px;font-weight:900;color:var(--pine,#2C6A4A)">~'+kc+'</div><div style="font-size:10.5px;color:var(--soft,#5A645D)">kcal (ước tính)</div></div>'+
@@ -590,7 +590,7 @@ function expiredView(o){
 function logout(){ try{ localStorage.removeItem("beeps_phone"); }catch(e){} CURP=null; WEBORD=null; EXPIRED=null; IS_ADMIN=false; IS_OWNER=false; SHOW_ADMIN=false; CUR_TAB="home"; route(); }
 function doLoginKey(e){ if(e.key==="Enter") doLogin(); }
 
-const BLOBS = [{"s":"vrgGZ2aXggsQsZsFpPfOtg==","iv":"ObfLJ8T8cw7TBv/E","ct":"Yz2JonKVUEXWZ/7qlRqP3Ju8pf6f8zHh7egBmewGEbB+JvmWjgoGyYUjeiV3WvwvHkVRC93M1f6nzg1/AklkY93t3zHSo9MSKPmzEAigbfGCaFJIcVzPzpdu8HtajTBnqYXsHpi1Ftx/KCSlsKTB6ngJcq7eJQ4yyxRs3xJEDN5ydUDdgnYhLg=="},{"s":"bMuPTe5ZbDMaFT1wyiNkhA==","iv":"+T7xj7LODVS3NDQc","ct":"7Fu/DFRltkKJ9FZ9oh5aFZVcOGClt6ajhnim5kcFCkoab80KgKgKuEqV9DdBZy6DFY8+RgbOU0xgul/G5W5I2e8VFt6huTmQGPBloAdk+xLlJ4VvPTPDilCHVB3zEFBCnHeEr8NgOVA5/nkYqwRX3Fe8plDGv28SVBS+j4+TkO0="},{"s":"0rpPhgtvBiKrbFgqiEBokQ==","iv":"ZxFsq2JLvp2dlKyT","ct":"iNwn8Q7X4bZgqbsA5nZaC15C7u3qAiXs31l1DK5Ug/2znkeKxE73kkSpVOY9YJvXL9ptH6mD+UuSxO8cgbvTVFXrk8PiIVnnOd89mZPQxjzsFHDutSzMATfkBGA1k2W8YawEgDkKyA18lGOq81TTPKQ+DiUo8StAQOrOgBWELv6saP/ofRtnKH0mURNdf4DkJU+PZQG4VtqWlNpGg7Q34G4Wtyr8elnTfOAwnlRm2+s3muoaprOdUDxZOf504HJhru+80XD8TZSqUcCPd3XmOILWC3sPH9LA7ISPRv/fiamqk0swwbcRMOTNu8oPGHfyQPL88eiQ7BgJF4eVkkvvV80TpOssnx3Vc0b6qR49VWgFoBHeSj1kqVZQfF8pNjSJADcFgfw7frvFgNg82ZYxgi2NnfoWAc6yWgihphfRnWSpZ1swSNvPAaKVEf6EruK5BZoHQK3oER/1jva1MeuHBnG/O35cwB9thjV2qZMnqyEvGy/fGNRoQ10+5js9xEIG0YiNawyV6780K5RrZcVyappQPp9N5qSISDS9Ptl+wNUTsKh/vhfmdyphdPGmj3XdUaMggXFTKKYXy08eJiWmNVR7rGDLk9F7bzH4ICXXOjon3CJ4iST8E5a6EVMOIN9VNFbbJkPqhAomgd/zrGlL/x6mYRIx8bVbp6tG46A8/nRIiwTaO9cm6u67w1hckLtveJYeGkubXYKXsJSGSepz1PmhvxaHReupuoeLyIWlU7TdXNHssoNrrXG0ZYNmvw7LZ3A6sv91s7BG+BovKBONHD1YaWmyvW8TOJF29NZ6V8JCBd7WDLGzIO2OsGCuIRDNQVwJy2NavTmQ20GXxQ=="},{"s":"bBLJpCuNvL9v6X6nQxclUA==","iv":"6MFdSF6bYrgVUZrr","ct":"Wu4pNK1xJXRlqF/4YXaBbYXFmGcYxQIm1ZEx1aw2tqOtRMKGMFyw2TqplVFL5rY+Nbh3qH9eaVvOxF1F5Xn1LDcq7dhnr+uERw3w9LBZu/OLCcks2jCe0aJJLcYnm8Z05Aqf82uVPArzcBC5EuFkoHtzfxbMRl8oxD9f7MddIsXHUVBoX5ysxWLX7fKLl2Ny"},{"s":"MhNh8jeJmvWaS05itqZs+w==","iv":"Cna75jaT0FfrM/kn","ct":"NjOtIJJY16ryQZwoPfzmx4Db53nqhFW1JBX9VMEjp3IQL4YgE+50vwQN2OV4vA0K6l2QLahhMNBVpQhG3lJLpRb3DeS7lnww9amzOekxbbsdGnXULaaPg4ketKOy0JBTHnRrSsA8NjAAJo+dG7KXqYmRyfzB"},{"s":"toCgM0MlALYYWwbxVI/Ylw==","iv":"BgHDc+Vfb0BVEi+G","ct":"bSTV7FzHFp5Sx38ZzYYbToR3wWkEzCCU94I/tBg3eP3/Icch6teRhr1joMZZzTIepHfVZ4NFsPda0fRmv0zCVelhHlBKrcK22I2C7/FBPGsz5I04n4THVgmk91Zk82hirlyCpX7j3Vxo8lv150Rp2dcK/OqEXHAM2vsaCK5QiQwfrMsA/rTUT6Hkb12ix6PSBnvzeVrRw7fL8/MkviT7MW+g1gjT6mg7srgkqNlu9NL3NXuacaE="},{"s":"ohTPZ8Axu2G8RLLPchrp0g==","iv":"L3GWKETfcu8yupjr","ct":"QNFwSON5mWyaRYSDPMzcZrd/Ns8FSb/FtDWh042psGcD/pw2jz6E16L01j5Qo0o2zfJ7dbsfBV3ymOZJemba78yTEosgn9jD8I/jjjXz/RHZFdDk3rz8p61Kx8VkTEMKZScjotOQTKA6Bjn1Z/SUf2vgT4ycaTUB7INApyv3+Kp12xk="},{"s":"ds5yhBZ1c8mDWsLUsMyIDw==","iv":"sCgQtZ2E3EGXboao","ct":"xjFCgGeZZSB+KOgU2CFuHSyPOUhXNWCKhopJnQ9KRNd0uWMYXSF7jKeG0gJrEa/34Zo+HLTTW3F/kag6lGFbnrF0cQ1MJrByM4ue1lPg3+FDrh+se7CIYzx+tOLJEjZm5Z004vpHbGoWylJMQf2dbxUlw9tntSoybS76iuYxGA+/Sko8vBpb"}];
+const BLOBS = [{"s":"7n8ckV1RLuwLGB5h0CtNIw==","iv":"DazCmz7GlZrwthpG","ct":"trSR6EVo2oVAX7UWATrR6gvwuWX5ajv4QoumtrrQEIVmdSV8OO9pZK6V81k6W6H95E8gjNaDUTlDbByAlKQwUwwEcTuuqcxxd8NpeWiQpLBB2VeUwqOd7UM8HduOXYCSD2pha7gmELNwYB6T/kzOCPiNPkL0kp2LtHk/UuM9LvyvfRCrdP39ATmKNo39lXagxRxzRnT4sEEJYqXyzHqW1S/se75FMghcTZ4SGDfaDotHKwkcMQvnK5Lpsu3el/E10lu+D1t8cggJsGAODZRzYSbJuoMlFo5wZbqW+D7dQ8HZ6I5t/RI26/8aNMKIGCZKSjXXFs8gB12A35eNnaVJtEnCkwWZUceZLGAt7YGIm1z3iqq+bcHQEZIvtniaFFH4l+nQPtmIOqed3GDqUoRRwGrA2W+nWnJ87P5ZdgW/piw7Z9y3FMErwk7lYPPKez2Vx0/P4Jr5dL/nGBBykFylJ29ItphIhwWSwTy984q7Vn8pCfaGs3KJ+UZtUS5uDzRLzQeD6oviA3ju5/Xvjr+LgmWTBzrOajmk8nRtLKItgtxQZiQVBR5/WsOqfpw2G4/nBPbmgsQIf1febb8EEFMG2GSdvj2O3u3w3hw2Nhui4RofgsN20WXFi41FoAQn9vJn5J0UVZBHmWzRXpvzSSKrOMrN00sxnQP4KyxSgbMqqNzVnQNCo+fyn/vhCKFoHEAxUri7cTbdlp0cZhY+T2KhGOraU7Q877ODpq5pYnfwUEwMgQlDowVfUt/QUVLG1r4M0izLEGo9c60tyHMHvxn+HOYSWCE/NNnhV/562mxXpgTeyPyiqNVNlOxqkcm5HEbZRc36EH8RW9VTTLzt3g=="},{"s":"pCRdqKCBcKV6gQSgIrwVFw==","iv":"UFK+7Kl+E5SWbjoj","ct":"2cff8953wF6I/QDKoris+l489TsnzKl1ixRVF9pYYlql6nmLMoJMwPZq6Im/37XnZUICFvkzt5/qKh5V6iy5PBxchTfqy5y7K+DAt0PygiEikqOhsrOv93w9CviWp8EIRjijSYMEO26GXA56loYwRvP8G0Ju+1FxfodKB8l6Mms="},{"s":"eh16Ck7dtxboi+OXlVRwfQ==","iv":"oaUQsfrwUJQs8fo/","ct":"R4h1krR86PNkV+A+UlLQZfEb1FL4RZ+wmeGus+ea9IBTLzrQAirQh2nSMGuptoCU2crtZwTIp4QCOWFkvO6xAFrZwLspPfi3Vcxqgo57Y4UpM1HJOofyEuoH96eSbnQCLNZZvULwEDjDSY2Vxw6b4mxgTbCEOwSGlMf+jwgHoyBsAwQDqxI5nQ=="},{"s":"F2lAn376WhgW0VJZ5aXouA==","iv":"eP+rpPCxopJ+ISXZ","ct":"+rHAcIqYnK0vFNi/v7a9QSJqNFXVfWMn/F11RYwTCBgVINo5HD4RiQqpoQxqDdFDtuAPMLiJUmc+C566SiEJFnWiBIWpwb9TaYwIGJkUmHzlpipqys5Uzc3+jdTqCf7SashRyMlGDNAQtXBfMY2fHjnFJHmd"},{"s":"gBOzyYqpa3kY97F2R9TPag==","iv":"jL6xaEPwPIdgY9cz","ct":"9noYX5C0SUiqtboOBMarte5PM7xyzBrf6Jxz/sfE2oynCNyNKLwPpVR9OJiuJOzbn4EPfP6D3rh8asPcB5MEkVxbxmA3DHUMUHAVhRgphMo+FQNxKNWMWpgJEqGiAMgQhEprDgqEy/h4Zhu4GzLjkMjL1juZM5qcJOtDo9st2zu9UslCOf1C"},{"s":"LpKbCQYhHScQDWa30ReUWA==","iv":"GtLkMOm5jTbYEi0x","ct":"p9A/br8/+g2yhjvj2v/dmsKxzXqiQsU9wFhWKMB/Y2gUMRpHkGshrXvcm8pH9sz5qVSd4oINzT/wBGEnnAa/pQX4YDYrPuoxi8V+XpW2etdqNoHAcnZjLRVd1Wq/b5NNkMsWd6GBmhTI8/aHbo3nDFK0edl1OTyT2oPnesKtplFGNK3SYQoyKeGughijKPGL"},{"s":"EH2YkGP1uCSjnSlPCOFvJg==","iv":"J3ZTuJ36NChMvqzc","ct":"bXdI1oqIsAOutvmKYd2xWOia45HHMhUHx3o4qLMctPnQe9Ku3Ds8xVJsOd4RkAn2nBb3uAhhlXwKeD3CMAdDFAGmAPRtK7srnmlhW+ZSUtcVCf0rXUSRlXz19EpFrbNegxk7bEPj55SqW66zH3QuOpfi1CztLXw07O9V1QLEW1fX0Udv/IyHbhlEW4tiM5zBhkE8bI2ZaqAbGYYyzjF3ugb59+gKJt8h5AMNWz//s65PxL+v87k="},{"s":"pFwKaVgoDik7w8QYMwOghA==","iv":"qSb5L/5pi5nfmbRQ","ct":"YuSJ8MdYTxL+jxYGz6KMYyeSMkn3ioqFxPihVxmZIG4bar77mtwYCTi4poCLAyaXfvpkH2Fk2K5W9k25jBF0+arTJfZNO8r8IKqVxHusZUjBEqPPjAEapVB2wepxCO5YQVK2QmDI8o8VOnR/DSPCMD44lil6olBh0ybJnT25VoA8Bwg="}];
 const ITER = 100000;
 const te = new TextEncoder(), td = new TextDecoder();
 function b64d(s){ const bin=atob(s); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; }
@@ -622,13 +622,30 @@ async function attempt(raw){
   } }
   return false;
 }
-var SHEET_API="https://script.google.com/macros/s/AKfycby1j5r6UuQ7SCEHATqZLA7tY9-cm6wKso0z874PwA0SRDxzbdxlpAowJvVK0FXtgNpokQ/exec";
+var SHEET_API="https://script.google.com/macros/s/AKfycbzIQEvUsOkBCkiVLVq6xUETZLh6rVyQZ5Ongj0P8mmHcciLlejAwfHKu6LLEpQlV6figg/exec";
 function sheetLookup(phone, cb){
   var name="__bcb"+(new Date()).getTime(); var s=document.createElement("script"); var done=false;
   var to=setTimeout(function(){ if(done) return; done=true; try{delete window[name];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s); cb([]); },8000);
   window[name]=function(res){ if(done) return; done=true; clearTimeout(to); try{delete window[name];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s); cb((res&&res.orders)||[]); };
   s.onerror=function(){ if(done) return; done=true; clearTimeout(to); cb([]); };
   s.src=SHEET_API+"?callback="+name+"&sdt="+encodeURIComponent(phone); document.body.appendChild(s);
+}
+function menuLoad(){
+  var name="__mcb"+(new Date()).getTime(); var s=document.createElement("script"); var done=false;
+  var to=setTimeout(function(){ if(done)return; done=true; if(s.parentNode)s.parentNode.removeChild(s); },8000);
+  window[name]=function(res){ if(done)return; done=true; clearTimeout(to); try{delete window[name];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s);
+    try{ var rows=(res&&res.menu)||[]; if(rows.length){ var dish=[[],[],[],[]], calo=[[],[],[],[]];
+      rows.forEach(function(r){ var wi=(parseInt(r.tuan,10)||0)-1, dow=(parseInt(r.thu,10)||0)-2; if(wi>=0&&wi<4&&dow>=0&&dow<5){ dish[wi][dow]=r.mon; calo[wi][dow]=parseInt(r.calo,10)||null; } });
+      LIVEMENU={dish:dish,calo:calo}; if(WEBORD||CURP||IS_OWNER) route(); } }catch(e){}
+  };
+  s.onerror=function(){ if(done)return; done=true; clearTimeout(to); };
+  s.src=SHEET_API+"?menu=1&callback="+name; document.body.appendChild(s);
+}
+function actISO(d){ return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); }
+function postAction(type, ngayISO, value){
+  try{ var id=((WEBORD&&WEBORD.sdt)||"")+"_"+type+"_"+ngayISO+"_"+(new Date()).getTime();
+    fetch(SHEET_API,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:true,type:type,sdt:(WEBORD&&WEBORD.sdt)||"",ngay:ngayISO,value:value||"",id:id})});
+  }catch(e){}
 }
 async function doLogin(){
   const inp=document.getElementById("ph"), err=document.getElementById("gerr"), btn=document.getElementById("gbtn");
@@ -666,6 +683,7 @@ function gateView(){
 }
 function goLogin(){ SHOW_LOGIN=true; route(); setTimeout(function(){ var e=document.getElementById("ph"); if(e) e.focus(); },60); }
 function goBack(){ location.href="./"; }
+try{ menuLoad(); }catch(e){}
 (function(){ let p=null; try{ p=localStorage.getItem("beeps_phone"); }catch(e){}
   if(!p){ route(); return; }
   var after=function(ok){ if(ok){ route(); return; } sheetLookup(p, function(orders){ if(orders&&orders.length){ WEBORD={ ten:orders[0].ten, sdt:p, list:orders }; } route(); }); };
