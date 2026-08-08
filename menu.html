@@ -332,8 +332,8 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
       <h1>Cơm mẹ nấu · đo từng gram đạm</h1>
       <p>Bữa trưa sạch, đủ chất, mẹ nấu trong ngày · giao tận nơi. Khỏi nghĩ "trưa nay ăn gì".</p>
       <div class="herobtns">
-        <button type="button" class="hbtn hbmain" onclick="document.getElementById('step1').scrollIntoView({behavior:'smooth'})">🍱 Đặt ngay</button>
         <a class="hbtn hbsub" href="https://zalo.me/0941751999" target="_blank" rel="noopener">💬 Tư vấn</a>
+        <button type="button" class="hbtn hbmain" onclick="document.getElementById('step1').scrollIntoView({behavior:'smooth'})">🍱 Đặt ngay</button>
       </div>
     </div>
   </div>
@@ -468,10 +468,14 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 
 <script>
 var GOIDATA = {"doni":{"name":"Đo Ni","mkey":"dinhduong","p":{"le":99,"ba":89,"tuan":85,"hai":85,"thang":80},"floor":80,"locked":false},"vuaxinh":{"name":"Vừa Xinh","mkey":"dinhduong","p":{"le":79,"ba":69,"tuan":65,"hai":65,"thang":60},"floor":60,"locked":false}};
-var GIFT=false, GIFT_CODE='';
-var GIFT_HASHES=["eea649b6f8d56b616f586b9fd99f57520995b8211157e3b71de5dc7f212202f4","aa67c56553de884def992a46c64daec36338f5c5383c974b1fd4a44149e92e35","7383908e4585f9def84bbc3c261a513da2416880d186be82a1eadfab8a76fae3","d712b78ca1569e2f0071acb865b189cd754861ef8f32b977d071544edbbbe985","8bc98404c0d3a760b939db8bb4df30bf2837d2a802ff458979a1edc10b6cd4ea","b4baea4088171d893df63da96b8fc515aba8aebd33de5de746dd18c6b368e6cf","0abd0c6c0e32149cc345ee7d2cc1cbdd7fcadf26cc16af21c3cb881a0d33c53c","c9cf54b3f25f8714840d3c8bea51c0dd3c361c817fbbd383efc7a07d2d23023a","7ec79525200975b0fd4b03d6f4ce287e84de1e4506b862c78babf2e177f26404","c68e940c3ca264b35424c84d27152038a45b2e2ba61f60b23b05598633272a3b","eeb9a57461c3919ae79c133380630a59ebf6e760077c66c2455a26abdef98b77","513d302dc833b55cb6fe7d351210ad5aeaf1e82eb4e55c0b65b4785e70b07db3","fe981e7ff2b9505d43bb1e19cb004ac05d9cf51d72caf9cbb388d22177ae5130","79dd48e62e7f842bc513a0d8c8b93c8df2b1fde2a2e6b35d5b242a3167c25939","dff07ddd56e826142d9444735ffb233c8229b4248925a7ec9cd19e6dbd5f7429","7636533ca998b80c54cc54bc27ddee2127b20af4157c1779524b0844733fb329","89ee2ac4f37c2244753c15ef2f6887ebf491c813dc524ecd3f203928332da82d","df9f56f4924615fab2a5a39f3aedc3cc54971d32ea81161c7e89a39a1def8bc4","0c72f76f5fc22348b9f73be023c6b780c577e12392d87e89ccfc607ccf17c8ee","3dae1306248fc4c9c9dbfd16e657b31de08952b71f454ef70128a543700da2e2","0db496ef5f184478719e5ee907047ebf41b208f2c6a5dd7296b78990b2cf61ed","b1eb9310b1ddcf11df9602b605a569aea6092e218613e8b7f318aeebfb7f2641","348283a47b4343502d155451b8ebb8f9a6dbe39243af4b19f2ee3331aea2179d","8277c6599f503c8fbb786d1982989a1593bb8d81dd012e797e0de58fd817272e"];
-function uprice(g){ return GIFT ? g.floor : g.p[selDur]; }
-function ocanhCost(){ return GIFT ? 0 : selCanh; }
+var GIFT=null, GIFT_CODE='';  // GIFT = chuỗi quyền lợi 's'(giá sàn) 'c'(free canh) 'p'(freeship), vd "scp"
+var GIFT_CODES=[{h:"7a9bd1943c6eae76b63944e70e1bdac9f211c33aa58a9a5d3751a9db1bfd96d8",ben:"scp"},{h:"3ef6d4a408b4005053a4138360ff4837cf5e3773152a3ae187c43be6246ec9a0",ben:"s"},{h:"dc26a0016ead5d61805b0e0ed468fc0d6f4ca473cd5ff48a19f0a0e89fbe3611",ben:"c"},{h:"39fe9da97a2731194470a98bf920219229be43f3d1e70b415f608493634a600a",ben:"p"},{h:"7ddcf606d131476ce0a532caa869d5398cc233f9d42168ca7c6085991cd4d26f",ben:"sc"},{h:"770983230ae7530e1692295b2846a9c58a6593de3e9618d8deea75e48dcb7301",ben:"sp"},{h:"70ee283bcda3d6b69fe143f2bb818f5c29d0ab4a8e29e52a38f0c58850bc18d4",ben:"cp"}];
+function gSan(){ return !!(GIFT&&GIFT.indexOf('s')>=0); }
+function gCanh(){ return !!(GIFT&&GIFT.indexOf('c')>=0); }
+function gShip(){ return !!(GIFT&&GIFT.indexOf('p')>=0); }
+function giftTxt(){ if(!GIFT) return ''; var a=[]; if(gSan())a.push('giá sàn'); if(gCanh())a.push('canh miễn phí'); if(gShip())a.push('freeship'); return a.join(' · '); }
+function uprice(g){ return gSan() ? g.floor : g.p[selDur]; }
+function ocanhCost(){ return gCanh() ? 0 : selCanh; }
 async function applyGift(){
   var inp=document.getElementById('giftin'), msg=document.getElementById('giftmsg'), btn=document.getElementById('giftbtn');
   if(!inp) return; var v=(inp.value||'').trim().toUpperCase().replace(/\s+/g,'');
@@ -480,8 +484,9 @@ async function applyGift(){
   try{
     var buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(v));
     var h=Array.from(new Uint8Array(buf)).map(function(x){return x.toString(16).padStart(2,'0');}).join('');
-    if(GIFT_HASHES.indexOf(h)>=0){ GIFT=true; GIFT_CODE=v; inp.disabled=true; btn.textContent='✓ Đã áp dụng'; msg.style.display='block'; msg.style.color='var(--pine)'; msg.innerHTML='✓ <b>Ưu đãi VIP:</b> giá sàn (Đo Ni 80k · Vừa Xinh 60k) mọi gói · canh miễn phí · freeship.'; }
-    else { GIFT=false; GIFT_CODE=''; btn.disabled=false; btn.textContent='Áp dụng'; msg.style.display='block'; msg.style.color='#C15B5B'; msg.textContent='Mã không đúng. Kiểm tra lại giúp Beeps nhé.'; }
+    var found=null; for(var i=0;i<GIFT_CODES.length;i++){ if(GIFT_CODES[i].h===h){ found=GIFT_CODES[i]; break; } }
+    if(found){ GIFT=found.ben; GIFT_CODE=v; inp.disabled=true; btn.textContent='✓ Đã áp dụng'; msg.style.display='block'; msg.style.color='var(--pine)'; msg.innerHTML='✓ <b>Ưu đãi:</b> '+giftTxt()+'.'; }
+    else { GIFT=null; GIFT_CODE=''; btn.disabled=false; btn.textContent='Áp dụng'; msg.style.display='block'; msg.style.color='#C15B5B'; msg.textContent='Mã không đúng. Kiểm tra lại giúp Beeps nhé.'; }
   }catch(e){ btn.disabled=false; btn.textContent='Áp dụng'; msg.style.display='block'; msg.style.color='#C15B5B'; msg.textContent='Máy chưa kiểm được mã (thử mở bằng link web).'; }
   updateSum();
 }
@@ -583,12 +588,12 @@ function updateSum(){
   var g=GOIDATA[selGoi];
   if(!selDur){ s.innerHTML='Gói <b>'+g.name+'</b> — chọn thời hạn ở trên.'; return; }
   var N=DURN[selDur], gia=uprice(g), tong=gia*N, canh=ocanhCost()*N, grand=tong+canh;
-  var goc=GIFT?(g.p[selDur]*N):(g.p.le*N);
-  var pr=(!GIFT && selDur==='le')?('<span class="osnew">'+tong.toLocaleString('vi-VN')+'k</span>')
-    :('<span class="osold">'+goc.toLocaleString('vi-VN')+'k</span> <span class="osnew">'+tong.toLocaleString('vi-VN')+'k</span> <span class="ossave">'+(GIFT?'ưu đãi ':'tiết kiệm ')+(goc-tong).toLocaleString('vi-VN')+'k</span>');
+  var goc=gSan()?(g.p[selDur]*N):(g.p.le*N);
+  var pr=(!gSan() && selDur==='le')?('<span class="osnew">'+tong.toLocaleString('vi-VN')+'k</span>')
+    :('<span class="osold">'+goc.toLocaleString('vi-VN')+'k</span> <span class="osnew">'+tong.toLocaleString('vi-VN')+'k</span> <span class="ossave">'+(gSan()?'ưu đãi ':'tiết kiệm ')+(goc-tong).toLocaleString('vi-VN')+'k</span>');
   var extra='';
-  if(selCanh>0) extra+='<br>🍲 Canh '+(selCanh===7?'nhỏ':'to')+' ×'+N+': '+(GIFT?'<b>miễn phí</b>':'<b>+'+canh.toLocaleString('vi-VN')+'k</b>');
-  if(GIFT) extra+='<br>🎁 <b>Ưu đãi VIP</b> ('+esc2(GIFT_CODE)+') · freeship';
+  if(selCanh>0) extra+='<br>🍲 Canh '+(selCanh===7?'nhỏ':'to')+' ×'+N+': '+(gCanh()?'<b>miễn phí</b>':'<b>+'+canh.toLocaleString('vi-VN')+'k</b>');
+  if(GIFT) extra+='<br>🎁 <b>Ưu đãi</b> ('+esc2(GIFT_CODE)+'): '+giftTxt();
   if(selCanh>0||GIFT) extra+='<br>💵 <b>Tổng: '+grand.toLocaleString('vi-VN')+'k</b>';
   var head='<b>'+g.name+'</b> · '+DURNAME[selDur]+' · '+N+' suất<br>💰 '+pr+extra;
   if(selDur==='thang'){ var an=selDays.length; s.innerHTML=head+'<br>🍱 Ăn <b>'+an+'</b> ngày'+(an<N?' · nghỉ '+(N-an)+' (giữ vé)':'')+(daysLabel()?'<br>🗓️ '+daysLabel():''); return; }
@@ -612,15 +617,15 @@ function submitOrder(e){
   if(selGoi==='doni'){ var cao=document.getElementById('f_cao').value.trim(), nang=document.getElementById('f_nang').value.trim(); if(!cao||!nang){ err.textContent='Gói Đo Ni cần chiều cao + cân nặng để đo suất chuẩn nhé.'; err.style.display='block'; return false; } mm='[Đo Ni: cao '+cao+'cm · nặng '+nang+'kg · mục tiêu '+selGoal+'] '+mm; }
   err.style.display='none';
   var g=GOIDATA[selGoi], suat=DURN[selDur], unit=uprice(g), total=(unit+ocanhCost())*suat*1000;
-  if(selCanh>0) mm='[Canh '+(selCanh===7?'nhỏ 7k':'to 12k')+'/bữa × '+suat+(GIFT?' — MIỄN PHÍ':'')+'] '+mm;
-  if(GIFT) mm='[GIFTCODE '+GIFT_CODE+': giá sàn '+unit+'k · canh free · freeship] '+mm;
-  PEND={ten:ten,sdt:sdt,diachi:diachi,mm:mm,goi:g.name,dur:DURNAME[selDur],gia:unit,suat:suat,total:total,ngay:daysLabel(),canh:GIFT?0:selCanh};
+  if(selCanh>0) mm='[Canh '+(selCanh===7?'nhỏ 7k':'to 12k')+'/bữa × '+suat+(gCanh()?' — MIỄN PHÍ':'')+'] '+mm;
+  if(GIFT) mm='[GIFTCODE '+GIFT_CODE+' ('+giftTxt()+')] '+mm;
+  PEND={ten:ten,sdt:sdt,diachi:diachi,mm:mm,goi:g.name,dur:DURNAME[selDur],gia:unit,suat:suat,total:total,ngay:daysLabel(),canh:gCanh()?0:selCanh};
   document.getElementById('ocrev').innerHTML=
     '<div><b>Gói:</b> '+esc2(g.name)+' · '+DURNAME[selDur]+'</div>'+
     '<div><b>Ngày ăn:</b> '+esc2(daysLabel())+'</div>'+
-    '<div><b>Số suất:</b> '+suat+' × <b>'+unit+'k</b>'+(GIFT?' <span style="color:var(--pine)">· giá sàn ưu đãi</span>':'')+'</div>'+
-    (selCanh>0?'<div><b>Canh:</b> '+(selCanh===7?'nhỏ +7k/bữa':'to +12k/bữa')+(GIFT?' — <b style="color:var(--pine)">miễn phí</b>':'')+'</div>':'')+
-    (GIFT?'<div style="color:var(--pine)"><b>🎁 GIFTCODE '+esc2(GIFT_CODE)+':</b> giá sàn · canh free · freeship</div>':'')+
+    '<div><b>Số suất:</b> '+suat+' × <b>'+unit+'k</b>'+(gSan()?' <span style="color:var(--pine)">· giá sàn ưu đãi</span>':'')+'</div>'+
+    (selCanh>0?'<div><b>Canh:</b> '+(selCanh===7?'nhỏ +7k/bữa':'to +12k/bữa')+(gCanh()?' — <b style="color:var(--pine)">miễn phí</b>':'')+'</div>':'')+
+    (GIFT?'<div style="color:var(--pine)"><b>🎁 GIFTCODE '+esc2(GIFT_CODE)+':</b> '+giftTxt()+'</div>':'')+
     '<div><b>Tên:</b> '+esc2(ten)+' · <b>SĐT:</b> '+esc2(sdt)+'</div>'+
     '<div><b>Giao tới:</b> '+esc2(diachi)+'</div>'+
     (mm?'<div><b>Ghi chú:</b> '+esc2(mm)+'</div>':'')+
