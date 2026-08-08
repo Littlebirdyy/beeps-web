@@ -440,7 +440,7 @@ function pickGoi(k){
   document.getElementById('menu_anlanh').hidden = (g.mkey!=='anlanh');
   if(g.mkey==='dinhduong'){ markWeek(); }
   document.getElementById('infobar').innerHTML='👆 Bấm vào 1 món để xem đang là ngày nào — món gì.';
-  ['le','ba','tuan','hai','thang'].forEach(function(k){ var tot=g.p[k]*DURN[k], sv=(g.p.le-g.p[k])*DURN[k]; var te=document.getElementById('t_'+k); if(te) te.textContent=tot.toLocaleString('vi-VN')+'đ'; var se=document.getElementById('s_'+k); if(se) se.textContent=sv>0?('tiết kiệm '+sv.toLocaleString('vi-VN')+'đ'):''; });
+  ['le','ba','tuan','hai','thang'].forEach(function(k){ var tot=g.p[k]*DURN[k]*1000, sv=(g.p.le-g.p[k])*DURN[k]*1000; var te=document.getElementById('t_'+k); if(te) te.textContent=tot.toLocaleString('vi-VN')+'đ'; var se=document.getElementById('s_'+k); if(se) se.textContent=sv>0?('tiết kiệm '+sv.toLocaleString('vi-VN')+'đ'):''; });
   var durs=document.querySelectorAll('.dur'); for(var j=0;j<durs.length;j++){ durs[j].classList.remove('on'); }
   updateSum();
   document.getElementById('durwrap').scrollIntoView({behavior:'smooth',block:'start'});
