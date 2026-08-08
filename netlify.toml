@@ -1,2 +1,18 @@
 [build]
   publish = "."
+
+# Luôn revalidate HTML để khách/anh không dính bản cache cũ (app + funnel cập nhật là thấy ngay)
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/app"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
