@@ -577,5 +577,6 @@ function showQR(){
     el.style.cursor='grab'; }
   [].slice.call(document.querySelectorAll('.hscroll,.photostrip,.bnrs')).forEach(dragScroll);
 })();
+try{ updatePbar(); }catch(e){}
 </script>
 </body></html>
