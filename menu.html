@@ -430,7 +430,13 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
             <button type="button" class="goal" data-g="Cân bằng" onclick="pickGoal(this)">Cân bằng</button>
             <button type="button" class="goal" data-g="Tăng cơ" onclick="pickGoal(this)">Tăng cơ</button>
           </div>
-          <div class="doninote">💡 Suất <b>giảm mỡ</b> sẽ khiến bạn <b>hơi đói một chút</b> — đó chính là mục đích của giảm cân (thâm hụt calo có kiểm soát). Beeps vẫn tính đủ đạm để bạn không tụt cơ.</div>
+          <div class="donilb" style="margin-top:12px">Cường độ tập luyện <span class="req">*</span></div>
+          <div class="goals">
+            <button type="button" class="goal" data-i="Ít vận động" onclick="pickInt(this)">Ít vận động<span class="gtag2" style="background:var(--line);color:var(--soft)">ngồi nhiều</span></button>
+            <button type="button" class="goal on" data-i="Vừa" onclick="pickInt(this)">Vừa<span class="gtag2">1-3 buổi/tuần</span></button>
+            <button type="button" class="goal" data-i="Nhiều" onclick="pickInt(this)">Nhiều<span class="gtag2" style="background:var(--line);color:var(--soft)">4+ buổi/tuần</span></button>
+          </div>
+          <div class="doninote" style="margin-top:12px">💡 Suất <b>giảm mỡ</b> sẽ khiến bạn <b>hơi đói một chút</b> — đó chính là mục đích của giảm cân (thâm hụt calo có kiểm soát). Beeps vẫn tính đủ đạm để bạn không tụt cơ.</div>
         </div>
         <div class="ofield"><label>Mong muốn / ghi chú (nếu có)</label><textarea id="f_mm" placeholder="VD: dị ứng tôm, không ăn cay, ít cơm, giao trước 12h…"></textarea></div>
         <div class="ofield"><label>🎁 Mã ưu đãi (nếu có)</label>
@@ -499,8 +505,9 @@ var curWk=0;
 var DURN={le:1,ba:3,tuan:5,hai:10,thang:20};
 var DURNAME={le:"1 ngày",ba:"3 ngày",tuan:"1 tuần",hai:"2 tuần",thang:"1 tháng"};
 var FREE={hai:1,thang:1};
-var selGoi=null, selDur=null, selStart=null, selDays=[], selGoal='Giảm mỡ';
-function pickGoal(el){ selGoal=el.getAttribute('data-g'); var gs=document.querySelectorAll('.goal'); for(var i=0;i<gs.length;i++) gs[i].classList.toggle('on', gs[i]===el); }
+var selGoi=null, selDur=null, selStart=null, selDays=[], selGoal='Giảm mỡ', selInt='Vừa';
+function pickGoal(el){ selGoal=el.getAttribute('data-g'); var gs=el.parentElement.querySelectorAll('.goal'); for(var i=0;i<gs.length;i++) gs[i].classList.toggle('on', gs[i]===el); }
+function pickInt(el){ selInt=el.getAttribute('data-i'); var gs=el.parentElement.querySelectorAll('.goal'); for(var i=0;i<gs.length;i++) gs[i].classList.toggle('on', gs[i]===el); }
 var selCanh=0;
 function pickCanh(v){ selCanh=v; var cs=document.querySelectorAll('.canh'); for(var i=0;i<cs.length;i++) cs[i].classList.toggle('on', parseInt(cs[i].getAttribute('data-c'),10)===v); updateSum(); }
 var WMENU=[
@@ -519,7 +526,7 @@ function pickGoi(k){
   if(GOIDATA[k]&&GOIDATA[k].locked){ return; }
   selGoi=k; selDur=null; selStart=null; selDays=[];
   var df=document.getElementById('doniFields'); if(df) df.hidden=(k!=='doni');
-  if(k==='doni'){ selGoal='Giảm mỡ'; var gg=document.querySelectorAll('.goal'); for(var gi2=0;gi2<gg.length;gi2++) gg[gi2].classList.toggle('on', gg[gi2].getAttribute('data-g')==='Giảm mỡ'); }
+  if(k==='doni'){ selGoal='Giảm mỡ'; selInt='Vừa'; var gg=document.querySelectorAll('.goal'); for(var gi2=0;gi2<gg.length;gi2++){ var b=gg[gi2]; if(b.getAttribute('data-g')!==null) b.classList.toggle('on', b.getAttribute('data-g')==='Giảm mỡ'); else if(b.getAttribute('data-i')!==null) b.classList.toggle('on', b.getAttribute('data-i')==='Vừa'); } }
   selCanh=0; var cc=document.querySelectorAll('.canh'); for(var ci=0;ci<cc.length;ci++) cc[ci].classList.toggle('on', cc[ci].getAttribute('data-c')==='0');
   var cards=document.querySelectorAll('.gsel'); for(var i=0;i<cards.length;i++){ cards[i].classList.toggle('on', cards[i].getAttribute('data-goi')===k); }
   var g=GOIDATA[k];
@@ -614,14 +621,15 @@ function submitOrder(e){
   if(ten.length<2){ err.textContent='Nhập tên giúp Beeps nhé.'; err.style.display='block'; return false; }
   if(sdt.replace(/[^0-9]/g,'').length<9){ err.textContent='Số điện thoại chưa đúng rồi.'; err.style.display='block'; return false; }
   if(diachi.length<5){ err.textContent='Nhập địa chỉ giao giúp Beeps nhé.'; err.style.display='block'; return false; }
-  if(selGoi==='doni'){ var cao=document.getElementById('f_cao').value.trim(), nang=document.getElementById('f_nang').value.trim(); if(!cao||!nang){ err.textContent='Gói Đo Ni cần chiều cao + cân nặng để đo suất chuẩn nhé.'; err.style.display='block'; return false; } mm='[Đo Ni: cao '+cao+'cm · nặng '+nang+'kg · mục tiêu '+selGoal+'] '+mm; }
+  var cao='',nang='',muctieu='',cuongdo='';
+  if(selGoi==='doni'){ cao=document.getElementById('f_cao').value.trim(); nang=document.getElementById('f_nang').value.trim(); if(!cao||!nang){ err.textContent='Gói Đo Ni cần chiều cao + cân nặng để đo suất chuẩn nhé.'; err.style.display='block'; return false; } muctieu=selGoal; cuongdo=selInt; }
   err.style.display='none';
   var g=GOIDATA[selGoi], suat=DURN[selDur], unit=uprice(g), total=(unit+ocanhCost())*suat*1000;
   if(selCanh>0) mm='[Canh '+(selCanh===7?'nhỏ 7k':'to 12k')+'/bữa × '+suat+(gCanh()?' — MIỄN PHÍ':'')+'] '+mm;
-  if(GIFT) mm='[GIFTCODE '+GIFT_CODE+' ('+giftTxt()+')] '+mm;
-  PEND={ten:ten,sdt:sdt,diachi:diachi,mm:mm,goi:g.name,dur:DURNAME[selDur],gia:unit,suat:suat,total:total,ngay:daysLabel(),canh:gCanh()?0:selCanh};
+  PEND={ten:ten,sdt:sdt,diachi:diachi,mm:mm,goi:g.name,dur:DURNAME[selDur],gia:unit,suat:suat,total:total,ngay:daysLabel(),canh:gCanh()?0:selCanh,cao:cao,nang:nang,muctieu:muctieu,cuongdo:cuongdo,mauudai:(GIFT?GIFT_CODE:'')};
   document.getElementById('ocrev').innerHTML=
     '<div><b>Gói:</b> '+esc2(g.name)+' · '+DURNAME[selDur]+'</div>'+
+    (selGoi==='doni'?'<div><b>Đo ni:</b> cao '+esc2(cao)+'cm · nặng '+esc2(nang)+'kg · '+esc2(muctieu)+' · tập '+esc2(cuongdo)+'</div>':'')+
     '<div><b>Ngày ăn:</b> '+esc2(daysLabel())+'</div>'+
     '<div><b>Số suất:</b> '+suat+' × <b>'+unit+'k</b>'+(gSan()?' <span style="color:var(--pine)">· giá sàn ưu đãi</span>':'')+'</div>'+
     (selCanh>0?'<div><b>Canh:</b> '+(selCanh===7?'nhỏ +7k/bữa':'to +12k/bữa')+(gCanh()?' — <b style="color:var(--pine)">miễn phí</b>':'')+'</div>':'')+
@@ -643,7 +651,7 @@ function confirmOrder(){
   var btn=document.getElementById('ocbtn'); btn.disabled=true; btn.textContent='Đang ghi nhận…';
   // (a) ĐƯỜNG CHÍNH: ghi thẳng vào Google Sheet qua Apps Script (fire-and-forget, chắc chắn)
   try{ fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({id:'web-'+Date.now()+'-'+Math.floor(Math.random()*1e6),data:{ten:PEND.ten,sdt:PEND.sdt,diachi:PEND.diachi,goi:PEND.goi,thoihan:PEND.dur,gia:PEND.gia+'k',ngayan:PEND.ngay,mongmuon:PEND.mm,canh:String(selCanh||0),tong:String(PEND.total||'')}})}); }catch(e){}
+    body:JSON.stringify({id:'web-'+Date.now()+'-'+Math.floor(Math.random()*1e6),data:{ten:PEND.ten,sdt:PEND.sdt,diachi:PEND.diachi,goi:PEND.goi,thoihan:PEND.dur,gia:PEND.gia+'k',ngayan:PEND.ngay,mongmuon:PEND.mm,canh:String(selCanh||0),tong:String(PEND.total||''),cao:PEND.cao||'',nang:PEND.nang||'',muctieu:PEND.muctieu||'',cuongdo:PEND.cuongdo||'',mauudai:PEND.mauudai||''}})}); }catch(e){}
   // (b) DỰ PHÒNG: lưu vào Netlify Forms + hiện QR
   fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params})
     .then(function(){ showQR(); })
