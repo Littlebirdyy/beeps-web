@@ -490,7 +490,7 @@ async function applyGift(){
   }catch(e){ btn.disabled=false; btn.textContent='Áp dụng'; msg.style.display='block'; msg.style.color='#C15B5B'; msg.textContent='Máy chưa kiểm được mã (thử mở bằng link web).'; }
   updateSum();
 }
-var SHEET_URL="https://script.google.com/macros/s/AKfycbzIQEvUsOkBCkiVLVq6xUETZLh6rVyQZ5Ongj0P8mmHcciLlejAwfHKu6LLEpQlV6figg/exec";
+var SHEET_URL="https://script.google.com/macros/s/AKfycbwpNAMV2DCH0CAXS47M2eKpGqhEI5MisFu9kCmMBapLzG5HYbCo_YP9azepEr0SwhXqMw/exec";
 function WDVN(dow){ return ({1:'T2',2:'T3',3:'T4',4:'T5',5:'T6'})[dow]||''; }
 function weekMonday(d){ var x=new Date(d); var dw=(x.getDay()+6)%7; x.setDate(x.getDate()-dw); x.setHours(0,0,0,0); return x; }
 var WD=(function(){ var now=new Date(); var lead=(now.getHours()<20)?1:2; var c=new Date(); c.setHours(0,0,0,0); c.setDate(c.getDate()+lead); var a=[],g=0; while(a.length<55 && g<100){ var dow=c.getDay(); if(dow!==0&&dow!==6) a.push(new Date(c)); c.setDate(c.getDate()+1); g++; } return a; })();
@@ -643,7 +643,7 @@ function confirmOrder(){
   var btn=document.getElementById('ocbtn'); btn.disabled=true; btn.textContent='Đang ghi nhận…';
   // (a) ĐƯỜNG CHÍNH: ghi thẳng vào Google Sheet qua Apps Script (fire-and-forget, chắc chắn)
   try{ fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({id:'web-'+Date.now()+'-'+Math.floor(Math.random()*1e6),data:{ten:PEND.ten,sdt:PEND.sdt,diachi:PEND.diachi,goi:PEND.goi,thoihan:PEND.dur,gia:PEND.gia+'k',ngayan:PEND.ngay,mongmuon:PEND.mm}})}); }catch(e){}
+    body:JSON.stringify({id:'web-'+Date.now()+'-'+Math.floor(Math.random()*1e6),data:{ten:PEND.ten,sdt:PEND.sdt,diachi:PEND.diachi,goi:PEND.goi,thoihan:PEND.dur,gia:PEND.gia+'k',ngayan:PEND.ngay,mongmuon:PEND.mm,canh:String(selCanh||0),tong:String(PEND.total||'')}})}); }catch(e){}
   // (b) DỰ PHÒNG: lưu vào Netlify Forms + hiện QR
   fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params})
     .then(function(){ showQR(); })
