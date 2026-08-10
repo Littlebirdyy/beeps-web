@@ -479,6 +479,30 @@ function caloDoNi(ma,kg,goal){ var M=monInfo(ma); if(!M) return null; if(!M.g&&M
   var kcalDam=phoi?230:(dt*KCAL_THIT[M.nhom]);
   return Math.round(kcalDam + comG*KCAL_CARB[M.carb] + q*18 + 40); }
 function damPortion(kg){ if(!kg) return null; return Math.max(70, Math.round((kg*0.55 - 13)/0.26/5)*5); } // [CŨ - đã bỏ, giữ tham chiếu]
+// ===== ENGINE v2 (TDEE đầy đủ) — Menu 1 spec, anh QA duyệt 09/08. TDEE điều CƠM+RAU, đạm giữ g/kg. =====
+var AF_DONI={"0":1.2,"1-2":1.375,"3-4":1.55,"5-6":1.725,"7+":1.9};
+var GOAL_DONI={"giảm mỡ":0.80,"giảm cân":0.80,"cân bằng":1.00,"tăng cơ":1.10};
+var MAXBOX={com:150,rau:300,thit:180}, MIN_COM_DONI=50, TRUA_FR=0.33; // hộp 3 ngăn — cap ƯỚC, chờ Menu 1 đong thật
+function tapKey(c){ c=String(c||''); if(c.indexOf('7+')>=0)return '7+'; if(c.indexOf('5-6')>=0)return '5-6'; if(c.indexOf('3-4')>=0)return '3-4'; if(c.indexOf('1-2')>=0)return '1-2'; if(c.indexOf('0')>=0)return '0'; return ''; }
+function hasFullProfile(){ return !!(profVal('cao')&&profVal('nang')&&profVal('tuoi')&&profVal('gioitinh')&&tapKey(profVal('cuongdo'))&&profVal('muctieu')); }
+function doniPortion(ma){ var M=monInfo(ma); if(!M) return null;
+  var kg=parseInt(String(profVal('nang')).replace(/[^0-9]/g,''),10)||0; var goal=profVal('muctieu')||''; if(!kg) return null;
+  var phoi=(M.nhom==='phối'); var q=phoi?0:eggQuarters(goal); var thit=phoi?0:(damThitG(kg,goal)||0);
+  if(hasFullProfile() && M.g){
+    var cm=parseInt(String(profVal('cao')).replace(/[^0-9]/g,''),10)||0;
+    var tuoi=parseInt(String(profVal('tuoi')).replace(/[^0-9]/g,''),10)||0;
+    var nam=(String(profVal('gioitinh')).trim()==='Nam');
+    var mt=mtKey(goal); var af=AF_DONI[tapKey(profVal('cuongdo'))]||1.55;
+    var tdee=(10*kg + 6.25*cm - 5*tuoi + (nam?5:-161))*af;
+    var caloTrua=tdee*(GOAL_DONI[mt]||1.0)*TRUA_FR;
+    var rau=(mt==='giảm mỡ')?255:170;
+    var kcalDam=phoi?230:(thit*KCAL_THIT[M.nhom]); var kcalTrung=q*18; var kcalRau=rau*0.22+30;
+    var com=Math.min(MAXBOX.com, Math.max(MIN_COM_DONI, r5((caloTrua-kcalDam-kcalTrung-kcalRau)/KCAL_CARB[M.carb])));
+    var calo=Math.round(kcalDam+kcalTrung+kcalRau+com*KCAL_CARB[M.carb]);
+    return {thit:thit,q:q,com:com,rau:rau,calo:calo,phoi:phoi,v2:true};
+  }
+  return {thit:thit,q:q,com:(comDoNi(ma,goal)||0),rau:170,calo:(caloDoNi(ma,kg,goal)||0),phoi:phoi,v2:false};
+}
 function thLabel(v){ v=String(v||'').trim(); return /^[0-9]+$/.test(v) ? (v+' ngày') : v; }
 function caloEst(goal){ return goal==='Tăng cơ'?620:(goal==='Cân bằng'?550:470); } // ƯỚC TÍNH kcal/suất trưa theo mục tiêu
 function canhKey(sdt,d){ return 'beeps_canh_'+String(sdt||'')+'_'+d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
@@ -527,8 +551,8 @@ function webCustView(){
   h+='<div style="height:8px;border-radius:99px;background:rgba(255,255,255,.25);margin:8px 0 4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--honey,#E0A32E)"></div></div>';
   if(doni){
     var band=DONI_BAND[mtKey(doni.goal)]||[500,660];
-    var sumC=0,cntC=0; days.forEach(function(dd){ if(dd.getTime()<todayT){ var c=caloDoNi(monCode(dd),doni.kg,doni.goal); if(c){sumC+=c;cntC++;} } });
-    var avgC=cntC?Math.round(sumC/cntC):(caloDoNi(monCode(cardDate||now),doni.kg,doni.goal)||0);
+    var sumC=0,cntC=0; days.forEach(function(dd){ if(dd.getTime()<todayT){ var pp=doniPortion(monCode(dd)); if(pp&&pp.calo){sumC+=pp.calo;cntC++;} } });
+    var _pt=doniPortion(monCode(cardDate||now)); var avgC=cntC?Math.round(sumC/cntC):((_pt&&_pt.calo)||0);
     var verdict=!avgC?'':(avgC<band[0]?'⚠️ hơi thấp so với mục tiêu':(avgC>band[1]?'⚠️ hơi cao so với mục tiêu':'👍 khớp mục tiêu '+esc(doni.goal)));
     if(cntC) h+='<div style="font-size:12.5px;opacity:.95;margin-top:6px">🔥 Đã nạp ~<b>'+sumC.toLocaleString("vi-VN")+' kcal</b> từ '+cntC+' bữa trưa · TB ~<b>'+avgC+'</b> kcal/bữa</div>';
     else h+='<div style="font-size:12.5px;opacity:.95;margin-top:6px">🔥 Suất trưa của bạn ~<b>'+(avgC||'—')+' kcal</b>/bữa</div>';
@@ -537,6 +561,13 @@ function webCustView(){
     h+='<div style="font-size:12.5px;opacity:.95;margin-top:4px">Còn <b>'+remain.length+'</b> bữa nữa. Ăn đều cho quen vị mẹ nấu nha 🐦</div>';
   }
   h+='</div>';
+
+  if(doni && !hasFullProfile()){
+    var missLbl=[]; if(!profVal('cao'))missLbl.push('chiều cao'); if(!profVal('tuoi'))missLbl.push('tuổi'); if(!profVal('gioitinh'))missLbl.push('giới tính'); if(!tapKey(profVal('cuongdo')))missLbl.push('mức tập');
+    h+='<div onclick="document.getElementById(\'profcard\')&&document.getElementById(\'profcard\').scrollIntoView({behavior:\'smooth\',block:\'center\'})" style="border:1.5px solid var(--honey,#E0A32E);background:var(--cream,#FDF3DC);border-radius:14px;padding:13px 15px;margin:10px 0;cursor:pointer">'+
+       '<div style="font-size:13px;font-weight:800;color:#8a5a00">📐 Hoàn thiện hồ sơ để nhận suất ĐO CHUẨN theo cơ thể bạn</div>'+
+       '<div style="font-size:11.5px;color:#8a5a00;margin-top:4px;line-height:1.5">Còn thiếu: <b>'+missLbl.join(' · ')+'</b>. Điền đủ → Beeps đo suất theo <b>6 yếu tố</b> (cao·nặng·tuổi·giới·mức tập·mục tiêu) thay vì chỉ cân nặng. Chạm để cập nhật ↓</div></div>';
+  }
 
   var vw=VIWALLET; var vcell=function(n,lbl){ return '<div style="flex:1;text-align:center;background:rgba(0,0,0,.03);border-radius:11px;padding:9px 4px"><div style="font-size:19px;font-weight:900;color:var(--pine,#2C6A4A)">'+n+'</div><div style="font-size:10px;color:var(--soft,#5A645D);line-height:1.25">'+lbl+'</div></div>'; };
   var buaN = isDoniGoi(goi) ? (vw?vw.buaDN:0) : (vw?vw.buaVX:0);
@@ -547,7 +578,7 @@ function webCustView(){
   if(doni){
     var miss='<span style="color:var(--honey,#E0A32E);font-size:12px">+ Bổ sung</span>';
     var pcell=function(f,lbl,val,numeric){ return '<div onclick="editProf(\''+f+'\',\''+lbl+'\','+(numeric?'true':'false')+')" style="flex:1;min-width:calc(33% - 5px);text-align:center;background:rgba(0,0,0,.03);border-radius:11px;padding:9px 4px;cursor:pointer"><div style="font-size:15px;font-weight:900;color:var(--pine,#2C6A4A);min-height:19px">'+(val||miss)+'</div><div style="font-size:10px;color:var(--soft,#5A645D);line-height:1.25;margin-top:2px">'+lbl+'</div></div>'; };
-    h+='<div style="'+box+'"><div style="font-size:13px;font-weight:800;color:var(--pine,#2C6A4A);margin-bottom:8px">📐 Hồ sơ đo ni <span style="font-size:10.5px;font-weight:600;color:var(--soft,#5A645D)">· chạm để sửa</span></div>'+
+    h+='<div id="profcard" style="'+box+'"><div style="font-size:13px;font-weight:800;color:var(--pine,#2C6A4A);margin-bottom:8px">📐 Hồ sơ đo ni <span style="font-size:10.5px;font-weight:600;color:var(--soft,#5A645D)">· chạm để sửa</span></div>'+
        '<div style="display:flex;flex-wrap:wrap;gap:7px">'+
          pcell('cao','Chiều cao', profVal('cao')?(profVal('cao')+'cm'):'', true)+
          pcell('nang','Cân nặng', profVal('nang')?(profVal('nang')+'kg'):'', true)+
@@ -566,18 +597,17 @@ function webCustView(){
   else if(firstUp){ h+='<div style="font-size:12.5px;color:var(--soft,#5A645D);font-weight:800">SUẤT SẮP TỚI</div><div style="font-size:18px;font-weight:800;color:var(--pine,#2C6A4A);margin-top:4px">'+dLabel(firstUp)+' · '+esc(cardDish)+'</div>'; }
   else { h+='<div style="font-size:15px;font-weight:800;color:var(--soft,#5A645D)">Hiện không có suất sắp tới</div>'; }
   if(doni && cardDish){
-    var maMon=monCode(cardDate); var phoi=isPhoiMon(maMon);
-    var comG=comDoNi(maMon, doni.goal); var calo=caloDoNi(maMon, doni.kg, doni.goal);
+    var maMon=monCode(cardDate); var P=doniPortion(maMon); var phoi=P&&P.phoi;
     var _mi=monInfo(maMon); var comLbl=(_mi&&CARB_LB[_mi.carb])?CARB_LB[_mi.carb]:'cơm';
     var cell=function(v,lbl){ return '<div style="flex:1;min-width:calc(50% - 4px);text-align:center;background:var(--cream,#FDF3DC);border-radius:10px;padding:8px"><div style="font-size:16px;font-weight:900;color:var(--pine,#2C6A4A)">'+v+'</div><div style="font-size:10px;color:var(--soft,#5A645D);line-height:1.25;margin-top:2px">'+lbl+'</div></div>'; };
-    h+='<div style="font-size:12px;font-weight:800;margin-top:12px;margin-bottom:6px">🍱 Khẩu phần đo ni của bạn</div>'+
+    h+='<div style="font-size:12px;font-weight:800;margin-top:12px;margin-bottom:6px">🍱 Khẩu phần đo ni của bạn'+(P&&P.v2?' <span style="font-size:9.5px;font-weight:800;color:#3a2a00;background:var(--honey,#E0A32E);padding:1px 7px;border-radius:99px">ĐO 6 YẾU TỐ</span>':'')+'</div>'+
        '<div style="display:flex;flex-wrap:wrap;gap:8px">';
-    if(phoi){ h+=cell('~28g','đạm phối trong món'); }
-    else { var dt=damThitG(doni.kg, doni.goal); var eq=eggQuarters(doni.goal); var eggLbl=(eq===3?'¾ quả':(eq===4?'1 quả':eq+' miếng'));
-      h+=cell((dt?('~'+dt+'g'):'—'),'thịt/cá chín')+ cell(eggLbl,'trứng cắt tư'); }
-    h+=cell((comG?('~'+comG+'g'):'—'), comLbl)+ cell('170g','rau')+ cell((calo?('~'+calo):'—'),'kcal/suất')+
-       '</div>'+
-       '<div style="font-size:10.5px;color:var(--soft,#5A645D);margin-top:6px;line-height:1.5">'+(phoi?'Món phối - đạm nằm trong món, không cân thịt riêng. ':('Đạm bạn thực nạp ~<b>'+(damNapG(doni.kg,doni.goal)||'—')+'g</b>. '))+'Đo theo <b>cân nặng + mục tiêu</b>, khớp đúng hộp mẹ nấu · calo tính từ chính gram trong hộp.</div>';
+    if(!P){ h+=cell('—','chưa đủ dữ liệu'); }
+    else { if(phoi){ h+=cell('~28g','đạm phối trong món'); }
+      else { var eggLbl=(P.q===3?'¾ quả':(P.q===4?'1 quả':P.q+' miếng')); h+=cell((P.thit?('~'+P.thit+'g'):'—'),'thịt/cá chín')+ cell(eggLbl,'trứng cắt tư'); }
+      h+=cell((P.com?('~'+P.com+'g'):'—'), comLbl)+ cell('~'+P.rau+'g','rau')+ cell((P.calo?('~'+P.calo):'—'),'kcal/suất'); }
+    h+='</div>'+
+       '<div style="font-size:10.5px;color:var(--soft,#5A645D);margin-top:6px;line-height:1.5">'+(P&&P.v2?'Đo theo <b>6 yếu tố</b> (cao·nặng·tuổi·giới·tập·mục tiêu) — cơm & rau theo nhu cầu calo của bạn, đạm giữ chuẩn sinh học. ':(phoi?'Món phối - đạm nằm trong món. ':'Đo theo <b>cân nặng + mục tiêu</b>. '))+'Khớp đúng hộp mẹ nấu · calo tính từ chính gram trong hộp.</div>';
   }
   if(todayD){
     var vi=VIWALLET||{canhNho:0,canhTo:0,buaVX:0,buaDN:0};
@@ -961,7 +991,7 @@ function expiredView(o){
 function logout(){ try{ localStorage.removeItem("beeps_phone"); }catch(e){} CURP=null; WEBORD=null; EXPIRED=null; IS_ADMIN=false; IS_OWNER=false; SHOW_ADMIN=false; CUR_TAB="home"; UPG_OPEN=false; UPG_DONE=null; VIWALLET=null; VI_LOADING=false; NGHI_OPEN=false; ANBU_OPEN=false; NGHI_SEL=null; OWNER_ACTS=null; OWNER_ACTS_LOADING=false; STATE_SYNCED=false; STATE_SYNCING=false; S3_ENSURED=false; route(); }
 function doLoginKey(e){ if(e.key==="Enter") doLogin(); }
 
-const BLOBS = [{"s":"4wsh1+MJleNhTRAgQE9v1w==","iv":"JuaUXmsPan5rNAj0","ct":"VOCErTVVyooj4G9FDjXo9kovPGXClCLMMOAbEevWEIYS4re9Vz8NTF7FfVT1xzmvpxocJxe0RFDEj/3BWphRPFfe2SY+vEoCZezJXVSbAweSUkD7t3duEIcW+pqP6F7C34+Gmk3cSreDq++sIZgUUQrj2MK9xFir4GwlR+4Sx1wJuY4hkuuf0ai0+NVgBbpgoA8hyvQdZxUtnKfP3E2aog=="},{"s":"FS7OUJTHz8GPj5lDkv+SZw==","iv":"nQgNSrOpIOJ4do+z","ct":"pNQeA3xMgGeTf/xGQkYuuPn6+oFilpNeMjX62i8m+uaf0jRizyH7W10/zyd4sIGqcLQ9/FQ9EjadLCM0GEZ/jC5IKasXMZmzMMqbTC5mb2AoZ8vVTb0ukxu13ez5jQOdHRv4PJPQcOcBfpAapbDCMP7a3ruHXvke4Hb01givWbcI3pV+tvfdoUjHUofOO1OB"},{"s":"oqScQCDTCnI12SIar7WQpA==","iv":"kEzuCiNvFrj+LOwA","ct":"auffGrO+4jNHNEsSblbImcqlPniwbuSLL/FEWqRLdxgRFnuj88Ycz+9mdeMrtiB5qkcsUuji1FFZbZauULaaSLPg8jOx6r3RHS1PuVZlBmVLPVP0+/vQqDatwpDEO2ZCv4Sgt/+rHKHUA3/gIhM2+hDs897yFgWeBSVuRNHpp4JfbHAh5qbvme/2IWK6JAO/puxIjhw/YGJngA3FgiNNOSxPIrrfa3N7gu0c1aJsYDqh9vbIhCo="},{"s":"p/sMlnm9YIr4h50pTL8Ocg==","iv":"aMO5okMm2V75hmik","ct":"5tEKLkrAXBWwObqz/hhpR3SR3Dq4gcehrDLa6WJ4285q+ISCJpX3P7Tqyqbmqj8LXbRF3AdBydMd2VB0C+1CodW2fbYUZDkut7czhA7l/qRZojH5Lw2w88OIaMTmWUMIrKQEOLrnrohTX1ESzCKoobcd4p2GY1j7HILj5ErqOHN6GOs="},{"s":"giqM7mCk/NCt0w3iF2VEAA==","iv":"a8n1LXg0KYFyc9Bj","ct":"cMfADm/Edpajmzo3ZSUF/ItG0DPWcFzfR1qxXP1kkDw8mO6IrkwULJD4Ap081AvCvHCY+dfWXXyDgZXvvJm2Dlp/jqQAvyObuujoTOofC4FJXCWIcgi1hZd5oBm/Fk5E7PH7NYND1mCnrtYOkPU84SpVFqNFJfDK/8422m1Rcx4kvcvesw8V"},{"s":"Jkwk6w/MBP05iXdp2MzrAQ==","iv":"Btw4OzQNyflmLLsn","ct":"5UKgvwB+K0/RMVz3IuaElbQArJD5R/5B2jREWLl1DCWvSM5ZsyULMZN6Jljz0d5FIUZ8o9+7Dp5x3arn36Om1WlPhS/4WQbkeSOadhYBR82N5t3hjH5lzLez8dw2qoOkjHVWGJhdYtBGIl5CQjwvfcprVDri"},{"s":"iS4oW+Yu3HB7lADsc9bAdg==","iv":"OEuTz8Hdlp9YZD7W","ct":"4lwtXqaJCCsNO/Q1HLBG1CZ6LUH2Q644xNXA5S/mOmZL34WilunQQOG45s8SFsmKvbiCcn634EblBPgbNM7KfNL0bN94prD9TMydfv4MT79qpPaLOq0h9PeXuueZZCmHE4th5qxaLiKQn9F8I+Cx6HvW2zxpmzuPOpjXQtkvYtw="},{"s":"kZpaofDhonCJy0yBydfpNA==","iv":"31A4CngCuoB4muw3","ct":"b001dn9jUCPaI0m/HRBKBcDyf1fXG396XG1Piiten0pxwPCjKEYvK9ogmlCNPzSo7EY27AWGJZtVY49Vy5+UIgEux7ESYshc9ahMSE6kyAp0Cy40yBdFmBIPWFP6KtSXEHkil3oD3WWXA1zt9wqHdbhSBKyI4zLh29bxw5ucViC0YQk5Vb2XUQ=="},{"s":"Wuc09Zjbjko+Ju+0kTjEag==","iv":"o0D1w/0xItuiRZM7","ct":"hyhqGYuMPASIqF6PAQHz9zDz0qsZaPyNfgLjbEP15e4APcJ8DZtge8avVcDggtDHdu9kBCf+7NrNQejAv35ZC7dZXfvJ9CAJeypcOF0RgF5nQgX65esMauaHiETvYyh76RSGRPUDchJInGxgU7NG2P0rb064m55h64TWByZE5Fajjn7SXfM7xwafI2DTDB8vAcgTWAfEe2HE2TE3v93jE1nulT70355ukiR4+w=="},{"s":"QfFC+xtk0XMmjX960PyY4Q==","iv":"jc6e4cCOPlpvVrWn","ct":"2ec/8TmOeKbps1vGZxufx4+98S1SG5JxVtBNSooRDtg8AQ1K5UsECSv8j9i7j3ib+KHirJm7O/ppXiiVoLnWD8UQjNwZa4WqypxOCd28VTlCynJyRyz7EwmqV5mKjXSqaANui/ANlcum7eUEQNZG/koq3w6ayOZ0fbfqGXAeeUqyuKgdnpK/P0fqvWW+bZku0g=="},{"s":"2Vp9KoBdFmFTrnCWdGiWBw==","iv":"TUHn+nxO0zCRNRzK","ct":"dYE1H49K6HX9A4Pwu1y8+8RNL/rXj7RrLx70J17kOcT8EBb5mAjQPMZ/gMGE5kPObc22/AIVd9yzGxQmxglBda4mDuZtSaDuuQFyiUoRVIcM+ggKxXByajFlVExnlNCm2/wGWyGwFKZWOo6fIE5f8NcPTScLFH/vc8Ds/P6TiNOCFm9TsKa/9e9ntY+82LMRfhubO/ZS21u7YPGq4gbXMTbzQGorwjF0uUXqzFB4uglgBN2vKbDt0nUEBWf6CWkCb6qYRYvJbplsTu6DfIOLHCF6+iUzSaMQ+VwTExb+yqzVl/Q2IPH7KMTcHkm60gVDM0kER+VBfh8OdsbkA4rh92xbV4vowMDO1iK3sRhZyWA6D0OMpqyy9neuE5ymloFF8gJx6VzA7Ww1mAeSNteQsKW8iL/4wlL56CUjVcv3W+3dVZ0pH4IXQrTz/8rAJIYUvvKPaMYTQBGzeFxNAcolKrGAcUUp8FPJ1wc5pO/c67JfblASvnjvvAvm7Cjk1cVXCtUtSKMXaloC/bsmfYX6P7ATE2gqUnGbhcwVO8FXQoH4EU5+1M/IasEXn/eJPqV/BeLyzMaj8Kilcdn5C6xuXZPyp15DXm5q7McE75HdWb1z3/B++cK4BcSvoWa5Jb8XPeUmfAm90AHgcnfrv1hW7EvWJ3XoQefM+sWfjx8NRzu9dTeln5Gdstu0Bka5lrnpkeGexoMryJPiwvr8KwUpSl7RKt88x18C/+wD9JgJqgkf4oH3crzr6/xcqLabH9a40MY5kHk++7VPCJWkhezSn9NBVsfImgVUzh87VTP+dTFZfpEJA/7aZXlGlGyDs7BjLgQ8kyoe5ttcWnDqDg=="},{"s":"ShfpjOEtNjO02FzYgeDsKQ==","iv":"1nYyuw3DWwK0kLJq","ct":"jFPMGngri5Fc3b4pZrMmxHc1fT9TAobAr40HWc0nOtwQKWob1JoARjDAc23CZ/pR2MDqZgUP4j9hEj6gQ8PgBZco7tp++kpp9awKDaYJWKwuz+lOeOT8o3d4M3CCxS+VSb5TYq9bGv1gVMTT7INMwwy9+AAf6j3ISyW6cGc1NWCiEdouoc1PZpqhMWoS"},{"s":"1azgcS4JG/WRz536SwTx2A==","iv":"z/UtjJ2dhowCAaVy","ct":"cwnNSRZG/ck/v7Otsmb8a6zVUrTJ8F5ljcpP8mdoUkhkYDZA7CKlz+Eqwce8OQPrhlM/12kTfDZ85pIwy0eSYjHH8NnNqIq/TMuUiMKsNFVW7UvIdebXpeML2LdhQazku4iOY1eQ4xAY9UNii302k2Zk0HU1BmLl"}];
+const BLOBS = [{"s":"HF3g+h8itKkDzDN+9zVYRA==","iv":"egIrnNniMUZXBo76","ct":"ZhI6E2LFa8NZhRbnRMWNNUmA4wnAR8AF8BACh4X1sWJAiEz90PNUMako1pJMvYdQPnRPDkDFwIZZ0z7nc/nKRLQvAA6+0nY50D5Vbjt4BHQ75AJS6RkGNgOX6Qgg0oGZHX5ArWkr1DNgUWtIOaF4UYrVfkeYbMT0OIZ8ciHfTpDVph/TqZwDMah4u4eioOjKnnBx9Qw0C4AG5TrwJ5ismJvHRrLtXQcqou2kdbjVJ+01W6I4dwo="},{"s":"1hbBjQXIwhkq22gvRPxjUQ==","iv":"LHZOjFWbeBhtxTC4","ct":"Jojg73uxL+KOq8lQnDeuwQQ3IMhJ67Gal64U1TL+T0QFqT77g9kYbSWThIvlXptNwkaIcHGiKeqg0OIAQdGLfcvQy8kftu/QQs3YqW6BafcbcHmrqdyjemtkdSvCYy5JUuwbzDMIufhruShs7uC1p10eXd+F"},{"s":"HfoObiPy27WDGypgmha/pA==","iv":"GHDy4M8lpo73vhKo","ct":"BRUotFACsIvD1I8A7asiORYvpiavnf1H/Tallf7NE8WX/VDjX0EXvl6JROk+EMsnY+92X2qxXKWK+bhePd9NcF0ghGMWBPeut1EyFfvtuXUMT+6QlVm85ot10yD7acCI/1M9nmEHW+plqXGNAOj6zvNdohU8jJfL29GXc2JJN77TZToh4kKJkaw2zaWXw5Bh"},{"s":"Wlgr4QHOGJycQ40EJyAMSA==","iv":"VJwPAhjBaZL3u06n","ct":"TtSCBdE+ZZfGsj/3E3qFXfj1EDRuFYQhScAO0Rrq5U8VqpW4f1dN3/3H9cvdoCe2xPP3fxEiMv0ypr66VjfQP1gNjFe7sze3bJydzsRESBE8g0fQinvAx53HzIH5/EKTCk13cIptPejrYFHc6z3YLZRJypetffJq"},{"s":"kB7aIJ26QdC0mosQkfqqOQ==","iv":"PWUqqv20xz4Tc5Fu","ct":"Spxwf+RXC3wKK/oDFWTmvOFdX0mF/gv+nYmkcMr5Ja4lSu+0flDdGwSpcprxjV3tZR/kF3wW2GXPV2F7UyvJxIkkjaOIyMBxFzDJwq+I0lHbki5hkNCA3TD16x4AUI+J45FjgANn+02U5DSL4fq+4ZFPi6wRbyD1qyVH0h7MeTKgeF2Qvwgqd/3DbLWjL732hQ=="},{"s":"kP07kyByyWF1esNa/ntVgg==","iv":"EVPVjLqT/biWkglv","ct":"2rmKWC03X+LM6nw4wlF1ea4m61FAiinCK4sHw0YQMT0VfrzudEoSgjrBbgvDaw5WMgAMt2xHYxv7i2o1pb4VteeR14D5uSr5S2tJbmywEr59C6zO9kPkoo+VvCq4NnvCwAofrAqCiBYZ1Aepur8L0R73uvTfzlKz5PMJypPIDY7PI3nm5P03/A=="},{"s":"UQi2pefOHTO0AaF95sZRzw==","iv":"qh4zMdkmbMuxSF1E","ct":"NpnHh112sGW/60/ifIFmEy8Mfm0M609tvfT0ZeieKSlqjsi6wSqAViL2GMr7xmQbEKqIKrMFYGmZSUBv6k8DQyk7m+NYDXwzOl64GEntw2oURZXAumGBsvPwGIt+PZSzBZy1XuZBMYkjbt4MdjkVxAIxR+5RmR0lNkByl1DZ9eo1y0jN65qXZWWPjzaRuPc/XnQc0nN4nQpsn3LWdxpYkA=="},{"s":"HBddT2be4gJiYpqxGnNvGQ==","iv":"JAi3q0qz5VwfEL8z","ct":"TcrQIxg1pvfAhtZZ3Q4Kb1IUZc5nhgbHS8YeIsyMYD+ABZYySsw4szGIEgt/GpALVOl1eFdDM6elu+R7WY63ugdeihi+mx5CyPk7BPHltq/PKq6jN6oLt5wrmIFalLbvvEO+gFjzLPwW7DFLAouaLUVTBZIaK2xqczR4Jh1fZDOMNUy0H6QZ50uPk85S"},{"s":"ocJM/AHJ6/M9CODOukL8GA==","iv":"u8db8TSl0xK95m3j","ct":"pTF/OsWtRMWyrLCRI4TIr6McnBqOkpgo544K0K627SmxyOsZqQDDPBpAS2kpnKRk+JlstdfPZK9/Dt/rSxLPMKDthJ+mj/NuEAwfeUW3Wv47zWxrUkrwC+jNa2qi6ZyiANNMotT40Q7OcfWQPoHm0HjB4vaPToV/rfc9xfeuH7EI+9w="},{"s":"2gUkwIhPgmnsG+q+UG1elg==","iv":"d9cnrJoYditdgq3V","ct":"6qPVFJ7fD2SKFn2riEuvOrXcqJgGv0nv2fKPudWR5BN+QzacUQ3HxpRS2czTnVbrQtJIC5nd/qJuJ+z0jZSIv7zc113TUl+eUyMWxcSsqT+dCvaMMVCgQ54n/xGx8pyoSJeHIOAtsML+yfH6SvHB1UJYlcUPAkYV8Ocra2B/1D8="},{"s":"6sTuWsMHFaA/ln+wjKkhHw==","iv":"DBuYbaP87qDZjirS","ct":"Jmxi5a8e1olsD71EP/O3yR0tFWwTOGEPLEc0BAMbAza3AGB7Cbl7NsmHpZ1r0ateGiNFwR7ZsJc/56+8ky375X4qvEVr26bXDKD1+cYF4x+iLMiyRl06pVdf4Zj4hqHJ6+8NVQQLQ+a/D8UuHBi0NfDgLczZr5MvJ5Ub2Ec9wDY+H1mQZb46niQyFA+h8kIsuo5p9BViTKASAzgAXlPfmoun9Q+T9Ul2XHF3Iqe3pPLph0fFSdvF0r/ZTSRRfQRoCE9SIGKyEVMvJTTETJgo9kTk1/op+LBm+WxuuplsLbLwuYIWa8dLox5/5cCKJGVtFunCt4ArYbQec9ebt5ajm+6p3u4XyOCvZnxS7C+aYiEMlouZzkX141vbl4md/eecnVGH6CGjIQiq+y8G4cspZW0WsQUs8ovaANEO5QopYrUthmKCq4fdGWVkfE0qE+ua17Zt7rSq+DZXHEg6jsuvMo9sf6uHr6Pgz87FTvQ+chLQ0DFUQqd51qJpNvtO+VHct++RqaXF59A+EMP1lKoIi0uqcQU9ATvZwL3VvmFguAi3hKgpl8r8T/Pq+4WQxalUbhcOnBsCtYZH2LA2zjekRl3oyh9LR9N8vY5So4kar1WECUa6gBhMHCgQEfe2bB6fhoYvqnWlU10LYdokOTjSqI0iaA+W2ME4bSyMPKiLorOAwOmBGxGU18V0U9XRtZo1NOAaLRMLytJIl4qx7lT8JcBuHGGknzBBuakpHBLn3eUfcmB8EqBhcNXafadOISdxy41ualClllD+AnpFT3gULy9MXj0C3hICZ7nj4nxCq6bnLc8m3nJdqbUBQfNbnLYthG4b+if4JXm5DSzE3A=="},{"s":"ua5gGI9PEmySyeyB6KS+TA==","iv":"UyAUwbNXxwtKqhsW","ct":"tt4A+U+LvLvU9jwoLkqZw4Nlg4Up/5iQTdvfZxWQ3KuyXH1AW/fkSv+oOuouKAVYhOSL77dyO4WszcNPQHjNk0+Vz3j3eHu7Pc29Dik9jxDPQWf1eh++18l0ZEjARKkeBBCyV3wv9HjAqTWjyES/iUihq4MJIBkYkvIM6Z8BrqEQfdDextia"},{"s":"vNmikL41m/jpww3/zhwzzA==","iv":"FypbQJzGJ3wZ8jyL","ct":"kz0PGrAbsRpHmIWjT7q/V3GG2FJjCPRYqyEE+7TCoMQ1t44Rk8OxKrrzh3vrpBhy2exfI1ErCx+xjSI9452R4OaYJh0CzrdpoSI4OZON22E/e7JsRCIJIpVpkHKQm/2CDXQAKSt2mpnJ0PRUHWoTVTVbxQ2G298hKW+DWYtMonKuc/kAUj0sPLOEFntrUF7i60RPscybROT/t06xkLXmwGnIUV9lEW+eVxOyKg=="}];
 const ITER = 100000;
 const te = new TextEncoder(), td = new TextDecoder();
 function b64d(s){ const bin=atob(s); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; }
