@@ -490,8 +490,8 @@ function webCustView(){
   var ths;{ var _th={}; W.list.forEach(function(o){ if(o.thoihan) _th[thLabel(o.thoihan)]=1; }); ths=Object.keys(_th).join(', '); }
   var totSuat=days.length;
   var doni=null;
-  if(isDoniGoi(goi)){ var o0=W.list[0]||{};
-    if(o0.nang||o0.muctieu){ doni={ kg:(parseInt(String(o0.nang).replace(/[^0-9]/g,''),10)||null), cao:(o0.cao?(String(o0.cao).replace(/[^0-9]/g,'')+'cm'):''), goal:(o0.muctieu||''), cuongdo:(o0.cuongdo||'') }; }
+  if(isDoniGoi(goi)){ var pk=profVal('nang'), pc=profVal('cao'), pg=profVal('muctieu');
+    if(pk||pg||pc){ doni={ kg:(parseInt(String(pk).replace(/[^0-9]/g,''),10)||null), cao:(pc?(String(pc).replace(/[^0-9]/g,'')+'cm'):''), goal:(pg||''), cuongdo:(profVal('cuongdo')||'') }; }
     else doni=parseDoni(ghi); }
   var box='border:1px solid rgba(0,0,0,.09);border-radius:16px;padding:16px;margin:10px 0;box-shadow:0 12px 26px -20px rgba(0,0,0,.5);background:var(--surface,#fff)';
   var h='<div class="app">'+masthead()+'<div class="head"><div class="hi">'+hello+', '+esc(W.ten||'bạn')+' 🐦</div><div class="sub">Suất Beeps của bạn <span style="display:inline-block;background:var(--honey,#E0A32E);color:#3a2a00;font-weight:900;font-size:12px;padding:2px 11px;border-radius:99px;letter-spacing:.3px">'+esc(goi)+'</span></div></div><div class="body">';
@@ -518,6 +518,18 @@ function webCustView(){
      '<div style="display:flex;gap:7px">'+vcell(vw?vw.canhNho:0,'vé canh nhỏ')+vcell(vw?vw.canhTo:0,'vé canh to')+vcell(buaN,'vé bữa'+(isDoniGoi(goi)?' Đo Ni':' Vừa Xinh'))+'</div>'+
      '<div style="font-size:10.5px;color:var(--soft,#5A645D);margin-top:7px;line-height:1.5">Vé canh dùng để bật canh mỗi bữa. Vé bữa nhận khi báo nghỉ - để dành ăn bù ngày khác, không mất suất.</div></div>';
 
+  if(doni){
+    var miss='<span style="color:var(--honey,#E0A32E);font-size:12px">+ Bổ sung</span>';
+    var pcell=function(f,lbl,val,numeric){ return '<div onclick="editProf(\''+f+'\',\''+lbl+'\','+(numeric?'true':'false')+')" style="flex:1;text-align:center;background:rgba(0,0,0,.03);border-radius:11px;padding:9px 4px;cursor:pointer"><div style="font-size:15px;font-weight:900;color:var(--pine,#2C6A4A);min-height:19px">'+(val||miss)+'</div><div style="font-size:10px;color:var(--soft,#5A645D);line-height:1.25;margin-top:2px">'+lbl+'</div></div>'; };
+    h+='<div style="'+box+'"><div style="font-size:13px;font-weight:800;color:var(--pine,#2C6A4A);margin-bottom:8px">📐 Hồ sơ đo ni <span style="font-size:10.5px;font-weight:600;color:var(--soft,#5A645D)">· chạm để sửa</span></div>'+
+       '<div style="display:flex;gap:7px">'+
+         pcell('cao','Chiều cao', profVal('cao')?(profVal('cao')+'cm'):'', true)+
+         pcell('nang','Cân nặng', profVal('nang')?(profVal('nang')+'kg'):'', true)+
+         pcell('cuongdo','Cường độ', esc(profVal('cuongdo')||''), false)+
+         pcell('muctieu','Mục tiêu', esc(profVal('muctieu')||''), false)+
+       '</div></div>';
+  }
+
   var cardDate = todayD||firstUp; var cardDish = cardDate? dishName(dishOf(cardDate)) : null; var cardImg = cardDate? imgForDate(cardDate) : '';
   h+='<div style="'+box+';padding:0;overflow:hidden">';
   if(cardImg) h+='<img src="'+cardImg+'" alt="" style="width:100%;height:180px;object-fit:cover;display:block">';
@@ -527,10 +539,12 @@ function webCustView(){
   else { h+='<div style="font-size:15px;font-weight:800;color:var(--soft,#5A645D)">Hiện không có suất sắp tới</div>'; }
   if(doni && cardDish){
     var dp=damPortion(doni.kg); var kc=caloForDate(cardDate)||caloEst(doni.goal);
-    h+='<div style="display:flex;gap:8px;margin-top:10px">'+
-       '<div style="flex:1;text-align:center;background:var(--cream,#FDF3DC);border-radius:10px;padding:8px"><div style="font-size:17px;font-weight:900;color:var(--pine,#2C6A4A)">'+(dp?('~'+dp+'g'):'—')+'</div><div style="font-size:10.5px;color:var(--soft,#5A645D)">đạm (thịt/cá chín)</div></div>'+
-       '<div style="flex:1;text-align:center;background:var(--cream,#FDF3DC);border-radius:10px;padding:8px"><div style="font-size:17px;font-weight:900;color:var(--pine,#2C6A4A)">~'+kc+'</div><div style="font-size:10.5px;color:var(--soft,#5A645D)">kcal (ước tính)</div></div>'+
-       '</div><div style="font-size:10.5px;color:var(--soft,#5A645D);margin-top:5px">Đạm đo theo cân nặng của bạn (đúng chuẩn Đo Ni). Calo là ước tính theo mục tiêu.</div>';
+    var fixed=function(v,lbl){ return '<div style="flex:1;min-width:calc(50% - 4px);text-align:center;background:var(--cream,#FDF3DC);border-radius:10px;padding:8px"><div style="font-size:17px;font-weight:900;color:var(--pine,#2C6A4A)">'+v+'</div><div style="font-size:10.5px;color:var(--soft,#5A645D)">'+lbl+'</div></div>'; };
+    var edit=function(f,lbl){ var val=profVal(f); return '<div onclick="editProf(\''+f+'\',\''+lbl+'\',false)" style="flex:1;min-width:calc(50% - 4px);text-align:center;background:var(--cream,#FDF3DC);border-radius:10px;padding:8px;cursor:pointer"><div style="font-size:17px;font-weight:900;color:var(--pine,#2C6A4A)">'+(val?esc(val):'<span style="color:var(--honey,#E0A32E);font-size:13px">+ Bổ sung</span>')+'</div><div style="font-size:10.5px;color:var(--soft,#5A645D)">'+lbl+'</div></div>'; };
+    h+='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">'+
+       fixed((dp?('~'+dp+'g'):'—'),'đạm (thịt/cá chín)')+ fixed('~'+kc,'kcal (ước tính)')+
+       edit('com','cơm')+ edit('rau','rau')+
+       '</div><div style="font-size:10.5px;color:var(--soft,#5A645D);margin-top:5px">Đạm đo theo cân nặng của bạn (đúng chuẩn Đo Ni). Cơm &amp; rau bạn tự bổ sung khẩu phần mong muốn - Beeps ghi nhận cho bếp. <i>(Calo ước tính theo mục tiêu.)</i></div>';
   }
   if(todayD){
     var vi=VIWALLET||{canhNho:0,canhTo:0,buaVX:0,buaDN:0};
@@ -540,6 +554,14 @@ function webCustView(){
        '<div style="display:flex;gap:6px">'+cbtn('0','Không','')+cbtn('nho','Nhỏ','dùng 1 vé nhỏ')+cbtn('to','To','dùng 1 vé to')+'</div>'+
        '<button onclick="openUpgCanh()" style="display:block;width:100%;margin-top:8px;background:#fff;border:1.5px solid var(--honey,#E0A32E);color:#8a5a00;font-weight:800;font-size:12.5px;padding:9px;border-radius:9px;cursor:pointer">➕ Mua vé canh (nhỏ 7k · to 12k)</button>'+
        '<div style="font-size:11px;color:var(--soft,#5A645D);margin-top:6px;line-height:1.5">Bật canh cho hôm nay = dùng 1 vé; tắt lại là hoàn vé. Suất Beeps đã đo đủ chuẩn nên canh là tuỳ chọn - giảm mỡ thì nên canh nhỏ hoặc bỏ. <i>(Beeps xác nhận khi giao.)</i></div></div>';
+  }
+  if(todayD){ var riso=actISO(todayD);
+    h+='<div style="margin-top:12px;border-top:1px dashed rgba(0,0,0,.12);padding-top:10px"><div style="font-size:12.5px;font-weight:800;margin-bottom:6px">✍️ Góp ý bữa hôm nay</div>';
+    if(reviewDone(riso)){ h+='<div style="font-size:12px;color:var(--pine,#2C6A4A);background:rgba(44,106,74,.08);border-radius:10px;padding:10px 12px;font-weight:700">✅ Cảm ơn bạn đã góp ý cho bữa nay! Beeps đã ghi nhận.</div>'; }
+    else { h+='<textarea id="rvtext" placeholder="Món hôm nay thế nào? Vừa miệng chưa, cần thêm/bớt gì...?" style="width:100%;box-sizing:border-box;border:1.5px solid rgba(0,0,0,.15);border-radius:10px;padding:10px 12px;font-size:13.5px;font-family:inherit;min-height:64px;resize:vertical"></textarea>'+
+      '<button onclick="sendReview(\''+riso+'\')" style="display:block;width:100%;margin-top:8px;background:var(--pine,#2C6A4A);color:#fff;font-weight:800;font-size:13.5px;padding:11px;border-radius:10px;border:none;cursor:pointer">Gửi góp ý</button>'+
+      '<div style="font-size:10.5px;color:var(--soft,#5A645D);margin-top:5px">Mỗi bữa gửi được 1 lần - góp ý giúp mẹ nấu hợp vị bạn hơn 🐦</div>'; }
+    h+='</div>';
   }
   h+='</div></div>';
 
@@ -726,8 +748,12 @@ function clearToast(){ TOAST=null; route(); }
 function toastHtml(){ if(!TOAST) return ''; return '<div onclick="clearToast()" style="position:fixed;left:0;right:0;top:0;z-index:70;display:flex;justify-content:center;padding:12px;pointer-events:none"><div style="pointer-events:auto;max-width:456px;width:calc(100% - 24px);background:var(--pine,#2C6A4A);color:#fff;border-radius:14px;padding:13px 16px;box-shadow:0 14px 34px rgba(0,0,0,.32);font-size:13.5px;font-weight:700;line-height:1.55">'+TOAST+'<div style="font-size:10.5px;font-weight:600;opacity:.8;margin-top:5px">Chạm để đóng</div></div></div>'; }
 // Dựng lại nghỉ/ăn bù/canh từ lịch sử action trên sheet (đồng bộ mọi thiết bị)
 function applyActionsState(acts){
-  if(!WEBORD) return; var nghi={}, anbu={}, canh={}, ghan={};
-  (acts||[]).forEach(function(a){ var t=a.type, iso=String(a.ngay||''); if(t==='giahan'){ String(a.value||'').split(',').forEach(function(x){ x=x.trim(); if(/^[0-9]{4}-/.test(x)) ghan[x]=1; }); return; } if(!iso) return;
+  if(!WEBORD) return; var nghi={}, anbu={}, canh={}, ghan={}, prof={}, revs={};
+  (acts||[]).forEach(function(a){ var t=a.type, iso=String(a.ngay||'');
+    if(t==='giahan'){ String(a.value||'').split(',').forEach(function(x){ x=x.trim(); if(/^[0-9]{4}-/.test(x)) ghan[x]=1; }); return; }
+    if(t==='profile'){ var mv=String(a.value||'').split('='); if(mv.length>=2) prof[mv[0].trim()]=mv.slice(1).join('=').trim(); return; }
+    if(t==='review'){ if(iso) revs[iso]=1; return; }
+    if(!iso) return;
     if(t==='nghi') nghi[iso]=1;
     else if(t==='huy_nghi') delete nghi[iso];
     else if(t==='anbu') anbu[iso]=1;
@@ -735,6 +761,8 @@ function applyActionsState(acts){
   try{ localStorage.setItem(nghiKey(), JSON.stringify(Object.keys(nghi))); }catch(e){}
   try{ localStorage.setItem(anbuKey(), JSON.stringify(Object.keys(anbu))); }catch(e){}
   try{ localStorage.setItem(ghanKey(), JSON.stringify(Object.keys(ghan))); }catch(e){}
+  try{ if(Object.keys(prof).length) localStorage.setItem(profKey(), JSON.stringify(prof)); }catch(e){}
+  Object.keys(revs).forEach(function(iso){ try{ localStorage.setItem(reviewKey(iso),'1'); }catch(e){} });
   Object.keys(canh).forEach(function(iso){ var p=iso.split('-'); if(p.length<3) return; var d=new Date(+p[0],+p[1]-1,+p[2]); try{ localStorage.setItem(canhKey(WEBORD.sdt,d), canh[iso]); }catch(e){} });
 }
 // ---- Vé canh (mỗi ngày dùng/hoàn 1 vé) ----
@@ -763,6 +791,22 @@ function anbuAdd(iso){ var a=anbuSet(); if(a.indexOf(iso)<0){ a.push(iso); try{ 
 function ghanKey(){ return 'beeps_giahan_'+((WEBORD&&WEBORD.sdt)||''); }
 function ghanSet(){ try{ return JSON.parse(localStorage.getItem(ghanKey())||'[]'); }catch(e){ return []; } }
 function ghanAdd(list){ var a=ghanSet(); (list||[]).forEach(function(iso){ if(a.indexOf(iso)<0) a.push(iso); }); try{ localStorage.setItem(ghanKey(), JSON.stringify(a)); }catch(e){} }
+// ---- Hồ sơ Đo Ni (khách tự bổ sung; ghi HanhDong cho bếp; đồng bộ mọi máy) ----
+function profKey(){ return 'beeps_prof_'+((WEBORD&&WEBORD.sdt)||''); }
+function profStore(){ try{ return JSON.parse(localStorage.getItem(profKey())||'{}'); }catch(e){ return {}; } }
+function profColVal(f){ var o=(WEBORD&&WEBORD.list&&WEBORD.list[0])||{};
+  var col=(f==='cao'?o.cao:(f==='nang'?o.nang:(f==='cuongdo'?o.cuongdo:(f==='muctieu'?o.muctieu:''))))||'';
+  if(String(col).trim()) return String(col).trim();
+  // fallback: đơn cũ nhét cao/nặng/mục tiêu trong ghi chú
+  var pd=parseDoni((o.ghichu)||''); if(f==='nang'&&pd.kg) return String(pd.kg); if(f==='cao'&&pd.cao) return String(pd.cao).replace(/[^0-9]/g,''); if(f==='muctieu'&&pd.goal) return pd.goal;
+  return ''; }
+function profVal(f){ var s=profStore(); if(s[f]!==undefined && s[f]!=='') return s[f]; return profColVal(f); }
+function profSave(f,v){ var s=profStore(); s[f]=v; try{ localStorage.setItem(profKey(), JSON.stringify(s)); }catch(e){} postAction('profile', actISO(new Date()), f+'='+v); }
+function editProf(f,label,numeric){ var cur=profVal(f); var v=prompt(label+(cur?' (đang: '+cur+')':''), cur||''); if(v===null) return; v=String(v).trim(); if(numeric) v=v.replace(/[^0-9]/g,''); profSave(f,v); route(); }
+// ---- Review bữa (1 lần/khách/ngày) ----
+function reviewKey(iso){ return 'beeps_review_'+((WEBORD&&WEBORD.sdt)||'')+'_'+iso; }
+function reviewDone(iso){ try{ return !!localStorage.getItem(reviewKey(iso)); }catch(e){ return false; } }
+function sendReview(iso){ var el=document.getElementById('rvtext'); if(!el) return; var t=String(el.value||'').trim(); if(t.length<2){ alert('Bạn viết vài chữ góp ý giúp Beeps nhé.'); return; } try{ localStorage.setItem(reviewKey(iso),'1'); }catch(e){} postAction('review', iso, t); showToast('✅ Cảm ơn góp ý của bạn về bữa hôm nay! Beeps ghi nhận rồi.'); }
 function openNghi(){ NGHI_OPEN=true; NGHI_SEL=null; route(); }
 function closeNghi(){ NGHI_OPEN=false; NGHI_SEL=null; route(); }
 function selNghi(iso){ NGHI_SEL=iso; route(); }
@@ -872,7 +916,7 @@ function expiredView(o){
 function logout(){ try{ localStorage.removeItem("beeps_phone"); }catch(e){} CURP=null; WEBORD=null; EXPIRED=null; IS_ADMIN=false; IS_OWNER=false; SHOW_ADMIN=false; CUR_TAB="home"; UPG_OPEN=false; UPG_DONE=null; VIWALLET=null; VI_LOADING=false; NGHI_OPEN=false; ANBU_OPEN=false; NGHI_SEL=null; OWNER_ACTS=null; OWNER_ACTS_LOADING=false; STATE_SYNCED=false; STATE_SYNCING=false; route(); }
 function doLoginKey(e){ if(e.key==="Enter") doLogin(); }
 
-const BLOBS = [{"s":"ZExrP+ol5aJ+Nqa+8zPGeg==","iv":"R7IWRsgcy2rf9mg6","ct":"TauP9qwkGp4m3Lg4NJr7qN7KDBoVr8HjXaUICPYPoKjX8gERErs78WR1wneygxAT4vG+D4FJS1n+dxF2XejVw3i9VwQ/hy9RvyGzX2S5HbodcBvRqo0z9LqXopF7GzruMoI9jblRhwrnCA6VTWmWahYA1v79"},{"s":"hh3UFo0d3INhzH/MjPzQ/A==","iv":"auAG8/NxqPtXOB6K","ct":"ziJZ2CDaY8xQIC9SGYBlO4QhguJkSsR5AKaNgQ0U8GZqKqTg3zswT2Tc++e7R/tvbs5s21Pvwb+EA1GqqiSw8/BfClmtfIDz2dejli1OMAgwtMmKBk6VgbjZls86ltCl63rZK3SNnOHRrT47ScLHyy99DFHsyoYm4HCZHb/OeerXjupoR4P/GUKzHKOzZYjb"},{"s":"PBwoaH2kK6rAySnDjBqnow==","iv":"QbuxowS4NNgs77A2","ct":"QkWUf2XB8Zl/freDdnvcTBNlrBaYRQbCJ4hntd2yZeOLegEpQow1/koi27qtJO/L9E4l2UD2D6lh6PUmmQOhcE1Ay4eCTIcn7dLu31JEgquGfQYKsDDi2uLI5878Joj8tSb1BGgQMrt7tgkWFh8Zvkxg+rm7V4XEX+bfS/sYKTLMny8ns9tIRg=="},{"s":"VfhZ7xTG0p/+w7tcVzXCbw==","iv":"nerV+YYO/KiBnbho","ct":"pzdrd1akvQSEodh7OSS/uAB9IVr9nDRF0RznyRChzsN8mXJ7tqpEpJ6q09nZRWzPWmhfIOVrAPzLPX31eIOVJtArrwU3DzfeVI3DlA3kxgw4spY16mAr9vSF19ZRa01iJ2iA9RR/5zyyeCHDka6/wMFeOdjQySDAH6KdtaxC8vh/DFfAyOtr0IDnBlIGLWVwCwOdlpXv9nDqdwDyT9Ecpvh5vt3GUsKyzz56t6kppF2RYsJjXs0AxDdBoVXFh1uKOgbX5yBDdZ3f7ZKGmrzk5a0PJNAezoqtHQlvCHMbrzkVC7I9XHo/tynDEareAOIudxYufPBwx93ikvgyp7mUkvxl0NHcrHJ6OgJN4SKiQnHvYkRqzdUtwF2g7P+m7O6bARTCQEb5FcRUPqhIErKQRh2FV1Kv5UB2DQ+DyqVc4Fwl+mUusFCOklqPLOnd4MfPrYLwGKpmplJmvzD7KHhA776gcUkMlHZWbkCshcjF7X91bBOuWAsvVt8iwm6bHUxFy4yrTMi2DKjeWNUNzegMKojgcVujgEO04cYVQttpCSL78cXQm/a3t4nflGQd7g3pynVcT3c6A0S1BrRClVC34ZMUwsU2ot92Af8hfRm915CGQnUJ76xK6a6QRPFC/SwWF60IFT/ogB1IoL+diX6m+kKPa7+wEUHLKcjYnofhiK5xpeHyP0/9wy6pi5b3+Pgl0+7rDJ5af951Bblt96EJTcwqDCQD86X8DbwKdcyZRaTP4/vkDQyEe24fmNjEZpBjdy7zK5jIiAFEu6+LSFveE7LEgep3RV3WPdnaCkHGYNPKJAd7jsVk4FJqP0NWmfvRuViAxXS8x90oFIWHXQ=="},{"s":"YFamHFny8zXnDDUv6rZrYg==","iv":"Rxax5bY8gxs09ffs","ct":"BVKMJE3jB+gNZOA1QWbOLyFvIEAXKiw9lTrKxWny8OoSGpvt8S7jWjNcsxC75SNabuY4NJGicAMKExY5kP80kqna5zhBnE+foYVFTE4+MFkBOJP7hucsP3QjWsJNDDw5IgYEqEIcrfzpEagBz/a/EFQOSSZz3++8daAcbaBDir0="},{"s":"76jkhn2OI7YRFa/QEFS4/g==","iv":"nNxR94I6FUvEoddv","ct":"frAvj8RG4sy2FMDT/oIajc8ROBQPC/Y0VUSyAeVM+swMk5QDiKbwlSbIIWyp4aWzcPXKU9O4+nyA6imakjaR2uwDczwvHJR59YBd8OWEvL9eo6D9GaJR0hFkCGzsHLcC0d8AlgWgRz79ewgkoJWURmVw8u0K7NQuhvdcqaUMuMuvI7BMZZEJ"},{"s":"Af+FWGA0GCC0UDCJx8fplQ==","iv":"T01Agpv95ckUKYxk","ct":"oN0Ipw/uvWivKToRHJVbXlKK3Q78q5T9Cu3oKIW1IYDpnklEp4INgHdxbIFTcyUoIsBpak7SPoINF1GSy0fdwWmEaK82A+8NHWddp4gHaNtaecHBW4BI1xydQWqR09xWmX+Xftl2/ZQJYhTGb2vg2Uh3zNdZHaO2H8rkqZYZbPtl5NkVleHO2ENiasy4T7T+og=="},{"s":"4j1QXZ6xB5Yv5476vLzoDA==","iv":"UsR1Ul/1A1/YApi5","ct":"KNyXZsEgVoSh5TvJoDIBLFk/9PHP8qOdndliEZk1ClYwpr9+xWyI7ZeL4pWCwqtiyOXsWBNujafwZZRVwxEbwjJHPQy2WuEMfdaVSI+s/FdIU3E/w55dlWXvOipqrB62gAXNhvKhLLIqwuo3eYVrkyD3skcaXFQxHFRw8ASf3UKLQblV62iXWUgTsfNA"},{"s":"jZAxNofz79GlRhdF2Wtm4w==","iv":"dGwMzIQgY0tLtCMj","ct":"n7/hovxLbj+lUpfNON72nafX6+sqYb2a6cLSiau1KSPwKZXZCszt3WIwOe5N0zG5XfoB4kk+uuQngjTfgUaUwEZ3BWhYn3KpqktfGAknaEI44RinYmTlXA80OXyS1Mike2g89IDz3SW/sgtfmkHkoJIik64KK+kuUb3hipSxLMB7P4p+WN4eOih6q9l0moTtJpVsWvJX29m7aV+aK9tiXg=="},{"s":"ltMg+szgDf61PxAlG01JZA==","iv":"v7rj3GD9JaX5yKQC","ct":"EINN70EF923YeoB30sQqOaB/KeQCqxUTFvdCZR80uR7A3i/5X04ygd/QQ6vJW02ootDzV8+a+R/jPQWqatiQtTttv34YzvTyjW50nMYG8j2Xk8gq0jyD9y+7WsKebfKDvyi8kUN8loigSFOOwnnlwVfyYsI+ENgcDeJ4C6h1Tm7cyWTI23URrCngczwzfV1aH/8AcvNBsIkNmBvDokbr6ZPtiOc2jxjNRIgiWw=="},{"s":"rCwnD6G163PoXsPgH6J9Cg==","iv":"boyXWOxyGW+rn2Ui","ct":"vMX2eqWagZ5EFGXgUtE6JxwrrsfQCe3oH/WR3F37V7y3S1evcvpR0ZnNR9i4EOngUr1zm4790jfk5sEYSNyqQYmRUOsB+fAmQhAgBYTtY5lZwS1bo2rhgQkvVU1HInBFWpQVHYchrgc4Z5VkGjeDIUj6t2mzLmUP"},{"s":"lfEYV+puAmI4QatoIqUPiA==","iv":"/+H0aYu3vNFcAowq","ct":"sNuL+SxA5yDDFzqXNllUbAqrCkfcsnr+YBLSCC+V1rpQ+e8aBzhxgEUlFlVLuNjpWwaVvk4Emu+4u5xCgEeYyEYe4iKPZALRn/emfjOoRsYSnRmrE+p9x2wtC5NaWL/QtA2V2ScVK12YvnsCI++3fV5+DYYwgBqvi8SQDsvQADj5zcU="},{"s":"3csBtaw0JUeSIu57lZXwmA==","iv":"gzwv9R3LSSUpjIFx","ct":"9n2uDEDgiP9fPoBgUdDRBO8SItDc5Le+YQbPWbFYwwt2uLSNThdbSZmwuED0FjVCjwDmZA51GnE/8ZeKgEdrQEg66TYaaHH6lXFaCRlp9iBvOztYzpbfeNlp88jirwcSJgLxUjapBZjHUT6HKt7tCz07VGTd+kwv+x7YzqcZFOZYZc6uWe7WlUU9jmDpfq2Djpeq2XK7Q4PGGoMasKXe7Jr1HPTQZEXRc6usORQ9EjW8g1oDSlM="}];
+const BLOBS = [{"s":"xRy3U9CldRRivHRx9tdTeA==","iv":"E/DgZko/jmthZYGZ","ct":"1nma2fzqKIYzK9rmaVegD6ie/9cnAZbK2NwsYFcb9hba/WhcGggTzxETqhP5+8cDGkqkYAgzlw9o3MjUIuPUtSd1hR4bpl3a7mWIZPqJku2ZforWXVcstdNHgCjv8fWtSZ9xVgh/X1FvdAp1OlINrOGiAR6ohdNv"},{"s":"W5XuJkQ1UsC383jCp8orzQ==","iv":"jwLC3XFae19L7TPQ","ct":"cL6D1UCHE6MmCx9by80wWtV19tq6oa9jDLZAshLl/20ON/iIrez5TBFE5Urec+qqAd4aUNRVxcQ6MpPdRmODbglt5m5rXARNUKc9NG5iqf3159EPuFCy2eHJVgs/K6013pTfcm8KsuaXqew+yk+tRBRpw+AFkga1lAVuGTBMGwR10gPYE+VoXuwFJAngpbK2F3wa4JjV1QOj3GNE94oCvmvZM0UqutPkCyO1kg=="},{"s":"iYuz7OBV6yW9CuthHPcKKg==","iv":"una534N1Hrs+tMwT","ct":"ZbRJI7nC0D7kg5Qzyw7Ag+eesIRfqdtYQ29MeScl6LBzERiB0AVJ68Umd7bdeQZGo+xu6q5TgDTf8K0lC7Ahn5KZe06b1qMJU0tQ3Ynmoedm094PmMrIApAGuDYVSW0Il1uhlNJJsIT+T260xwr8QaHdwUHwqnESlIDgmbrbYbbfDZdIADMyiLNMUNoc"},{"s":"P3G09jcOhjhnNCxHudgkEQ==","iv":"GzL3p6T9uHwzNTOQ","ct":"tyIaaBcbHLuWEfHIwgc1cQeWEbDAyBZl0Tgd2E7v/h8LP/aCkVPb1Jv/3vxQyAN4MzT91cqVErHjngk5oLq//ydbnaz86oktD/d/w3YZ9wLqHFK7nZ3fJAVAbDP8fV+Qsuhk4CrWE9axzTq+tvnj8aEuPbRsn3cRmAuGT9/JUrE="},{"s":"961BaYACE3JIixjMMFe+kw==","iv":"MmyLqVsFmAnLUuiJ","ct":"PaDdFXHnBvhO7JCmPQhHED7pEpQw5FprILQZ+hRvWyXGuXmJXefRrzlYzmRsIaC/HiQtRTa+79qu+tHC6dQAQhdMm3YHB/ZxXXvFvf/eC+KC2hygUx/Fll/IMmPR27W4I6n9VHA6d5Su81zmkaOpFyTmPzaeWIgnrejna+xVxZAIW6Rs1ZbqlvBeWAePdVCXX/WcN4H67K6DzyePsB8R5lWAxqpOILSVed4/4e+TvP8+sQFDnNoIXCYetAGgJ03Qh7xzVCp/8LgzZfPKRswQ/ZZpkEz7rY8bAEV0QUz9AGIA643N9bv/F/+TMq95HlYbRpFU59gCmrfWhE4WQzHSGhBj2eo4iup3uDbVHA68CwBHjIw6bcOKfWLCGyu+qclrSfM5EEsYwY656CK9vRvAiYDTUleN9Fu63RDsacpQg06NlH6WYg0ALqUdrPYNbqgSj0KC8hPTs2JQIiAZB+p/HI3u7u9dCIY2jI8kpfqq883Qhl2GaY/79FyWQifvjHI1Xpd6iCKgwP+l5GB7nMRjsgNU5mAQfOBlW2+YeFJ/zo0OOelr3U9ZZoJV6H/gukZwPPqqag9lPUUXvIHsJ73gC0Ux2KFz0x2OQzVKt7KE8ikykiJGDemqIiUdARJGF5/NW9Y3wjUgx4ReCSngJEkI+4uvZPFFNekCKOqG+oXoMDINEdvVDCWKS2dE4qA6uHf6uwju1ltU1ARqW/O4olQ0f6pWJtSIxQ8FlCufwVk0/IHnMFuJCfZk12HXD3+LtwTHn8WsbmTQsu6txScvT52MnhedAQvca981FO3HyKJuyFLfyzYWY7R7uOTMLG0TuIsCQhIkf1qoK5A2dihpLg=="},{"s":"/rWCDBhl9HpbB4jx3gI+Lw==","iv":"5LoRxqnCp4INS+UR","ct":"Sc0ccOOEvVGsLQkOWWH7tRSP0MMArsykX5UL/4XaSsAxsFsC1+opaAGKyia+a8sPQHEyJRAyt4Q82YvOIV3yMRtDowJtiBzm1NxmvYvBB8vEV6wGdY3+BB9t+kHm38abB3O1qwzdYTV8AEVOCvhhXYj3OS6Rhiy80znOKP2WIjF5WFwUtZstrw=="},{"s":"HdYvCNl7Pb7QYWz/F4uNqg==","iv":"lvBEjF9a/yr1iMTV","ct":"GIm0aiE57vdP5YTylw1leewcQ1Wty/gZkngjWuUcXqFBNAgi9roYhydcssO8s6VzDjYqIlUjtffaRl8BcpwpPxEIdCJL0jSFGqLOn5GxeYezJV8K8G/p2q8z0v/REms6Iz3wS26zkc7xe/sTdPpEpu5/dZfqKqI/VlVKxr/Puy7KBqnq9wAX"},{"s":"jnmC/QUBauYEBe8x7sAAUg==","iv":"f9ybVkSCAZn+srSX","ct":"3zxo92KXjahmoa7hdiNRzPgkQ5O3kww5VucsXu6302oz7W6lfKCnssIA8pvPrhgcS4QduPMhVeNEDvB9mpaI4b/DgjF5urA2HvqpyRoQ8QuNRQINd9i2TfXi4BNKu6gZYC5oEH+eKUnqZ+kTcDrlBmX0hR1QLHG8swmDggJEBawvh5ddyhUBqqzLgAe9pQNy/w=="},{"s":"HNkwfCRG74rknCYnZK6DMw==","iv":"+Q9h0zilDyHcsBkl","ct":"42rPKFxH2oZTkMqFxKiOcO6lduui9g16uTP4G0tfKLSyvHCtXoao0qHXTOrYtlDnUyTDJ7XJgAsZ3Bqics4odshI6j9TeMdVjaP/A3JDA2iuNPM4MdCF3d3/4L9G0rHVt0XMAQDH0BtzNPYRPJudoLiN6EzEUP+7YH7ysCjB0W01rx0="},{"s":"+SUdxz2/+a6kx6PQ3+4XEA==","iv":"WuBC7ACakPmBygyC","ct":"z7Lz47wxR5ZkHC/vPvTYt2qYcQGhfr26hmJo07CQs1IaTsKMeKh1SVfzjafCX9k0pnIL4usHBOKWydeHSYHNxYIMdWRiskEzJn7cu5mB+1gXBSyzYZCsDaj5+XbPHRP401bGVF4O6G//NO9nSjP+Gx/rbceovxGRAU759VDNCVzsiq44Qh+9ZFwYQIGy3CSA"},{"s":"6lxAT78GrVSqiGdTFCyGOA==","iv":"ipbfCwemraKW6Ito","ct":"xrEB0CioblPC12QfIL/ZFPWfWguaKmQM3Z8LXjFarNwNbB09EGcZknVjn/LAFfIE3sXxKLn/MIpsBVFFzumDV+6ZD1bysQtuwDHgZH1ETLnUOtcXUpVsxAkHoZZNRcX0fw8hpv/nTC4VdBreKcZPkP5IM5kF"},{"s":"0HMQbnbUtsliQ0TYAkxduQ==","iv":"zTfzE9oNEWV+bwRd","ct":"9yWo9obTfnFDOhlHqgJAABaPG5tas/K+iTtuBeDVJFHey1nUa/ottEkmEO7HyzctXqVPSOCSE5SHdzV3xMl2foVyCE1ueHB1uabQ6cjiVF/SqzdtRfI2oersVeJnSgNordCi78RGCAT5LJp/Ozcl4+Evhc26z9iH9bBQ7vZptXKxq+01Xyzm14Zzv5mgf+zOgZCTFOB/3LirVSTP2oCSLmxr44ITt08iumtoKv3NPPmBsRSxpKk="},{"s":"n1NJvdRO2UKPeintmJC3FA==","iv":"wTYiwT+OOvmpO/0g","ct":"nl2szAzXYdDGBO+3zMttQQVaIONVVKTpTTRtNXEWGBvMFEX32ddET/ILTM+jIw5IxEAyqf69U6DEr3XjFXWm76bICkdrvW0iATTPje/sjsbErxEOkuYm6RUckBMkeZ440AcjFbW3F7juIrnOJs3xQ5FSgipExbqw0qGVky7CjAgguVmMnbh9WLhUIpQ9jWKyr6NUklGRv+qwOFVj39kPjQ=="}];
 const ITER = 100000;
 const te = new TextEncoder(), td = new TextDecoder();
 function b64d(s){ const bin=atob(s); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; }
@@ -904,7 +948,7 @@ async function attempt(raw){
   } }
   return false;
 }
-var SHEET_API="https://script.google.com/macros/s/AKfycbyq7fY92wF1LXj5Jp7EuLG9W3Iavyq43OEHzDR1kD6VIhEMuZ-iZIlmnafFAkN5TwPdXg/exec";
+var SHEET_API="https://script.google.com/macros/s/AKfycbywt7moWL8v4MSOQucINAWEAUoPFEh3s6DwuaXreAD2Zbo19oD6pi5-GHBBQRQ8x1ORUA/exec";
 function sheetLookup(phone, cb){
   var name="__bcb"+(new Date()).getTime(); var s=document.createElement("script"); var done=false;
   var to=setTimeout(function(){ if(done) return; done=true; try{delete window[name];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s); cb([]); },20000);
