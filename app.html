@@ -467,9 +467,13 @@ var CARBF={"giảm mỡ":1.0,"giảm cân":1.0,"cân bằng":1.1,"tăng cơ":1.3
 var KCAL_THIT={"nạc":1.55,"vừa":1.85,"béo":2.40}, KCAL_CARB={com:3.6,khoai:0.86,bun:1.11,mien:1.00,comga:1.45};
 var CARB_LB={com:"cơm lứt",khoai:"khoai lang",bun:"bún lứt",mien:"miến",comga:"cơm gà"};
 function monCode(d){ var s=slotOf(d); if(!s) return null; return 'W'+(s.wi+1)+'_T'+(s.dow+2); }
-function isPhoiMon(ma){ var M=MON[ma]; return !!(M&&M.nhom==='phối'); }
-function comDoNi(ma,goal){ var M=MON[ma]; if(!M) return null; return r5(M.g*(CARBF[mtKey(goal)]||1.0)); }
-function caloDoNi(ma,kg,goal){ var M=MON[ma]; if(!M) return null; var phoi=(M.nhom==='phối');
+function monInfo(ma){ // ưu tiên carb LIVE từ tab MENU; fallback bảng cứng; thiếu -> null (không đoán)
+  if(!ma) return null; var mm=String(ma).match(/W(\d)_T(\d)/);
+  if(mm && LIVEMENU && LIVEMENU.carb){ var wi=+mm[1]-1, dow=+mm[2]-2; var c=LIVEMENU.carb[wi]&&LIVEMENU.carb[wi][dow]; if(c) return c; }
+  return MON[ma]||null; }
+function isPhoiMon(ma){ var M=monInfo(ma); return !!(M&&M.nhom==='phối'); }
+function comDoNi(ma,goal){ var M=monInfo(ma); if(!M||!M.g) return null; return r5(M.g*(CARBF[mtKey(goal)]||1.0)); }
+function caloDoNi(ma,kg,goal){ var M=monInfo(ma); if(!M) return null; if(!M.g&&M.nhom!=='phối') return null; var phoi=(M.nhom==='phối');
   var dt=phoi?0:(damThitG(kg,goal)||0); var q=phoi?0:eggQuarters(goal); var comG=comDoNi(ma,goal)||0;
   var kcalDam=phoi?230:(dt*KCAL_THIT[M.nhom]);
   return Math.round(kcalDam + comG*KCAL_CARB[M.carb] + q*18 + 40); }
@@ -539,11 +543,13 @@ function webCustView(){
 
   if(doni){
     var miss='<span style="color:var(--honey,#E0A32E);font-size:12px">+ Bổ sung</span>';
-    var pcell=function(f,lbl,val,numeric){ return '<div onclick="editProf(\''+f+'\',\''+lbl+'\','+(numeric?'true':'false')+')" style="flex:1;text-align:center;background:rgba(0,0,0,.03);border-radius:11px;padding:9px 4px;cursor:pointer"><div style="font-size:15px;font-weight:900;color:var(--pine,#2C6A4A);min-height:19px">'+(val||miss)+'</div><div style="font-size:10px;color:var(--soft,#5A645D);line-height:1.25;margin-top:2px">'+lbl+'</div></div>'; };
+    var pcell=function(f,lbl,val,numeric){ return '<div onclick="editProf(\''+f+'\',\''+lbl+'\','+(numeric?'true':'false')+')" style="flex:1;min-width:calc(33% - 5px);text-align:center;background:rgba(0,0,0,.03);border-radius:11px;padding:9px 4px;cursor:pointer"><div style="font-size:15px;font-weight:900;color:var(--pine,#2C6A4A);min-height:19px">'+(val||miss)+'</div><div style="font-size:10px;color:var(--soft,#5A645D);line-height:1.25;margin-top:2px">'+lbl+'</div></div>'; };
     h+='<div style="'+box+'"><div style="font-size:13px;font-weight:800;color:var(--pine,#2C6A4A);margin-bottom:8px">📐 Hồ sơ đo ni <span style="font-size:10.5px;font-weight:600;color:var(--soft,#5A645D)">· chạm để sửa</span></div>'+
-       '<div style="display:flex;gap:7px">'+
+       '<div style="display:flex;flex-wrap:wrap;gap:7px">'+
          pcell('cao','Chiều cao', profVal('cao')?(profVal('cao')+'cm'):'', true)+
          pcell('nang','Cân nặng', profVal('nang')?(profVal('nang')+'kg'):'', true)+
+         pcell('tuoi','Tuổi', esc(profVal('tuoi')||''), true)+
+         pcell('gioitinh','Giới tính', esc(profVal('gioitinh')||''), false)+
          pcell('cuongdo','Tập luyện', esc(profVal('cuongdo')||''), false)+
          pcell('muctieu','Mục tiêu', esc(profVal('muctieu')||''), false)+
        '</div><div style="font-size:10.5px;color:var(--soft,#5A645D);margin-top:7px;line-height:1.5">📌 Cập nhật chiều cao / cân nặng theo <b>thể trạng hiện tại</b> để suất đo đúng người nhé. Suất đo theo <b>cân nặng + mục tiêu</b>.</div></div>';
@@ -559,7 +565,7 @@ function webCustView(){
   if(doni && cardDish){
     var maMon=monCode(cardDate); var phoi=isPhoiMon(maMon);
     var comG=comDoNi(maMon, doni.goal); var calo=caloDoNi(maMon, doni.kg, doni.goal);
-    var comLbl=(maMon&&MON[maMon])?CARB_LB[MON[maMon].carb]:'cơm';
+    var _mi=monInfo(maMon); var comLbl=(_mi&&CARB_LB[_mi.carb])?CARB_LB[_mi.carb]:'cơm';
     var cell=function(v,lbl){ return '<div style="flex:1;min-width:calc(50% - 4px);text-align:center;background:var(--cream,#FDF3DC);border-radius:10px;padding:8px"><div style="font-size:16px;font-weight:900;color:var(--pine,#2C6A4A)">'+v+'</div><div style="font-size:10px;color:var(--soft,#5A645D);line-height:1.25;margin-top:2px">'+lbl+'</div></div>'; };
     h+='<div style="font-size:12px;font-weight:800;margin-top:12px;margin-bottom:6px">🍱 Khẩu phần đo ni của bạn</div>'+
        '<div style="display:flex;flex-wrap:wrap;gap:8px">';
@@ -819,7 +825,7 @@ function ghanAdd(list){ var a=ghanSet(); (list||[]).forEach(function(iso){ if(a.
 function profKey(){ return 'beeps_prof_'+((WEBORD&&WEBORD.sdt)||''); }
 function profStore(){ try{ return JSON.parse(localStorage.getItem(profKey())||'{}'); }catch(e){ return {}; } }
 function profColVal(f){ var o=(WEBORD&&WEBORD.list&&WEBORD.list[0])||{};
-  var col=(f==='cao'?o.cao:(f==='nang'?o.nang:(f==='cuongdo'?o.cuongdo:(f==='muctieu'?o.muctieu:''))))||'';
+  var col=(o[f]!==undefined?o[f]:'')||'';
   if(String(col).trim()) return String(col).trim();
   // fallback: đơn cũ nhét cao/nặng/mục tiêu trong ghi chú
   var pd=parseDoni((o.ghichu)||''); if(f==='nang'&&pd.kg) return String(pd.kg); if(f==='cao'&&pd.cao) return String(pd.cao).replace(/[^0-9]/g,''); if(f==='muctieu'&&pd.goal) return pd.goal;
@@ -940,7 +946,7 @@ function expiredView(o){
 function logout(){ try{ localStorage.removeItem("beeps_phone"); }catch(e){} CURP=null; WEBORD=null; EXPIRED=null; IS_ADMIN=false; IS_OWNER=false; SHOW_ADMIN=false; CUR_TAB="home"; UPG_OPEN=false; UPG_DONE=null; VIWALLET=null; VI_LOADING=false; NGHI_OPEN=false; ANBU_OPEN=false; NGHI_SEL=null; OWNER_ACTS=null; OWNER_ACTS_LOADING=false; STATE_SYNCED=false; STATE_SYNCING=false; route(); }
 function doLoginKey(e){ if(e.key==="Enter") doLogin(); }
 
-const BLOBS = [{"s":"PKPPjV9RPDy1XR6/MMPUnA==","iv":"f0PxI3PsCNGEGAhY","ct":"LyX9eUfBwz5x5Hy6r941CbA35Usc4wKS5zgaH3/NYP4jDufqK2sqSFOHzQnSLbaWZk4zC93ONfVZVHzfBDGkla1pHzySlPvCO0KKnFQvG1KrCqZWlb0GSY8Cy1A0Jbxe7M7Keo3U2csOKuByVXcaKyWsCMeOLFBmdDvD1etwoetK/y8T393tRNwJFhiVSyMntQ=="},{"s":"PDig+FbF4mOn7IN0BSwdKg==","iv":"Iup0zgM3RkcdqdkF","ct":"FTo7wryzPHdNVJpMqJTKvkSrphbb7ga0SPA5XpHGtomr+T1+h7guMAbn/bDj72rFMoGuzwAC31pIX1WGwADw2smf6sUfdymIoM27Fbzxmamlv2gNtQTxpZKj9bP0jZExrbWtdHrZ9kQu5TF7TafYkwqaDJpKqu4wjKhwTHWNM7v3GDbme3yv8w=="},{"s":"Geiu0Xq7t4eyFchq3MfXmQ==","iv":"MvqpEiKSe4gKIumB","ct":"IDltI+JELQpvbCHByVHmZn06IddsSIZa7zZW/CNriHg/YBoiptF7ARwsLZjZVfFYiEEU01r28uZ4KYJekV3bzxOCPfIe9NcK0BnT/io/yTyTdPoykU7eUENQRCsxfkXUzLPChjxmmpkFeD5ErTBTnUf8T7p8sKlbVSquayMB8gjDW0c+q5ncfwk6bUCfhiUwRixxp4ItfZI4TLgaPYTbIeKoBx6jgZrmfpJVYg=="},{"s":"4Y2EcuCWz7ecK5pJJn3g+A==","iv":"bjTkr3oceldWgNXt","ct":"9ofEZAGIf8nzbYmJqNs1XQp6rbrKXWHHuM9KD+8ylXPdMyljsl31rDP1Sn0PUrKRc7OCKCaLi3y1jgZQp89hhqA1I9pH7+ZYGmyfiPvAcfTzawl7lhsYvrItyckDJW7gnkZiKBAbzN3Zyk2i3eyhJ/KZfm4n/d3j7IgxIsXlOO6OeKAbpHTYcYXTBhPs"},{"s":"ny7CzA3ppDMVQiiYnllFOw==","iv":"EoFaafD8/G6u+Zch","ct":"3ke5JLJPYSXDhG/m/zknm+fYqZlegUyqk8GbmempGUSElbqvqqU+QjT/ZtcioxRdXFvS4h1W7lVnBKLBJa3rF+rBwhR0xoaGF8Tdd7nd0eL50mmAWqjysQwGrYeBMir4N7YbJ7sURPoBXygA8mIl/7tEaw7S2vhgmVA8hZxGng1NqBaEV/dC"},{"s":"2IePMJ6pAX0oLqZ/JjB64g==","iv":"dTw3VB8Ex+Nqqhqn","ct":"QNqcxrj9He9opM0XgRs0YI13a3+CILcvx2RaoHyuQiFPsFMeJOSRmtxhma+EJRgMk4vicBQuENcC37+IQkShWJc/F6FK3QCnYL4o663feOCd2IYgFrwtkWUD2kRoiU/+++tHBxJ6yY7LFtclKGAIj21DMEQkoYpw"},{"s":"JGMwqgy3zi/4TgVW5hTJgA==","iv":"fPGlypPtxqJk7Nrr","ct":"aGlbWs5kA5nbDG9ofVyDW9vAgFpCaVv/hpR3ssfxzMO/DoPCfmYs/usjah+xzBfyqZy0vzjmrkfHqJyZrtqUXbVc49vHmlmzuKiO4AaD98fJiujs7tavpmFrYot0Ikp177TPLoj6qp+HnC4jPx+WkHFWdFeWdMHthFKUgkBFrH5xSY4H/kp5PBSXjUVTm4uqI1CGYjFS3kZN3xL/M/EoY2BtM/oqXcuyqAHlQOA593+auukHWuk="},{"s":"isGERU2ZtooK+WZwErV9/A==","iv":"3my+7XJKFm9A1A98","ct":"L8cOOJ+b5+mLcTvZ6TxINljqDAOQfAvTJDwUSD+l2o3F8xEDJN1BT4PcnmCOI1qCgGL36w2CIptr5k8sk5H0k4hAbjiE7BRhoEttPnnm2DEKzVYGvFX/ANlUFgbLbRkIZ1qXJxQLHtrLeLa1WBxXtvYfACkQVGUwDcAyyqIfNY5J8GI="},{"s":"9HTmUx8IsBOQQCiO++bAEw==","iv":"SCNCNnxt/Qkw74ui","ct":"oaE8N36y4b1Mh/VE6aZRj9y4ibSe/E/h7VbJ5Bn78iD65HhdqFNKcImOJfllIcQY1hWH3Hj+Gon1h9rm2E0ycTmcC5gNThVZiVe5g+b4HUErYcKCH3UeIDT24SzgDFeFDfzW5lC4aEDvHDU3TCegSTlwD1N5nJ/BR8YFMIvsVFOZPGcCgekALtR67fQ6u1W8g3oGAK6G5tF6xGzYbSihsQ=="},{"s":"LCLRQitZSl9T691PwmoE3g==","iv":"E6RcPr7v45RcHmk4","ct":"fJpV8EyxOheTycqql/x5ZrSHMNcPrpnC6RCUnjxnfVLKJN06NC47itTZ/bGm5S88RZ7yxTgsypsm4l53YEBlnSiJROzF54j/hPMVdzIio+xOBzyloY4LULTbtrqkcimQdGsFcIRWi4DgeNAKz0ou7RwDCZpj"},{"s":"dwVFUuuKiJgc12vfWOJpSg==","iv":"/VuT9hZiYJjk1MNS","ct":"cZ7wbjooLHgZ2e5VqRf9sqaD0jE2LcbhOu8QojzYlujSSqCy68ERgkprXhBPVKFdhhGnMoQLk9hT9QZAcp7buLNdC05+3pr2Vv82Vfj4fAq8PfXFEpRtF/v6CjOAqpbuMSemVY/5K+t8Y2pDQRgtoJRhOOV0Sup3qiLEysDhpqzHSCNr7kyet/dHmIDulozMoJ8jlRLybW/aZfpqJ9hlOfvzOOHEMIiIuyFlr5ycSQhAJwkzbJDrLbfG6H1qOlCApY4e8Fw2YLqoBh+qjKyu/2SIQ6Q2edzrBBbhNorde87kDWau+pgWhYFch3rqvqasB71FXpV4WFwn0XZ88n1jw226Om09v1dLWNGwVwNrXyZZueXtz1Hg/vNH+RlpyXpNPmCVtKht9iAvExm24UnyIp+wBAld6xWFXq51xxJR1gWxooA0vt1V3/5JlKD2eeQMTI7IJwX80JUnS+Lnq+6f1Bl0WqNN9S0bV7ioRTd+w07+yXt+nB5Yf8v+CMh7W9JeXkr9SdB07Ht4THrhuLyrLYLbb5QCh1WmwPuita3vhavoEdlh3Ah/ye8p+GNsEB6uqTrZzrYBG2Sgb/Uwy42dC2S6BM5qcPb0PYR0putb7zCCbWUp/1vy2ojdkqXKukdp0Bdra7WgCCaOTL/wtVNBlnPSPHe75D/zg3kikkmVhJVeAaHsN6DCzL8eFBBIRQq22MY11YTcmFpwjY/rWNtHNAsAIElqi4MsBKos/O4yLF9Z0hab88PVaMWEIWb3IXn/F3bOVRSHfaKfABi/WcfmQ1DKqczNsrLKrjNu7wC4fWU9HQq55bPSbnt1Yktm7+1n3vINwlCNv1trMdc8rQ=="},{"s":"pFwPwB3ZuMAUn/bECBB0Eg==","iv":"Na4YB8vIGgP6uLrZ","ct":"g8fNJ3d0WtUdPKebardJG5llqa4KkSNhKFP8etdbKAwav0At3uzhIRu9L1bb3n9KFsTM4+IyTsMrP/3KEgWCFMOBhdEK3t2myY8jIsEiiYGpzE9eovSgLgw3FVm7T1UglKl3ZeTQMyjxRB2UsV2QAXQ36wpb6gepSKh5DZoALNKwpm/0sVZUn1Wr5ARQaNaz"},{"s":"4LtHZ3TTmCE+vj5K6miBtA==","iv":"7QWs/aO8lflhCocz","ct":"i+/q1mrfCklIUYfqDmXggQt8Bl1BZhAN2WuNZlf9hynSEsg6J9d2SMTcnGL4V0hOBTVMeV+1lEY0hXah6QThIchFt1d3Waf2ZtdPOiSskLCDzx0VcdEqTvwTY+RkMhV2CdjujzRcuMMIhF7kXXtiZFLf5C9Pi5Kmcy/wMKdphWg="}];
+const BLOBS = [{"s":"PzroWET3do6Tp51ERpWUKg==","iv":"KR7Vk1dUJT6PFZ7B","ct":"dd/O2vgSMUYzHxsPIh1x44AqLObgjhrzSzVc/0lST26MoB/+MiLSCaxS/F5HgNx4S2it2YoRYT0jm53uMxFBsX6kv+QgH95twi3mOOSYDiz7wcsPcDzkCehLlBkauOcC7ILL5wL6FcmXXYHBmorxxN/IAOty5sCujZsxxpy8ULdjm4kcNtdqJ7eINsdKrgpcXHdrhEsEprxKO77mTXxQHw=="},{"s":"p3HdNELNhXLIjcJhusFEFg==","iv":"WdWksFXB8eV8SLBt","ct":"nYMJEv7bGE6YGSJCZWIm+in5sWq2VgO/3byPBqe8XXMb8hR7dgoG0ACDzQ764znE9PQ49VK5LBswyJfRT4SqG5Mzr/sanDrLkMxqn7k5Y8JtBV8o86sB4ZGFYbwHbPlmsog6QfBc3f1wsPaiGYtJD8U3FXqO9VvWHDR5huCBvSt4xc0y4otPdw=="},{"s":"WWg7SXlVsorNwIHT3xW0BA==","iv":"ThSxM+jyKVOqaCo0","ct":"9faKgjOnq2IOH5DqxOxPtaR3ADLeDhMbuXHC714dpK2ljrSj1Htum/bnYMXkT0Y02oxmPnQawVI0s+lAYaW3sYzrRgCrC6goR9zf9XxRVY1ZW3v+wjinQxIXGQTCFEQrkXcFYIdaWQ/DAI8NHOezzggr/pOYalUzzBIn10/+Pjew2Dx/B75m5Kj+fljx70vvVA=="},{"s":"4rTYf2URpo23olCjWaQhNQ==","iv":"GJVhQLM5+1+OEC5u","ct":"3+ET94DK4+FWVqop0j3ncNYrUOD25s7b+qq3AnvtFlNS3Zfol++1gjhzQqKiKqCA4SkcJsMGmLRdRg7c/SsnpqPI9N8xkIqkSh2GHD6pogb7t6JaOnG4HhKi00TXiQzLMEHIbEiivOBO8u1JA1+/6bM60nn7IvzueSbiuYPFJCjL/+2wj/QSF8qdtELoRPbDGeFDnkkotVbgnXRYdQAu3PRuS2zc8mw6mxENowHBih7U1B42uPHsLDzq5EN+4ns0EZpIf6m6jiI2dE/9yznIayyOyKHPtMYNhYoMqlmsBe93aToDLjyI8V40XAIVENFwavEiKXloCJCN/BDpHq804/jWvNIhv+6ZqMKMlNKDtkgr1D26SGWoSDOIFf+gAxtB6DiIrwMxKxJO0sZ1Su+E96Ux1SaCnaGUcyPDtcFS4is9UK2eVWI4ifZMLBcLCedHBwN9BJH23x2Huw7mRBO6UR7A/nUoJcSQXBRLtIuLvEgz07aq4IXQUsbIn7EqecwHi+Edf8E2szgCOQx6+OxeS8AzvozuaMx7yUA6iENxMYZ+w3iKJbVIZ45IgMuKoHhqlL942tHRzmNdeFES4MYAlHQkN+6SxZPcWzVmTu6+Wc30z/RiWjoilxINLjm9zzLZpPHa+1DfQMFs8wXFCHEJ7o3vg7q2eKVCjPc29e9dpGSyKyYxZfYm45gPXqDhY85qd8DDQGhv48qXZsjwfTlIHA2puY/ZbRdOFA8kNIv3nozRs6AThm+w7hq0PEentRxLcQ03VRpIW/tbTNW2wnb13kaW+Bf6wAQysekEFAmQ1yM6G9nOeQPdSpshD/0xVdu9/RmoLdGo3edt1hHV0g=="},{"s":"SpOuhIU1xtNjVJAs/jM71w==","iv":"fJr1W420GdSo/GD8","ct":"gF+Vi/I4TcZ7F/G7vyVVRsPUCLVBv2esIcNV4vUIKFuc69K3/xXeptNflIjooigqezfUnYRvKiHuan9KnjPphgS1hysFDKnn1nS7zhuZVketLSZ8pPKA6gSVgloGxZv+wuPfSPPKRN9B185QUA8UbsCNhtVd2MdArwksg9USka/S+GnPHXlvQGuxk+MSrEHOH05KHJq6dASVqUkS1MFfD13kgTA66Q6ukYImFR3+fhf87LB7xJs="},{"s":"YoBSZxuQjcQ9yF9CCusHaQ==","iv":"96dlUTZFvV+Ozm72","ct":"5ybzYlAV7Q4S9tNmMl/7ZzaJZNXfLdhR2mbsoN4kISBdrI8CGmznv+aDxU2YovC//IlquUCN0JJxmUZ2P1+da8O9XYSv1BknNBnw++FovaPtWKRbvRzPRAHv2oZdqM4wnKPU7xKMZVZPzD2w3dmTYCXXfxA9vfEz4/BQD7lkpHQ="},{"s":"yb02ZC4qbQgwB1in+Msn0g==","iv":"m2Ws0jo3BDMCZcBB","ct":"Q+DXxtqLvN9uMSFFn4iqry2p1YNURnhwnS+syRowfXUhAgf6UWfYHcBd7wjAdZbg8OKFdNeAhqYzsnIMLGoGLu0FPAnH1QKag4Txh/cOGT9lnjEfqN8ojyvF+tC/bd66CZpSbWSQtXIZJopnrGHjBa0qojWLbM/Xx8p7fR8PrdPxXLlH4wE4jp9Wkjb8Secnf1+yToICAfhsQLhkn7goO+Z9yveB4etCdGf42Q=="},{"s":"t80ut2n4cnr0o/EZswp+cg==","iv":"MootGLfrNUShUp4L","ct":"BwIfJ9C+SmQMKtjVqsjchkNrVj2e1OjubfC/h+9WGWlj8u258gseyHrEwpeF9BDoAqEoYdZ9Fb/MbSRWLZlwaA+pA//Nk7ZQ7F9v/x8R2GxuhWUHkQHu/nc8MYIWJIHCVChQdfgwZBm7u9xlbYm4XMZyRD/AQYUO4yDCXoR08JjkKraFIqYZsuxp3ztfCIgF"},{"s":"GgyjfDRicA6GaLFbtPfJWg==","iv":"UMnsjohG5WjnJY+k","ct":"RMGr593haQrDS/RTD18S2ITchS7DoPIxXrjHr2mC5+GMVdKaUUyUdbZvt9aqnwbxVbeMr8QOpP/QVpcm5b9MW6N2ZaUiN1uOvwyPiX6lWYwOvw+tEY06PwJV+2GTy4QM+GhZIgIwG7tMpYm/GIgaFM3VuyIe1WcIyNMOh76xaZXxnyx1I/82RdGgZFsF"},{"s":"COwCWsoasRrfBAYDKPH2OQ==","iv":"WUKmOOSXyn5x7inw","ct":"HMpBnAuhDgWBxau2QP2CdG46s3aqHZKG3sxNWVpCuIV7juRZdB4VA4VXXOA28biuOHLljw6cQuB2ckBlSKbSsAlyfmUIQe6wllyy57Ddo15bgl2ovS8+mrozwF+kVf1asdLoRSo8M25rqvlcu14l9sEnf3Us1igLHOij51yd1zgKUG8="},{"s":"YZpoh/E8Fyc9lzjEimHVSg==","iv":"VCWJU8iuzyBjZezD","ct":"JeSVfnVJ9VqOLLuPvrvJpqq1wkgrtyaA6gaRUuo7JlNtbraBJsQehg3/MwQNDqZSQpsOr6PD9UWnYk9i6bzTl2Eo3RJN0wsuyzDP2w6ZuC/BoK090Mk9JKQ0AOACOTunEp/ZdE8kGi1hGfcCFfVwhUzjr62qPEKj"},{"s":"2cej8P0gLapYtiboXwL8nw==","iv":"S2StgHGoVMs/OP83","ct":"sqlIANrZ8fWorzV3HX1UEl1kLs54ll9eharPxHCkzcoKW9LkM6u2t+6qQqTGTL/UWoKplVth4p5hIDMsf9uZnENGNfVBuqG4gmpTpcsDPeMuOX6h6trEPED8vpFz3mSkKVNVvo4YauPW5vMdri++pJl8+eYJpH4hIs97wf05MgFSZcbolgc9"},{"s":"UaP2M/0i5ClWzIdIsulvCQ==","iv":"MSbgmgeBqSVYsdci","ct":"RJkwuljiF11B0tIcTzwEROWkzD8jTR5P3NH50sYa8o0oKxXhDmXwtzBny2VK4RDYL6AbugI2C4bHgNxdZeCWaO+gHdavCdo1nPY6K3eFGb4Nhe0Sa+W790lqxwU+CjcdQvytUgEyM8xcDHOX6K099/Daz/y8"}];
 const ITER = 100000;
 const te = new TextEncoder(), td = new TextDecoder();
 function b64d(s){ const bin=atob(s); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; }
@@ -972,7 +978,7 @@ async function attempt(raw){
   } }
   return false;
 }
-var SHEET_API="https://script.google.com/macros/s/AKfycbywt7moWL8v4MSOQucINAWEAUoPFEh3s6DwuaXreAD2Zbo19oD6pi5-GHBBQRQ8x1ORUA/exec";
+var SHEET_API="https://script.google.com/macros/s/AKfycbxPKeSx8W6kmxidsu7RXqns4g_NiVldZslkFjPdk661iUDd7iO5yxkM3naw1JhCmjAC9w/exec";
 function sheetLookup(phone, cb){
   var name="__bcb"+(new Date()).getTime(); var s=document.createElement("script"); var done=false;
   var to=setTimeout(function(){ if(done) return; done=true; try{delete window[name];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s); cb([]); },20000);
@@ -984,9 +990,10 @@ function menuLoad(){
   var name="__mcb"+(new Date()).getTime(); var s=document.createElement("script"); var done=false;
   var to=setTimeout(function(){ if(done)return; done=true; if(s.parentNode)s.parentNode.removeChild(s); },20000);
   window[name]=function(res){ if(done)return; done=true; clearTimeout(to); try{delete window[name];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s);
-    try{ var rows=(res&&res.menu)||[]; if(rows.length){ var dish=[[],[],[],[]], calo=[[],[],[],[]];
-      rows.forEach(function(r){ var wi=(parseInt(r.tuan,10)||0)-1, dow=(parseInt(r.thu,10)||0)-2; if(wi>=0&&wi<4&&dow>=0&&dow<5){ dish[wi][dow]=r.mon; calo[wi][dow]=parseInt(r.calo,10)||null; } });
-      LIVEMENU={dish:dish,calo:calo}; if(WEBORD||CURP||IS_OWNER) route(); } }catch(e){}
+    try{ var rows=(res&&res.menu)||[]; if(rows.length){ var dish=[[],[],[],[]], calo=[[],[],[],[]], carb=[[],[],[],[]];
+      rows.forEach(function(r){ var wi=(parseInt(r.tuan,10)||0)-1, dow=(parseInt(r.thu,10)||0)-2; if(wi>=0&&wi<4&&dow>=0&&dow<5){ dish[wi][dow]=r.mon; calo[wi][dow]=parseInt(r.calo,10)||null;
+        var nt=String(r.nhom_thit||'').trim(), cl=String(r.carb_loai||'').trim(), cg=parseInt(r.carb_g,10)||0; if(nt&&(cl&&cg||nt==='phối')) carb[wi][dow]={nhom:nt,carb:cl,g:cg}; } });
+      LIVEMENU={dish:dish,calo:calo,carb:carb}; if(WEBORD||CURP||IS_OWNER) route(); } }catch(e){}
   };
   s.onerror=function(){ if(done)return; done=true; clearTimeout(to); };
   s.src=SHEET_API+"?menu=1&callback="+name; document.body.appendChild(s);
