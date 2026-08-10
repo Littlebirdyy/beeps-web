@@ -263,6 +263,8 @@ const DAYS=[
 let PEOPLE = [];          // set khi owner đăng nhập (production) / gán sẵn (preview)
 let CUR_TAB="home", FB_SEL=null, FB_NGON=null, CURP=null, IS_ADMIN=false, IS_OWNER=false, SHOW_ADMIN=false, ADM_DAY=0, SHOW_LOGIN=true, WEBORD=null, EXPIRED=null, CANH_SCOPE="today", LIVEMENU=null;
 var UPG_OPEN=false, UPG_TAB='tier', UPG_SUATDUR='tuan', UPG_CANH='nho', UPG_CANHSCOPE='all', UPG_DONE=null;
+var VIWALLET=null, VI_LOADING=false, NGHI_OPEN=false, ANBU_OPEN=false;
+var OWNER_ACTS=null, OWNER_ACTS_LOADING=false;
 var UPGP={doni:{le:99,ba:89,tuan:85,hai:85,thang:80}, vuaxinh:{le:79,ba:69,tuan:65,hai:65,thang:60}};
 var UPGFLOOR={doni:80, vuaxinh:60};
 var UPG_GIFT=null, UPG_GIFT_CODE='';  // 's'=giá sàn 'c'=free canh 'p'=freeship
@@ -424,11 +426,21 @@ function dLabel(d){ return dWeekday(d)+' '+dDate(d); }
 function slotOf(d){ var A=new Date(2026,6,27); A.setHours(0,0,0,0); var dow=(d.getDay()+6)%7; if(dow>4) return null; var mon=new Date(d); mon.setDate(d.getDate()-dow); mon.setHours(0,0,0,0); var w=Math.round((mon-A)/604800000); return {wi:(((w%4)+4)%4),dow:dow}; }
 function dishOf(d){ var s=slotOf(d); if(!s) return 'Nghỉ cuối tuần'; if(LIVEMENU&&LIVEMENU.dish[s.wi]&&LIVEMENU.dish[s.wi][s.dow]) return LIVEMENU.dish[s.wi][s.dow]; return (WMENU[s.wi]&&WMENU[s.wi][s.dow])||'—'; }
 function caloForDate(d){ var s=slotOf(d); if(!s) return null; return (LIVEMENU&&LIVEMENU.calo[s.wi]&&LIVEMENU.calo[s.wi][s.dow])||null; }
+function ownerVeCanhBox(box){
+  if(OWNER_ACTS===null) return '<div style="'+box+'"><div style="font-size:13px;font-weight:800;color:var(--pine,#2C6A4A)">🎫 Vé canh chờ duyệt</div><div style="font-size:12px;color:var(--soft,#5A645D);margin-top:6px">Đang tải yêu cầu mua vé…</div></div>';
+  var pend=pendingVeCanh();
+  var h='<div style="'+box+'"><div style="display:flex;align-items:center;justify-content:space-between"><div style="font-size:13px;font-weight:800;color:var(--pine,#2C6A4A)">🎫 Vé canh chờ duyệt</div><span style="font-size:11px;color:var(--soft,#5A645D)">'+pend.length+' yêu cầu</span></div>';
+  if(!pend.length){ h+='<div style="font-size:12px;color:var(--soft,#5A645D);margin-top:6px">Chưa có yêu cầu mua vé canh nào chờ duyệt. Khi khách mua vé canh trong app, bấm duyệt ở đây sau khi nhận được tiền để cộng vé.</div></div>'; return h; }
+  h+='<div style="font-size:11.5px;color:var(--soft,#5A645D);margin:6px 0 8px">Nhận được tiền chuyển khoản rồi thì bấm <b>Cộng vé</b> — vé mới vào ví khách.</div><div style="display:flex;flex-direction:column;gap:7px">';
+  pend.forEach(function(p){ h+='<div style="display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.1);border-radius:11px;padding:9px 11px"><span style="flex:1"><span style="font-size:13.5px;font-weight:800">'+esc(p.ten||p.sdt)+'</span><br><span style="font-size:11.5px;color:var(--soft,#5A645D)">'+p.qty+' vé canh '+(p.sz==='to'?'to':'nhỏ')+' · '+esc(p.sdt)+'</span></span><button onclick="approveVeCanh(\''+p.sdt+'\',\''+esc(p.ten||'').replace(/\x27/g,"")+'\',\''+p.sz+'\','+p.qty+',\''+p.k+'\')" style="background:var(--pine,#2C6A4A);color:#fff;font-weight:800;font-size:12px;padding:8px 12px;border-radius:9px;border:none;cursor:pointer">✓ Cộng vé</button></div>'; });
+  h+='</div></div>'; return h;
+}
 function ownerHome(){
   var hr=(new Date()).getHours(), hello=hr<11?'Chào buổi sáng':(hr<14?'Trưa rồi':'Chào');
   var box='border:1px solid rgba(0,0,0,.09);border-radius:16px;padding:16px;margin:10px 0;box-shadow:0 12px 26px -20px rgba(0,0,0,.5);background:var(--surface,#fff)';
   return '<div class="app">'+masthead()+'<div class="head"><div class="hi">'+hello+', Quang Anh 🐦</div><div class="sub">Màn quản lý bếp Beeps</div></div><div class="body">'+
     '<div style="'+box+'"><div style="font-size:13px;line-height:1.6">👋 Đây là tài khoản <b>quản lý</b> của bạn. Khách của Beeps đăng nhập bằng <b>SĐT của họ</b> sẽ thấy màn <b>theo dõi suất ăn</b> riêng (hôm nay ăn gì · lịch · tiến độ).</div></div>'+
+    ownerVeCanhBox(box)+
     '<button class="ownbtn" onclick="SHOW_ADMIN=true; route();">👩‍🍳 Xem lệnh sản xuất (bản cũ) →</button>'+
     '<div class="note">Lệnh sản xuất đang chuyển sang đọc thẳng từ Google Sheet (đơn đã CK) — sẽ cập nhật sau.</div>'+
     foot()+'</div></div>';
@@ -494,6 +506,12 @@ function webCustView(){
   }
   h+='</div>';
 
+  var vw=VIWALLET; var vcell=function(n,lbl){ return '<div style="flex:1;text-align:center;background:rgba(0,0,0,.03);border-radius:11px;padding:9px 4px"><div style="font-size:19px;font-weight:900;color:var(--pine,#2C6A4A)">'+n+'</div><div style="font-size:10px;color:var(--soft,#5A645D);line-height:1.25">'+lbl+'</div></div>'; };
+  var buaN = isDoniGoi(goi) ? (vw?vw.buaDN:0) : (vw?vw.buaVX:0);
+  h+='<div style="'+box+'"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div style="font-size:13px;font-weight:800;color:var(--pine,#2C6A4A)">🎫 Ví vé của bạn</div>'+(vw?'':'<span style="font-size:11px;color:var(--soft,#5A645D)">đang tải…</span>')+'</div>'+
+     '<div style="display:flex;gap:7px">'+vcell(vw?vw.canhNho:0,'vé canh nhỏ')+vcell(vw?vw.canhTo:0,'vé canh to')+vcell(buaN,'vé bữa'+(isDoniGoi(goi)?' Đo Ni':' Vừa Xinh'))+'</div>'+
+     '<div style="font-size:10.5px;color:var(--soft,#5A645D);margin-top:7px;line-height:1.5">Vé canh dùng để bật canh mỗi bữa. Vé bữa nhận khi báo nghỉ - để dành ăn bù ngày khác, không mất suất.</div></div>';
+
   var cardDate = todayD||firstUp; var cardDish = cardDate? dishName(dishOf(cardDate)) : null; var cardImg = cardDate? imgForDate(cardDate) : '';
   h+='<div style="'+box+';padding:0;overflow:hidden">';
   if(cardImg) h+='<img src="'+cardImg+'" alt="" style="width:100%;height:180px;object-fit:cover;display:block">';
@@ -509,13 +527,13 @@ function webCustView(){
        '</div><div style="font-size:10.5px;color:var(--soft,#5A645D);margin-top:5px">Đạm đo theo cân nặng của bạn (đúng chuẩn Đo Ni). Calo là ước tính theo mục tiêu.</div>';
   }
   if(todayD){
-    var cur=getCanh(W.sdt, todayD); var sc=CANH_SCOPE;
-    var scbtn=function(v,lbl){ return '<button onclick="setCanhScope(\''+v+'\')" style="flex:1;padding:7px 4px;border-radius:8px;border:1.5px solid '+(sc===v?'var(--honey,#E0A32E)':'rgba(0,0,0,.15)')+';background:'+(sc===v?'var(--honey,#E0A32E)':'#fff')+';color:#3a2a00;font-weight:800;font-size:11.5px;cursor:pointer">'+lbl+'</button>'; };
-    var cbtn=function(v,lbl){ return '<button onclick="applyCanh(\''+v+'\')" style="flex:1;padding:9px 4px;border-radius:9px;border:1.5px solid '+(cur===v?'var(--pine,#2C6A4A)':'rgba(0,0,0,.15)')+';background:'+(cur===v?'var(--pine,#2C6A4A)':'#fff')+';color:'+(cur===v?'#fff':'var(--ink,#1b241d)')+';font-weight:800;font-size:12px;cursor:pointer">'+lbl+'</button>'; };
-    h+='<div style="margin-top:12px;border-top:1px dashed rgba(0,0,0,.12);padding-top:10px"><div style="font-size:12.5px;font-weight:800;margin-bottom:6px">🍲 Thêm canh?</div>'+
-       '<div style="display:flex;gap:6px;margin-bottom:6px">'+scbtn('today','Chỉ hôm nay')+scbtn('all','Mọi bữa')+'</div>'+
-       '<div style="display:flex;gap:6px">'+cbtn('0','Không')+cbtn('nho','Nhỏ +7k')+cbtn('to','To +12k')+'</div>'+
-       '<div style="font-size:11px;color:var(--soft,#5A645D);margin-top:6px;line-height:1.5">Canh cho ấm bụng, dễ ăn - nhưng suất Beeps đã đo đủ chuẩn nên canh là tuỳ chọn. Đang giảm mỡ thì nên ăn canh nhỏ hoặc bỏ, để no bằng đạm &amp; rau thay vì nước muối nhé. <i>(Beeps xác nhận khi giao - đổi thì nhắn Beeps.)</i></div></div>';
+    var vi=VIWALLET||{canhNho:0,canhTo:0,buaVX:0,buaDN:0};
+    var cur=getCanh(W.sdt, todayD);
+    var cbtn=function(v,lbl,extra){ return '<button onclick="toggleCanh(\''+v+'\')" style="flex:1;padding:9px 4px;border-radius:9px;border:1.5px solid '+(cur===v?'var(--pine,#2C6A4A)':'rgba(0,0,0,.15)')+';background:'+(cur===v?'var(--pine,#2C6A4A)':'#fff')+';color:'+(cur===v?'#fff':'var(--ink,#1b241d)')+';font-weight:800;font-size:12px;cursor:pointer;line-height:1.3">'+lbl+(extra?'<br><span style="font-size:9.5px;font-weight:700;opacity:.85">'+extra+'</span>':'')+'</button>'; };
+    h+='<div style="margin-top:12px;border-top:1px dashed rgba(0,0,0,.12);padding-top:10px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><div style="font-size:12.5px;font-weight:800">🍲 Canh hôm nay</div><div style="font-size:11px;color:var(--soft,#5A645D)">Vé còn: <b style="color:var(--pine,#2C6A4A)">'+vi.canhNho+' nhỏ · '+vi.canhTo+' to</b></div></div>'+
+       '<div style="display:flex;gap:6px">'+cbtn('0','Không','')+cbtn('nho','Nhỏ','dùng 1 vé nhỏ')+cbtn('to','To','dùng 1 vé to')+'</div>'+
+       '<button onclick="openUpgCanh()" style="display:block;width:100%;margin-top:8px;background:#fff;border:1.5px solid var(--honey,#E0A32E);color:#8a5a00;font-weight:800;font-size:12.5px;padding:9px;border-radius:9px;cursor:pointer">➕ Mua vé canh (nhỏ 7k · to 12k)</button>'+
+       '<div style="font-size:11px;color:var(--soft,#5A645D);margin-top:6px;line-height:1.5">Bật canh cho hôm nay = dùng 1 vé; tắt lại là hoàn vé. Suất Beeps đã đo đủ chuẩn nên canh là tuỳ chọn - giảm mỡ thì nên canh nhỏ hoặc bỏ. <i>(Beeps xác nhận khi giao.)</i></div></div>';
   }
   h+='</div></div>';
 
@@ -525,20 +543,29 @@ function webCustView(){
   if(ghi) h+='<div class="prow"><span class="k">📝 Ghi chú</span><span class="v">'+esc(ghi)+'</span></div>';
 
   h+='<div class="sect">📅 Theo dõi lịch ăn</div>';
+  var calDays=days.slice(); anbuSet().forEach(function(iso){ var p=iso.split('-'); var dd=new Date(+p[0],+p[1]-1,+p[2]); dd.setHours(0,0,0,0); if(!calDays.some(function(x){return x.getTime()===dd.getTime();})) calDays.push(dd); });
+  calDays.sort(function(a,b){ return a-b; });
   h+='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px">';
-  days.forEach(function(d){ var isT=d.getTime()===todayT, past=d.getTime()<todayT;
-    var mark = past? '<span style="color:var(--pine,#2C6A4A);font-size:17px;font-weight:900;line-height:1">✓</span>' : '<span style="display:inline-block;width:13px;height:13px;border-radius:99px;border:2.5px solid var(--honey,#E0A32E)"></span>';
-    h+='<div style="width:calc(20% - 7px);min-width:56px;aspect-ratio:1;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;'+(isT?'background:var(--cream,#FDF3DC);border:2px solid var(--honey,#E0A32E)':(past?'background:rgba(44,106,74,.10)':'background:rgba(0,0,0,.04)'))+'">'+
+  calDays.forEach(function(d){ var iso=actISO(d); var isT=d.getTime()===todayT, past=d.getTime()<todayT;
+    var isNghi=nghiHas(iso), isAnbu=anbuSet().indexOf(iso)>=0;
+    var mark, bg;
+    if(isNghi){ mark='<span style="color:#B03A2E;font-size:17px;font-weight:900;line-height:1">✕</span>'; bg='background:rgba(176,58,46,.08)'; }
+    else if(isAnbu){ mark='<span style="color:#B27A0E;font-size:15px;font-weight:900;line-height:1">🍱</span>'; bg='background:rgba(224,163,46,.12)'; }
+    else if(past){ mark='<span style="color:var(--pine,#2C6A4A);font-size:17px;font-weight:900;line-height:1">✓</span>'; bg='background:rgba(44,106,74,.10)'; }
+    else { mark='<span style="display:inline-block;width:13px;height:13px;border-radius:99px;border:2.5px solid var(--honey,#E0A32E)"></span>'; bg='background:rgba(0,0,0,.04)'; }
+    if(isT) bg='background:var(--cream,#FDF3DC);border:2px solid var(--honey,#E0A32E)';
+    h+='<div style="width:calc(20% - 7px);min-width:56px;aspect-ratio:1;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;'+bg+'">'+
        '<span style="font-size:11px;font-weight:800;color:var(--soft,#5A645D);line-height:1.15">'+dWeekday(d)+'</span><span style="font-size:10px;color:var(--soft,#5A645D)">'+dDate(d)+'</span>'+mark+(isT?'<span style="font-size:8.5px;font-weight:800;color:var(--pine,#2C6A4A)">HÔM NAY</span>':'')+'</div>';
   });
   h+='</div>';
-  h+='<div style="font-size:11px;color:var(--soft,#5A645D);margin-bottom:8px"><span style="color:var(--pine,#2C6A4A);font-weight:900">✓</span> đã ăn &nbsp; <span style="display:inline-block;width:10px;height:10px;border-radius:99px;border:2px solid var(--honey,#E0A32E);vertical-align:middle"></span> chưa ăn</div>';
+  h+='<div style="font-size:11px;color:var(--soft,#5A645D);margin-bottom:8px"><span style="color:var(--pine,#2C6A4A);font-weight:900">✓</span> đã ăn &nbsp; <span style="display:inline-block;width:10px;height:10px;border-radius:99px;border:2px solid var(--honey,#E0A32E);vertical-align:middle"></span> chưa ăn &nbsp; <span style="color:#B03A2E;font-weight:900">✕</span> nghỉ &nbsp; 🍱 ăn bù</div>';
 
+  var buaHave = isDoniGoi(goi) ? (VIWALLET?VIWALLET.buaDN:0) : (VIWALLET?VIWALLET.buaVX:0);
   h+='<div style="display:flex;gap:8px;margin:6px 0 4px">'+
-     '<a href="https://zalo.me/0941751999" target="_blank" rel="noopener" style="flex:1;text-align:center;text-decoration:none;background:#fff;border:1.5px solid var(--pine,#2C6A4A);color:var(--pine,#2C6A4A);font-weight:800;font-size:13px;padding:11px;border-radius:11px">❌ Báo nghỉ bữa</a>'+
-     '<a href="https://zalo.me/0941751999" target="_blank" rel="noopener" style="flex:1;text-align:center;text-decoration:none;background:#fff;border:1.5px solid var(--pine,#2C6A4A);color:var(--pine,#2C6A4A);font-weight:800;font-size:13px;padding:11px;border-radius:11px">🔄 Dời lịch</a>'+
+     '<button onclick="openNghi()" style="flex:1;text-align:center;background:#fff;border:1.5px solid var(--pine,#2C6A4A);color:var(--pine,#2C6A4A);font-weight:800;font-size:13px;padding:11px;border-radius:11px;cursor:pointer">❌ Báo nghỉ bữa</button>'+
+     '<button onclick="openAnbu()" style="flex:1;text-align:center;background:'+(buaHave>0?'var(--pine,#2C6A4A)':'#fff')+';border:1.5px solid var(--pine,#2C6A4A);color:'+(buaHave>0?'#fff':'var(--pine,#2C6A4A)')+';font-weight:800;font-size:13px;padding:11px;border-radius:11px;cursor:pointer">🍱 Ăn bù ('+buaHave+' vé)</button>'+
      '</div>';
-  h+='<div class="note">Báo nghỉ/dời trước 20h hôm trước (gấp: dùng quyền 5 bữa huỷ gấp nếu là gói tháng). Bấm nút trên để nhắn Beeps.</div>';
+  h+='<div class="note">Báo nghỉ trước 20h hôm trước → được +1 vé bữa (gói này tối đa '+cancelQuota()+' vé), để dành ăn bù ngày khác, không mất suất.</div>';
 
   var refD = todayD||firstUp||(remain.length?remain[0]:now);
   var monday=new Date(refD); var mdow=(refD.getDay()+6)%7; monday.setDate(refD.getDate()-mdow); monday.setHours(0,0,0,0);
@@ -589,8 +616,11 @@ function submitFb(){
 function upGoiKey(g){ return String(g||'').indexOf('Đo')>=0?'doni':'vuaxinh'; }
 function upDurKey(th){ th=String(th||''); if(th.indexOf('2 tu')>=0)return 'hai'; if(th.indexOf('1 tu')>=0)return 'tuan'; if(th.indexOf('3 ng')>=0)return 'ba'; if(th.indexOf('tháng')>=0)return 'thang'; return (th.indexOf('1 ng')>=0||th.indexOf('lẻ')>=0)?'le':'hai'; }
 function upRemain(){ var now=new Date(); now.setHours(0,0,0,0); var t=now.getTime(); var seen={},c=0; if(WEBORD) WEBORD.list.forEach(function(o){ parseVNDates(o.ngayan).forEach(function(d){ if(d.getTime()>=t&&!seen[d.getTime()]){seen[d.getTime()]=1;c++;} }); }); return c; }
+function upLastDay(){ var mx=0; if(WEBORD) WEBORD.list.forEach(function(o){ parseVNDates(o.ngayan).forEach(function(d){ if(d.getTime()>mx) mx=d.getTime(); }); }); return mx?new Date(mx):null; }
+function upNextStart(){ var last=upLastDay(); var d=last?new Date(last):new Date(); d.setHours(0,0,0,0); do{ d.setDate(d.getDate()+1); }while(d.getDay()===0||d.getDay()===6); return d; }
 function upgQR(amt,note){ return 'https://img.vietqr.io/image/970432-183037412-compact2.png?amount='+amt+'&addInfo='+encodeURIComponent(note)+'&accountName='+encodeURIComponent('NGUYEN QUANG ANH'); }
 function openUpg(){ UPG_OPEN=true; UPG_DONE=null; UPG_TAB='tier'; UPG_GIFT=null; UPG_GIFT_CODE=''; route(); }
+function openUpgCanh(){ UPG_OPEN=true; UPG_DONE=null; UPG_TAB='canh'; UPG_CANHSCOPE='one'; UPG_GIFT=null; UPG_GIFT_CODE=''; route(); }
 function closeUpg(){ UPG_OPEN=false; UPG_DONE=null; UPG_GIFT=null; UPG_GIFT_CODE=''; route(); }
 function upgTab(t){ UPG_TAB=t; route(); }
 function setUpgDur(d){ UPG_SUATDUR=d; route(); }
@@ -599,10 +629,15 @@ function setUpgCanhScope(s){ UPG_CANHSCOPE=s; route(); }
 function upgAmount(){
   var g=WEBORD.list[0], gk=upGoiKey(g.goi), dk=upDurKey(g.thoihan), rem=upRemain();
   if(UPG_TAB==='tier'){ var diff=(UPGP.doni[dk]-UPGP.vuaxinh[dk]); return {amt:diff*rem, note:'Beeps '+(WEBORD.ten||'')+' nang goi', detail:'Nâng Vừa Xinh → Đo Ni cho '+rem+' suất còn lại (+'+diff+'k/suất)'}; }
-  if(UPG_TAB==='suat'){ var n=UDURN[UPG_SUATDUR], pr=(ugSan()?UPGFLOOR[gk]:UPGP[gk][UPG_SUATDUR]); return {amt:pr*n, note:'Beeps '+(WEBORD.ten||'')+' mua them suat', detail:'Mua thêm '+UDLB[UPG_SUATDUR]+' — '+n+' suất × '+pr+'k'+(ugSan()?' (giá sàn)':'')+(UPG_GIFT?' ['+UPG_GIFT_CODE+']':'')}; }
+  if(UPG_TAB==='suat'){ var n=UDURN[UPG_SUATDUR], pr=(ugSan()?UPGFLOOR[gk]:UPGP[gk][UPG_SUATDUR]); return {amt:pr*n, note:'Beeps '+(WEBORD.ten||'')+' mua them suat', detail:'Mua thêm '+UDLB[UPG_SUATDUR]+' — '+n+' suất × '+pr+'k'+(ugSan()?' (giá sàn)':'')+' · bắt đầu từ '+dLabel(upNextStart())+(UPG_GIFT?' ['+UPG_GIFT_CODE+']':'')}; }
   var cz=(UPG_CANH==='to'?12:7); var nd=(UPG_CANHSCOPE==='one'?1:rem); var camt=(ugCanh()?0:cz*nd); return {amt:camt, note:'Beeps '+(WEBORD.ten||'')+' them canh', detail:'Thêm canh '+(UPG_CANH==='to'?'to 12k':'nhỏ 7k')+'/bữa × '+nd+(UPG_CANHSCOPE==='one'?' bữa (bữa kế tiếp)':' ngày còn lại')+(ugCanh()?' — MIỄN PHÍ ['+UPG_GIFT_CODE+']':'')};
 }
-function confirmUpg(){ var a=upgAmount(); var d=new Date(); d.setHours(0,0,0,0); postAction('upg_'+UPG_TAB, actISO(d), a.detail+' = '+a.amt+'k'); UPG_DONE={amt:a.amt*1000, note:a.note, detail:a.detail}; route(); }
+function confirmUpg(){ var a=upgAmount(); var d=new Date(); d.setHours(0,0,0,0);
+  if(UPG_TAB==='canh'){ var rem=upRemain(); var nd=(UPG_CANHSCOPE==='one'?1:rem); var sz=(UPG_CANH==='to'?'to':'nho');
+    // chờ anh xác nhận tiền rồi mới cộng vé (không cộng lạc quan)
+    postAction('mua_ve_canh', actISO(d), 've '+sz+' x'+nd+' = '+a.amt+'k · CHỜ DUYỆT'); }
+  else postAction('upg_'+UPG_TAB, actISO(d), a.detail+' = '+a.amt+'k');
+  UPG_DONE={amt:a.amt*1000, note:a.note, detail:a.detail, wait:(UPG_TAB==='canh')}; route(); }
 function upgradeSheet(){
   var W=WEBORD; var g=W.list[0], gk=upGoiKey(g.goi), rem=upRemain();
   var head='<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px"><div><div style="font-size:17px;font-weight:800;color:var(--pine,#2C6A4A)">⬆️ Nâng gói / mua thêm</div><div style="font-size:12.5px;color:var(--soft,#5A645D);margin-top:2px">Đang có: '+esc(g.goi)+' · còn '+rem+' suất</div></div><button onclick="closeUpg()" style="background:none;border:none;font-size:22px;color:var(--soft,#5A645D);cursor:pointer;line-height:1;padding:0 2px">✕</button></div>';
@@ -613,7 +648,7 @@ function upgradeSheet(){
       (UPG_DONE.amt>0
         ? '<img src="'+upgQR(UPG_DONE.amt, UPG_DONE.note)+'" alt="QR chuyển khoản" style="width:220px;max-width:80%;border-radius:12px">'+
           '<div style="font-size:14px;margin-top:10px">Chuyển <b style="color:var(--pine,#2C6A4A)">'+UPG_DONE.amt.toLocaleString('vi-VN')+'đ</b><br>VPBank <b>183037412</b> · NGUYEN QUANG ANH</div>'+
-          '<div class="note">Chuyển xong Beeps đối soát rồi nâng/thêm suất cho bạn + nhắn Zalo xác nhận. Áp từ bữa kế tiếp (chốt trước 20h hôm trước).</div>'
+          '<div class="note">'+(UPG_DONE.wait?'Chuyển xong Beeps đối soát rồi <b>cộng vé canh</b> vào ví của bạn + nhắn Zalo xác nhận. Sau đó bạn bật canh mỗi bữa bằng vé nhé.':'Chuyển xong Beeps đối soát rồi nâng/thêm suất cho bạn + nhắn Zalo xác nhận. Áp từ bữa kế tiếp (chốt trước 20h hôm trước).')+'</div>'
         : '<div style="font-size:15px;margin-top:6px;color:var(--pine,#2C6A4A);font-weight:800">🎁 Miễn phí (đã dùng mã '+esc(UPG_GIFT_CODE)+')</div>'+
           '<div class="note">Beeps đã nhận yêu cầu, sẽ áp từ bữa kế tiếp + nhắn Zalo xác nhận. Không cần chuyển khoản.</div>')+
       '<button onclick="closeUpg()" style="display:block;width:100%;margin-top:8px;background:var(--honey,#E0A32E);color:#3a2a00;font-weight:800;font-size:14px;padding:12px;border-radius:11px;border:none;cursor:pointer">Xong</button></div>';
@@ -627,7 +662,8 @@ function upgradeSheet(){
       else content+='<div style="font-size:14px;line-height:1.7;padding:6px 0">Nâng <b>'+rem+' suất còn lại</b> từ Vừa Xinh lên <b>Đo Ni</b> — đo khẩu phần đạm chuẩn theo cân nặng của bạn.<br><br><span style="font-size:16px">Chênh lệch: <b style="color:var(--pine,#2C6A4A)">+'+a.amt.toLocaleString('vi-VN')+'k</b></span></div>';
     } else if(UPG_TAB==='suat'){
       content+='<div style="font-size:12.5px;color:var(--soft,#5A645D);margin-bottom:9px">Mua thêm gói (gói của bạn: '+esc(g.goi)+'):</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+['le','ba','tuan','hai','thang'].map(function(d){ return '<button onclick="setUpgDur(\''+d+'\')" style="'+chip(UPG_SUATDUR===d)+'">'+UDLB[d]+'</button>'; }).join('')+'</div>'+
-         '<div style="margin-top:12px;font-size:15px">'+UDLB[UPG_SUATDUR]+' = '+UDURN[UPG_SUATDUR]+' suất × '+(ugSan()?UPGFLOOR[gk]:UPGP[gk][UPG_SUATDUR])+'k'+(ugSan()?' (giá sàn)':'')+' = <b style="color:var(--pine,#2C6A4A)">'+a.amt.toLocaleString('vi-VN')+'k</b></div>';
+         '<div style="margin-top:12px;font-size:15px">'+UDLB[UPG_SUATDUR]+' = '+UDURN[UPG_SUATDUR]+' suất × '+(ugSan()?UPGFLOOR[gk]:UPGP[gk][UPG_SUATDUR])+'k'+(ugSan()?' (giá sàn)':'')+' = <b style="color:var(--pine,#2C6A4A)">'+a.amt.toLocaleString('vi-VN')+'k</b></div>'+
+         '<div style="font-size:12px;color:var(--soft,#5A645D);margin-top:5px">🗓️ Ăn tiếp từ <b>'+dLabel(upNextStart())+'</b> (nối sau ngày cuối của bạn)</div>';
     } else {
       content+='<div style="font-size:12.5px;color:var(--soft,#5A645D);margin-bottom:9px">Thêm canh — chọn phạm vi:</div>'+
          '<div style="display:flex;gap:6px;margin-bottom:8px">'+
@@ -649,12 +685,107 @@ function upgradeSheet(){
   var sheet='<div onclick="event.stopPropagation()" style="width:calc(100% - 24px);max-width:456px;background:var(--surface,#fff);border-radius:20px;padding:14px 18px 22px;max-height:86vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.35)">'+handle+head+content+'</div>';
   return '<div onclick="closeUpg()" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:60;display:flex;align-items:center;justify-content:center;padding:12px 0">'+sheet+'</div>';
 }
+function actISO(d){ return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); }
+// ---- Owner duyệt vé canh (cộng vé sau khi nhận tiền) ----
+function veApprovedKey(){ return 'beeps_ve_approved'; }
+function veApprovedSet(){ try{ return JSON.parse(localStorage.getItem(veApprovedKey())||'[]'); }catch(e){ return []; } }
+function veApprovedAdd(k){ var a=veApprovedSet(); if(a.indexOf(k)<0){ a.push(k); try{ localStorage.setItem(veApprovedKey(), JSON.stringify(a)); }catch(e){} } }
+function parseVeCanh(v){ v=String(v||''); var sz=(v.indexOf('to')>=0&&v.indexOf('nho')<0)?'to':'nho'; var m=v.match(/x\s*(\d+)/); var qty=m?parseInt(m[1],10):1; return {sz:sz, qty:qty}; }
+function pendingVeCanh(){ if(!OWNER_ACTS) return []; var appr=veApprovedSet(); var out=[];
+  OWNER_ACTS.forEach(function(a){ if(a.type!=='mua_ve_canh') return; var k=(a.sdt||'')+'|'+(a.ts||''); if(appr.indexOf(k)>=0) return; var p=parseVeCanh(a.value); out.push({sdt:a.sdt, ten:a.ten, sz:p.sz, qty:p.qty, value:a.value, ts:a.ts, k:k}); });
+  return out; }
+function approveVeCanh(sdt, ten, sz, qty, k){
+  var cn=(sz==='nho'?qty:0), ct=(sz==='to'?qty:0);
+  viAdjFor(sdt, ten, cn, ct, 0, 0);
+  veApprovedAdd(k);
+  route();
+}
+function viLocal(cn,ct,bvx,bdn){
+  if(!VIWALLET) VIWALLET={canhNho:0,canhTo:0,buaVX:0,buaDN:0};
+  VIWALLET.canhNho=Math.max(0,VIWALLET.canhNho+(cn||0)); VIWALLET.canhTo=Math.max(0,VIWALLET.canhTo+(ct||0));
+  VIWALLET.buaVX=Math.max(0,VIWALLET.buaVX+(bvx||0)); VIWALLET.buaDN=Math.max(0,VIWALLET.buaDN+(bdn||0));
+}
+function webGoi(){ return (WEBORD&&WEBORD.list&&WEBORD.list[0]&&WEBORD.list[0].goi)||''; }
+function isDoniCust(){ return isDoniGoi(webGoi()); }
+// ---- Vé canh (mỗi ngày dùng/hoàn 1 vé) ----
+function toggleCanh(size){
+  if(!WEBORD||!VIWALLET) return; var d=new Date(); d.setHours(0,0,0,0);
+  var cur=getCanh(WEBORD.sdt,d); if(cur===size) size='0';
+  if(size==='nho'&&cur!=='nho'&&VIWALLET.canhNho<=0){ alert('Bạn chưa có vé canh nhỏ. Bấm "Mua vé canh" để nạp thêm nhé.'); return; }
+  if(size==='to'&&cur!=='to'&&VIWALLET.canhTo<=0){ alert('Bạn chưa có vé canh to. Bấm "Mua vé canh" để nạp thêm nhé.'); return; }
+  var cn=0,ct=0; if(cur==='nho') cn+=1; else if(cur==='to') ct+=1; // hoàn vé cũ
+  if(size==='nho') cn-=1; else if(size==='to') ct-=1;             // trừ vé mới
+  postViAdj(cn,ct,0,0);
+  try{ localStorage.setItem(canhKey(WEBORD.sdt,d), size); }catch(e){}
+  postAction('canh', actISO(d), size);
+  route();
+}
+// ---- Báo nghỉ / ăn bù ----
+function webThoihan(){ return (WEBORD&&WEBORD.list&&WEBORD.list[0]&&WEBORD.list[0].thoihan)||''; }
+function cancelQuota(){ var dk=upDurKey(webThoihan()); return dk==='thang'?8:(dk==='hai'?4:(dk==='tuan'?2:1)); }
+function nghiKey(){ return 'beeps_nghi_'+((WEBORD&&WEBORD.sdt)||''); }
+function nghiSet(){ try{ return JSON.parse(localStorage.getItem(nghiKey())||'[]'); }catch(e){ return []; } }
+function nghiAdd(iso){ var a=nghiSet(); if(a.indexOf(iso)<0){ a.push(iso); try{ localStorage.setItem(nghiKey(), JSON.stringify(a)); }catch(e){} } }
+function nghiHas(iso){ return nghiSet().indexOf(iso)>=0; }
+function anbuKey(){ return 'beeps_anbu_'+((WEBORD&&WEBORD.sdt)||''); }
+function anbuSet(){ try{ return JSON.parse(localStorage.getItem(anbuKey())||'[]'); }catch(e){ return []; } }
+function anbuAdd(iso){ var a=anbuSet(); if(a.indexOf(iso)<0){ a.push(iso); try{ localStorage.setItem(anbuKey(), JSON.stringify(a)); }catch(e){} } }
+function openNghi(){ NGHI_OPEN=true; route(); }
+function closeNghi(){ NGHI_OPEN=false; route(); }
+function openAnbu(){ ANBU_OPEN=true; route(); }
+function closeAnbu(){ ANBU_OPEN=false; route(); }
+function doNghi(iso){
+  if(nghiHas(iso)) return; var used=nghiSet().length; if(used>=cancelQuota()){ alert('Gói này được báo nghỉ tối đa '+cancelQuota()+' bữa — bạn đã dùng hết. Nhắn Beeps nếu cần gấp nhé.'); return; }
+  nghiAdd(iso); postS3Mark(iso,'O'); if(isDoniCust()) postViAdj(0,0,0,1); else postViAdj(0,0,1,0);
+  postAction('nghi', iso, 'báo nghỉ · +1 vé bữa'); NGHI_OPEN=false; route();
+}
+function doAnbu(iso){
+  var have=isDoniCust()?VIWALLET.buaDN:VIWALLET.buaVX; if(have<=0){ alert('Bạn chưa có vé bữa để ăn bù. Vé bữa có khi bạn báo nghỉ một bữa nhé.'); return; }
+  anbuAdd(iso); postS3Mark(iso,'B'); if(isDoniCust()) postViAdj(0,0,0,-1); else postViAdj(0,0,-1,0);
+  postAction('anbu', iso, 'ăn bù bằng vé bữa'); ANBU_OPEN=false; route();
+}
+function sheetWrap(onClose, inner){
+  var handle='<div style="width:44px;height:5px;border-radius:99px;background:rgba(0,0,0,.15);margin:2px auto 12px"></div>';
+  var box='<div onclick="event.stopPropagation()" style="width:calc(100% - 24px);max-width:456px;background:var(--surface,#fff);border-radius:20px;padding:14px 18px 22px;max-height:86vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.35)">'+handle+inner+'</div>';
+  return '<div onclick="'+onClose+'" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:60;display:flex;align-items:center;justify-content:center;padding:12px 0">'+box+'</div>';
+}
+function nghiSheet(){
+  var W=WEBORD; var now=new Date(); now.setHours(0,0,0,0); var tmr=new Date(now); tmr.setDate(now.getDate()+1);
+  var days=[]; W.list.forEach(function(o){ parseVNDates(o.ngayan).forEach(function(d){ days.push(d); }); });
+  days.sort(function(a,b){return a-b;}); var seen={},uq=[]; days.forEach(function(d){ if(!seen[d.getTime()]){seen[d.getTime()]=1;uq.push(d);} }); days=uq;
+  var future=days.filter(function(d){ return d.getTime()>=tmr.getTime() && !nghiHas(actISO(d)); });
+  var used=nghiSet().length, quota=cancelQuota();
+  var head='<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px"><div><div style="font-size:17px;font-weight:800;color:var(--pine,#2C6A4A)">❌ Báo nghỉ bữa</div><div style="font-size:12.5px;color:var(--soft,#5A645D);margin-top:2px">Đã dùng '+used+'/'+quota+' vé nghỉ · báo trước 20h hôm trước</div></div><button onclick="closeNghi()" style="background:none;border:none;font-size:22px;color:var(--soft,#5A645D);cursor:pointer;line-height:1;padding:0 2px">✕</button></div>';
+  var body='';
+  if(used>=quota){ body='<div class="note">Bạn đã dùng hết '+quota+' vé nghỉ của gói này. Cần nghỉ gấp thì nhắn Beeps qua Zalo nhé.</div>'; }
+  else if(!future.length){ body='<div class="note">Không còn bữa sắp tới để báo nghỉ.</div>'; }
+  else { body='<div style="font-size:12.5px;color:var(--soft,#5A645D);margin-bottom:8px">Chọn bữa bạn muốn nghỉ - suất đó thành 1 vé bữa để ăn bù ngày khác:</div><div style="display:flex;flex-direction:column;gap:7px">';
+    future.forEach(function(d){ var iso=actISO(d); body+='<button onclick="doNghi(\''+iso+'\')" style="display:flex;align-items:center;gap:10px;text-align:left;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.1);border-radius:11px;padding:10px 12px;cursor:pointer"><span style="flex:1"><span style="font-size:12px;font-weight:800;color:var(--soft,#5A645D)">'+dLabel(d)+'</span><br><span style="font-size:14px;font-weight:700">'+esc(dishName(dishOf(d)))+'</span></span><span style="font-size:12px;font-weight:800;color:#B03A2E">Nghỉ →</span></button>'; });
+    body+='</div>'; }
+  return sheetWrap('closeNghi()', head+body);
+}
+function anbuSheet(){
+  var W=WEBORD; var now=new Date(); now.setHours(0,0,0,0);
+  var days=[]; W.list.forEach(function(o){ parseVNDates(o.ngayan).forEach(function(d){ days.push(d); }); });
+  var isSuat=function(t){ return days.some(function(x){return x.getTime()===t;}); };
+  var have=isDoniCust()?(VIWALLET?VIWALLET.buaDN:0):(VIWALLET?VIWALLET.buaVX:0);
+  var head='<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px"><div><div style="font-size:17px;font-weight:800;color:var(--pine,#2C6A4A)">🍱 Ăn bù bằng vé</div><div style="font-size:12.5px;color:var(--soft,#5A645D);margin-top:2px">Đang có '+have+' vé bữa '+(isDoniCust()?'Đo Ni':'Vừa Xinh')+'</div></div><button onclick="closeAnbu()" style="background:none;border:none;font-size:22px;color:var(--soft,#5A645D);cursor:pointer;line-height:1;padding:0 2px">✕</button></div>';
+  var body='';
+  if(have<=0){ body='<div class="note">Bạn chưa có vé bữa. Vé bữa có khi bạn báo nghỉ một bữa - suất nghỉ được giữ lại thành vé để ăn bù.</div>'; return sheetWrap('closeAnbu()', head+body); }
+  // liệt kê ngày làm việc sắp tới CHƯA có suất, chưa chọn ăn bù
+  var cand=[]; var d=new Date(now); var guard=0;
+  while(cand.length<10 && guard<40){ d.setDate(d.getDate()+1); guard++; if(d.getDay()===0||d.getDay()===6) continue; d.setHours(0,0,0,0); if(isSuat(d.getTime())) continue; if(anbuSet().indexOf(actISO(d))>=0) continue; cand.push(new Date(d)); }
+  body='<div style="font-size:12.5px;color:var(--soft,#5A645D);margin-bottom:8px">Chọn ngày bạn muốn ăn bù (trừ 1 vé bữa) - Beeps sẽ giao suất đúng chuẩn gói của bạn:</div><div style="display:flex;flex-direction:column;gap:7px">';
+  cand.forEach(function(x){ var iso=actISO(x); body+='<button onclick="doAnbu(\''+iso+'\')" style="display:flex;align-items:center;gap:10px;text-align:left;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.1);border-radius:11px;padding:10px 12px;cursor:pointer"><span style="flex:1"><span style="font-size:12px;font-weight:800;color:var(--soft,#5A645D)">'+dLabel(x)+'</span><br><span style="font-size:14px;font-weight:700">'+esc(dishName(dishOf(x)))+'</span></span><span style="font-size:12px;font-weight:800;color:var(--pine,#2C6A4A)">Ăn bù →</span></button>'; });
+  body+='</div><div class="note" style="margin-top:8px">Chốt trước 20h hôm trước. Beeps xác nhận lại khi giao.</div>';
+  return sheetWrap('closeAnbu()', head+body);
+}
 function route(){
   const root = document.getElementById("root");
   if (IS_ADMIN || (IS_OWNER && SHOW_ADMIN)) root.innerHTML = adminView();
-  else if (IS_OWNER) root.innerHTML = ownerHome();
+  else if (IS_OWNER) { if(OWNER_ACTS===null && !OWNER_ACTS_LOADING){ OWNER_ACTS_LOADING=true; ownerActsLoad(); } root.innerHTML = ownerHome(); }
   else if (CURP) root.innerHTML = custView(CURP);
-  else if (WEBORD) root.innerHTML = webCustView() + (UPG_OPEN ? upgradeSheet() : '');
+  else if (WEBORD) { if(VIWALLET===null && !VI_LOADING){ VI_LOADING=true; viLoad(WEBORD.sdt); } root.innerHTML = webCustView() + (UPG_OPEN ? upgradeSheet() : '') + (NGHI_OPEN ? nghiSheet() : '') + (ANBU_OPEN ? anbuSheet() : ''); }
   else if (EXPIRED) root.innerHTML = expiredView(EXPIRED);
   else root.innerHTML = gateView();
 }
@@ -667,10 +798,10 @@ function expiredView(o){
     '<button class="gback" onclick="logout()">← Về đầu</button>'+
     '<p class="gtag">🔒 cơm mẹ nấu, vốn dĩ đã lành</p></div>';
 }
-function logout(){ try{ localStorage.removeItem("beeps_phone"); }catch(e){} CURP=null; WEBORD=null; EXPIRED=null; IS_ADMIN=false; IS_OWNER=false; SHOW_ADMIN=false; CUR_TAB="home"; UPG_OPEN=false; UPG_DONE=null; route(); }
+function logout(){ try{ localStorage.removeItem("beeps_phone"); }catch(e){} CURP=null; WEBORD=null; EXPIRED=null; IS_ADMIN=false; IS_OWNER=false; SHOW_ADMIN=false; CUR_TAB="home"; UPG_OPEN=false; UPG_DONE=null; VIWALLET=null; VI_LOADING=false; NGHI_OPEN=false; ANBU_OPEN=false; OWNER_ACTS=null; OWNER_ACTS_LOADING=false; route(); }
 function doLoginKey(e){ if(e.key==="Enter") doLogin(); }
 
-const BLOBS = [{"s":"OLyljbFS7f2PM9uGUO2PwQ==","iv":"lVzhR+pdvLZ1sKW+","ct":"2QSwU8skKMNmMXcfi5zV3QGIMFOWaiEcHAr9I8amKt0Sfb+w+dObh3oinCn8TIZUDynHb0rnjsTNYa/RrJP/23Npp6gKqYDPR6VNt70HfvwFYoA2lNxCGzIDYe16v758d6UvPVvTXT3LAyTaowk+fFB++MySo80b1xA+YmN4k/G1Z7eJvWAgFYxwddxU"},{"s":"am0yVv1mvNOpAOl9ShA4yg==","iv":"LBlxlgmBjhsnDtBU","ct":"Lk3Y44FonEWOXxKhis+99ko40z71PqWJVdbJop0iECwKX7ML5/WJkToTLx7H2FZyj9jNyAm0pRrYrYxXEDFs1wTMn5N6983eZ0EH8zz2LXgBoJiNyVWRaa+ZxNn20QC4XMw1d9LImKUW1SRUgj0v2sIL99jabiB+EjcaRVGHy1GrvreqofT0ksJOwJcW6at9"},{"s":"74wsERIS/e3htXncqC0Ddw==","iv":"wD+HzXdb5SOabsFn","ct":"lEXI9qkhciuakb/1Ga+eRpFct5hEzgvJelX8zIydu52S4AdvXysHn2c7TLhJZfnutViMf3aT8Ea+4Vfv+HWPvEOORzm2JWxCBB3VGLUOLbc2ICPzDPMTYxJHldKAdTnSVs/3YNFIbeNm/qIkgMfEqd4iRzvdHWgl"},{"s":"ujhc5998f3MCtrJgJnM9Qg==","iv":"BDBNytzlz0OsQCVu","ct":"KfDkGZLjYi7CfZlOX/CG+IaO7rVQndy1RSvINzzggVErjSMhLLPr4bGADlYwyIeLxHzpuZPaT2s+sfQaUZIHQVfRfxPpbeNiKyj5xP4DcGcgTkrOP/h0rih7/TfF1FGMjIsGKG9cqNSQbxwtv3varm5Cr9DF"},{"s":"dSY0C0bcs7uzEMQkp5XXsQ==","iv":"YHpp+ATlXvmlv3g7","ct":"6tTgzmn+VuZXcOWq9pcdHyTfmI7FML0H+E2/lotgTjxOSifzVtTpYUMPRYrUH2xlbA48TeXmZ1g9GH57XIUv5nhjkT4bhBC6czraDyR8SZgFr4CvVJnXJ/nhNe4vkbH/2TBHtwmrzglN+sKTyqLYmKp38BrMCeq7mjJSrF/1QOx8UZuXo5VhLn/xtsWtifJYDwDBQuBeF5qvAw+djC6rkUXzqineXdLvtrHyYQ=="},{"s":"IvQnrd93jKzEcBcRPkWvKA==","iv":"UuFEdZ9x0TWVaRts","ct":"S/XsXdPGXP2foQ+NTIOMBKmINBeYB0fYXrgc8C1L9PFTZBjK2dIB8Al987uHKVy/VmxVohc/A3L00M2aicttrfmgVLmUTp4ml7lRqTfnVopgUsPBzZ1LY43C8anSHYN3lEFN/bps2ie6DaAJeycNMDag0yf7pPelsPCbWmjtI8qWlmvPIIEhhpnaP97ca313smGlto07GvD6T443b9km/NsDjuQFIyl2Iz7OCobDH8VCzEvcel8="},{"s":"fEN5BLj9O6P87rmdjnPh5w==","iv":"KwyQ2Sm1RlEMK9vY","ct":"UiUJbQDZyMxwTryxvirYW7FZ8AyReyNoLuXQMzth8Lr+MisXF4yn/Sa95JUKZPFeg1lr9IcWDFmIEmLhljdVECApjMtrfUrp29VIynGZxiSlWG2PdJil7Yw/WiAMkGn+O2ExV1kGq2suUZIUJtUNXf8NBVyDjmmaFX8xDJumnQGO7hgBF0JzoHQ23cVj02FjMQ=="},{"s":"wy7RTG098N9E4YZ5R05K6g==","iv":"ZcF7bZSpswPzI7B9","ct":"N9qlwT7qyn0EDReAgBl/CVVv5G5XRP5TgeQrQ2dhceCqIM7l3/2XGBEANBQOv/hYJYzOG4uT4sxmEZgbBB58o8Bgx8wwEYkNreYMJB3aYjHfeTNhMHPHN9LQCcMxl0qQ8vNhSfV63zeo34uVQn83OpqMTEiVgYsApkMiib7z2lXh7oFk5a/vfsgMfe8/EuFamSoiZ1DtxBVh3/e7jru+ew=="},{"s":"ffDwcmHLAqhNrJrsYu5Ghg==","iv":"2B/3iEEIZuliB4c1","ct":"P0QKSf8t4/SaYWFOQLtqr50+4Z35jbil/M8XctleF/8I9IYKbdscN+ksm2UmXtJ20kYiQoxPnpcmm9PQO4ln4sejRngQmFmQQjgc5e0V2YJDnxZ6FeeARb9U/qUYnsFZb4acF9dmGdV4MbwLLZb1RhQE0zns1XZs8/Zj+eF/AwRnxL6rCES+"},{"s":"ReUVPPV7okdYea6KdN++tg==","iv":"IlYgA4sDN/vf7n/Y","ct":"pFExe3eG4Q4+GTVilRMtAKyJH8BJYZ/KAljZwE66a1eG6FQL6faX0aRGHFXsZw+Ljcgs42Sq26X8yLAS1cyfGwZY+H4RteXhuCAbsIYsp8n2pbBrMHtyVDsXQslW6T6oszhiFvEdBe0+TJNipmQWQkjR16+bsJK9ZN1a4GPz3y0="},{"s":"W4ANGnCUewt4NKCG5nGzJQ==","iv":"SKDrRdh+AwSbgJ8u","ct":"0CwO6ioveJy7to/rNg05k3Y7skWZOagawQgTzubQKAwYg5RM7D3bC5/mHCl6Wgwe/3XHswiEc+gW3Lp1uHtAOrk8gU37LvFFfAxQWejf8CVVxP82Ft23Wg4BycuBM8rG55HCwUrSCNPFjr0kzKffkubRtGujVA77cPv5W0UacgDvb6WswxkRTMY5eAvv7gz3w7WluImcPoX7UEp07hXKOJujnrmt8WcOZ5cT6XUch0WEWl7janlX1j9zQ0H5UDhY8zEo4UbRAweAdINVuHraIgnKE5+ZAH6joBxCULsugtt4yt/7YaopC5RztsrUD9FNxPQ6G5PiG+zDS5sHAjRVmKn9oQCZRm6l2VhB2oD5/Am7hBMpbcQ7eQrPDUq87l7ioijD6aTBfSW3XnX1sUZwfrhI9XsHMgLxiDx/QCCw1pI+zGHR7NjTTQLX92aC7Rv/6x72Y8vbX6bYjxTDh0nIYRTo2hkkeXBjlJ1O8Hsdkn5/Pvx2p3Ig3JmUNpT7EQ3jRl9Vl4K9b5tWtzAnymSO0VxUDTSl6fil3enIdWurPHCWJ4zWMKWd9OsQ4sIYu5Hw6aVDgQwKPDYBL602G/5dv3X53qRjf+NfjOwtH73MU2lK33PLOHQQOf0Xhv7/F1sF73tNn/N8qKYDI+KxYR5BT0FxASpvDh7oWNJhkWQvWnz67+lzZN/xfmYOxp/U8zV8G03UVBXxjgzGGQPenTyL+FsLP81YcQu7N5PQTU3wkdlDcuWo8HCHhytNBoyK+8bYYJpEYgbcVjpC2g7gY/eSgvwBAYtgzCDQGyszhTKkU9TMkfVFvN1ZAa6/Teu9asBAOOcJ8nCpD4vH+90H8w=="},{"s":"/kp1PFzo+gfFvLqJJkizsQ==","iv":"Xd3iprAdYyo40lIw","ct":"AGukZUHnEbJ/RFUFGoDHvejAJ2j02OYhJQUfMR62Ml2inTJBUGhRoyi82RQcpGR7Qxe0d3L7a2+b1wAZQM8K7hGiZk4brtLbCElBrsOXk71Z2XcIOmwWK/XXiNOEjm7rHTCpKrkxWL30jqO/BbmIySDqcskphzc9p5c39/uFMP8nIng="},{"s":"riqLBsUHPQ7e/xhWGA8k4A==","iv":"YqASasy1FrZhh0dM","ct":"PDxqAi0sArzr1S+jFQGEzvtfGzHEnCkbAueX0nPp7nvoX6jyulMZT5owLG1dLo61/vsS3OL+ML7trSoeRWMRjX3SlkCnDqNEJYYYGenT8AXZuZoQ+QgdGtr+GpA2O8kDw/MflW4aiVqj+uscLPcT1BYY2HDGc1Ic+ZRsPQupHHcvikkTaqb+8A=="}];
+const BLOBS = [{"s":"qDhTpDiUp1OJiZJB1bmNEg==","iv":"KuOb/WdyZBmDMUvo","ct":"7iGz6JdH8qzcV2QRBhfk1LO38Ov+Q8UACFVzdWyYgSuT79tFLHuV1QhUOQCW2oZap7BCzNhaOEZWiMIEgFPwS3uR6MAMpN4U1xWYopF6Bhdbrsxi5fcCMven/I1/4s4DD6MpTQt/XhGsIVdqAMhUcfTrKYO45m/YTKd49RmM2UbiCAzdrqIk"},{"s":"P97ZQaSP637qY/gQcaoeIA==","iv":"+X9BPdPG40gQ6NfZ","ct":"vlh8dDGP0X0HYZWZ2Wna1dwOSMivdypUd7PY5hksxyYORbYJiFWb+GzH7u2dJvpWOfs9VwyAbKqViayMFk4xzLsObA04LHuiLbGj/X/5zpYgx0WLFuSmlQYKKjCbAZ4R5Vlvg6l3AlJLClH5JKe+h71qkTeG8VkxApRMggpJ3yvxVFm/sLW6d/AlzTGzUOKMvHAMr20z0yEBz4XuwukFi08Ple7NZkG3HV7+ILuEUn3lsyeSksE="},{"s":"aZ547NMXswjXhE49I6Dk7Q==","iv":"gfdQZH1ydwgs2gbj","ct":"rufzO1nIGsJbFQFePvftmQCJxImRk6J4bTgERwDAaRPJ2XR3QCmmE1nByZJXAOgSvRYA9IyQJxSNlIKqXSR7iESYR4h7qrNcgnUZ7TW2qLIUIKaWxD8RpA1txkOzf+GU93ss4TkSZkydFhIUWtGiONb2wRfnJIap"},{"s":"QUEzE+HqLxWRZmY1F4+PAQ==","iv":"KySWxKPQ8KgXwYFt","ct":"TDi7e4T8htbdn1jPAZ4pgrcoLtit8UjFWA7Bdh9LkOdhAEd5cThfpuY5lMZPpe2GrvnnI7W1CfXkuYX5Npb62FC0yEPwdFLpvvQO4w1tBmIw9+NecqX9IltPOtvIy7OHTlWa0PlL5ltf/KDGWTy5hxIyK9GZ7TrtU2+kPRyOQ48rpNGZEMTPCZ4XDaFCoz2N"},{"s":"6oXC9fvtREUuxaAg4R3qGQ==","iv":"iuPbvfNjhdC08Vtd","ct":"Ly115ul0W9W2f0uebcdURDtFnd7fSLssu1JFUoLxkKKTg0wY6GWo1Aw32aI297rMdJcGn1IaZekM9n14e3DO+CMTy8+IHhw7fZ+zRoPsjJFSUmiO/j0zMhb7GJMniWdb2HQdu2ylG0EUFsPtvbMR+SJT37i81vBLH0/Ga2Jwx5fWM4drbtTgtEuF8KU2cnXjIfV3jyqTflXGv/XmnsvsRKLQr401eaemtTV7zrRpDQYHhNPUQr0lI3Yedi6epQ2ctNphIPiSOCj/Nha0hM7B3XAD9QAQ6MyVtvkBCcc1M5BhRHsU0neRfUFsc4uIMeb0vCEj+wc2DPgiTWJkpYMq6amwuugjQAm0liilVXF3dxaRo6rwzva4Or/3zC4GcMClleUL+2TKDtMDyjTBYGK/4fy1hcNk9iGf0cJqBVvt42YGrFsTpbWZ4dQx5pQCqCWzuBU+JD1vFszNcF4yzAFDgsa2zQI4zbMztPjI8QZaLw8k+xXsFNN/wtn96OFQjtNTTxBzZ1yIJMjtHGW5CDwzAp03uLo6ZC+95LnXtO5dszb8Q6w2OiFZHCI1MKhAojhooELUBpDPFFsCCepk+TPpK4qKBFA+nS8+czZnlZQ46XGEiebUPMSlf+kxKPkI4uQ12RLaCCJU4S0RlvfWa+/VJhc0B+pyTuLslYd06acQ/+8VeR4g04mLf0v37V2ihYlABCOk89C8U1gum8HW+3f25oCvg+TGMGkD/8YIpCquwXwOCRfWJT4E/LjDhRZmfipunqiofI7M9AMXFTolpqI7u6oyj34mcWHSaJ3sKpcwyWn3/Be8c6Swk/8K/xl0jfSmtyKDZOQTYVGHwWb56g=="},{"s":"5ju2NMfYmwIYUjg0hT72SQ==","iv":"DUMCBOLn0cxSVQ1N","ct":"H5hxy/XGTHU6r/6LDljJMsLXrnw2nf46FfKjJUGUm6gv68pTXiZNQbI2JfiWx8grZr+mXJ2loGLqGw3BiLaMircmAsNVovt5MuKRasQBa3gtcdBVM3Z5sHmXgrQz0lxlqenC+ap054xLcbvvDXfouSLFJsbV"},{"s":"ZFlw8SK8de6aMf9SMiMmEg==","iv":"yYDdCsHqyFDUkQKg","ct":"tRDfQTiwr+4p1whCB8jzTvQyCaxC1LbzxjcnLrWIFHoHbQRDd1oMQe8GhWs3W2djKbGun+DxHZvjorvCnjsuCS//k9f6m+C9L8A+cohVhljAPZ1f/4VjONVhHg7U97m9BqVUaE/vPxXR6acQNRPBqBHaqwEywTjyEaLik8kpXha8wrU="},{"s":"7iAgsOiCfz6vLdLLslwswQ==","iv":"6jOYWPYIQjy1g7Ys","ct":"bd7sQgFQZNcOBL+xfUY6CG+M6GnldVbqoYye7RUZWPL9etqYCYC8CS8axV9UI0a6U2wNqZXpWMhNTcEpiipvrFNZSz+ntPoFJ5ZoMN/h0l2j8RBBNB6xujCcUg79wfIxAdM5SDLCJkYu3cCq4fYelr/i2q8Of4uvrXomPrikkhra/0s2x2UpGA=="},{"s":"SkmaGp5pvFtJOD7o+9ZyTw==","iv":"kR/vJkhgKfDZ8p59","ct":"yeVeAsOG+X7utfCeSoKeZxonrLTTG0uG+cTGi/lHkilIZM8XG/3suNrCLjVtwv1E+fLrMjVUGRVJedUzKloNx5zBI33xmQ0VnIBoeKrlc62KXOyTAavm/021OLWCqCCtkRNvfM9JpqhHMZ/geQQ+PcyBzWItQQBlCNfb8LeK3G37m5341twZUuf/jlJj"},{"s":"+Z/gTyJfil/txwKK0CtNOQ==","iv":"mEhcX7ICWbrNvJDh","ct":"vPfuZpkOrn+qhvJKFXi0utMfFjLeZD+uELRO7KML+M7ca12y585krXMmkIQv3dQqgPoqf1kvOh6BNg3c0LR/cTfc7TrWUREXD9I5wvTcJPPRZoOppd9SlqzaTWnzluEVyiNQKeT+jASGA0YhfAe41tNpeney+UCdTuAwXlDAIcKq67ApHIa1IuO1858uodHUkw=="},{"s":"E0IeSUDIqSijhmF4SzSE6Q==","iv":"GuqOkCyYLarzBEFV","ct":"0qcvk0AtFFF/K41pP8Ce1tsFEOOJ81mQscnXXIKJKP30ESXn27G8k0isQZIs04xfofD6x6YWsqg0o/Yq1iI4zU7rOkXNmkLwXN48LS/bUgoyOmThr/z3nZ5c8meTNTSR4EZic4H9M23FEk2sR8kTdeRgplDtDdz7cRgrbifwcs5JBB0f1bsJI356byBVx3YH4bBYWdEePYv1gakowzPe0t3H31Jokc0VrxGeSA=="},{"s":"0ThEyh2n0UfVd95+v8Zscg==","iv":"OQDdb/wUGiRJizeh","ct":"OAuEdEYxQZXqocZhfQejne7bdnB8V657PAtoTS/cZ7PuQYqnhczgymB2rr/L961sgOwbez+sA76pO4DfDZ2DwoyGwCMS8xkbWKMBffx+HZlZpxtNDqfige5XhYRHB92Rtwz+M8DpWkwfJsPG2ogP5iI/n7V/g/gO9/D2UdT5XD7te57a0F0IR/SwHDhfBf5BnMu1hs+3YcIF5VR+26PCWg=="},{"s":"bYB6Kh379gRihux1Of8G2A==","iv":"fTUHo/qLneyLHrpx","ct":"iRKJbtlDLOZptl8xRYsOfhCiSjhMUiJg6CQY6sNyxX6pojF2W3DPGvA85wx8aVvEc79XwR9MimZAL5edjqrxKahLmQMu/zvoSfudkBOWWO01Uh3q379qDSz5zGC9FH2nNecSAyZhJJSXyiYTgKbFv/u8qfxhFWwhjpYr3OBHB60="}];
 const ITER = 100000;
 const te = new TextEncoder(), td = new TextDecoder();
 function b64d(s){ const bin=atob(s); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; }
@@ -702,7 +833,7 @@ async function attempt(raw){
   } }
   return false;
 }
-var SHEET_API="https://script.google.com/macros/s/AKfycbzIQEvUsOkBCkiVLVq6xUETZLh6rVyQZ5Ongj0P8mmHcciLlejAwfHKu6LLEpQlV6figg/exec";
+var SHEET_API="https://script.google.com/macros/s/AKfycbwpNAMV2DCH0CAXS47M2eKpGqhEI5MisFu9kCmMBapLzG5HYbCo_YP9azepEr0SwhXqMw/exec";
 function sheetLookup(phone, cb){
   var name="__bcb"+(new Date()).getTime(); var s=document.createElement("script"); var done=false;
   var to=setTimeout(function(){ if(done) return; done=true; try{delete window[name];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s); cb([]); },20000);
@@ -721,11 +852,31 @@ function menuLoad(){
   s.onerror=function(){ if(done)return; done=true; clearTimeout(to); };
   s.src=SHEET_API+"?menu=1&callback="+name; document.body.appendChild(s);
 }
-function actISO(d){ return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); }
+function viLoad(sdt, cb){
+  var name="__vcb"+(new Date()).getTime(); var s=document.createElement("script"); var done=false;
+  var fin=function(v){ if(done)return; done=true; clearTimeout(to); try{delete window[name];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s); VIWALLET=v||{canhNho:0,canhTo:0,buaVX:0,buaDN:0}; VI_LOADING=false; if(cb)cb(); else if(WEBORD||CURP) route(); };
+  var to=setTimeout(function(){ fin(VIWALLET||{canhNho:0,canhTo:0,buaVX:0,buaDN:0}); },20000);
+  window[name]=function(res){ fin(res&&res.vi); };
+  s.onerror=function(){ fin(VIWALLET||{canhNho:0,canhTo:0,buaVX:0,buaDN:0}); };
+  s.src=SHEET_API+"?vi="+encodeURIComponent(sdt)+"&callback="+name; document.body.appendChild(s);
+}
 function postAction(type, ngayISO, value){
   try{ var id=((WEBORD&&WEBORD.sdt)||"")+"_"+type+"_"+ngayISO+"_"+(new Date()).getTime();
     fetch(SHEET_API,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:true,type:type,sdt:(WEBORD&&WEBORD.sdt)||"",ngay:ngayISO,value:value||"",id:id})});
   }catch(e){}
+}
+function postViAdj(cn,ct,bvx,bdn){
+  try{ fetch(SHEET_API,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify({viadj:true,sdt:(WEBORD&&WEBORD.sdt)||"",ten:(WEBORD&&WEBORD.ten)||"",cn:cn||0,ct:ct||0,bvx:bvx||0,bdn:bdn||0})}); }catch(e){}
+  viLocal(cn,ct,bvx,bdn);
+}
+function postS3Mark(ngayISO, mark){ try{ fetch(SHEET_API,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify({s3mark:true,ten:(WEBORD&&WEBORD.ten)||"",ngay:ngayISO,goi:webGoi(),mark:mark||""})}); }catch(e){} }
+function viAdjFor(sdt, ten, cn, ct, bvx, bdn){ try{ fetch(SHEET_API,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify({viadj:true,sdt:sdt||"",ten:ten||"",cn:cn||0,ct:ct||0,bvx:bvx||0,bdn:bdn||0})}); }catch(e){} }
+function ownerActsLoad(){
+  var name="__acb"+(new Date()).getTime(); var s=document.createElement("script"); var done=false;
+  var to=setTimeout(function(){ if(done)return; done=true; if(s.parentNode)s.parentNode.removeChild(s); OWNER_ACTS=OWNER_ACTS||[]; OWNER_ACTS_LOADING=false; route(); },20000);
+  window[name]=function(res){ if(done)return; done=true; clearTimeout(to); try{delete window[name];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s); OWNER_ACTS=(res&&res.actions)||[]; OWNER_ACTS_LOADING=false; route(); };
+  s.onerror=function(){ if(done)return; done=true; clearTimeout(to); OWNER_ACTS=OWNER_ACTS||[]; OWNER_ACTS_LOADING=false; route(); };
+  s.src=SHEET_API+"?actions=1&key=beeps26&callback="+name; document.body.appendChild(s);
 }
 async function doLogin(){
   const inp=document.getElementById("ph"), err=document.getElementById("gerr"), btn=document.getElementById("gbtn");
