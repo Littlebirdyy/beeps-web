@@ -506,7 +506,7 @@ async function applyGift(){
   }catch(e){ btn.disabled=false; btn.textContent='Áp dụng'; msg.style.display='block'; msg.style.color='#C15B5B'; msg.textContent='Máy chưa kiểm được mã (thử mở bằng link web).'; }
   updateSum();
 }
-var SHEET_URL="https://script.google.com/macros/s/AKfycbzwlVFHGT0EAFS4_L42FquAGFivob6hysseQdjJB4Ts97x634B1aUfslzBePCLI2Bc7PA/exec";
+var SHEET_URL="https://script.google.com/macros/s/AKfycby9Y3EpsFiBJBbP-V4Jg435LFQXBlpntxM8xEp7rn5DKY9OPugS4E38kuT8wgzksRA8wg/exec";
 function WDVN(dow){ return ({1:'T2',2:'T3',3:'T4',4:'T5',5:'T6'})[dow]||''; }
 function weekMonday(d){ var x=new Date(d); var dw=(x.getDay()+6)%7; x.setDate(x.getDate()-dw); x.setHours(0,0,0,0); return x; }
 var WD=(function(){ var now=new Date(); var lead=(now.getHours()<20)?1:2; var c=new Date(); c.setHours(0,0,0,0); c.setDate(c.getDate()+lead); var a=[],g=0; while(a.length<55 && g<100){ var dow=c.getDay(); if(dow!==0&&dow!==6) a.push(new Date(c)); c.setDate(c.getDate()+1); g++; } return a; })();
