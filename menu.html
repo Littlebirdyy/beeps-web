@@ -208,7 +208,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 .gben li.off{color:var(--soft);opacity:.55;}
 .gben li .ic{width:15px;height:15px;color:var(--pine);margin-top:1px;flex:none;}
 .gben li .gbx{width:15px;text-align:center;color:var(--soft);font-weight:800;flex:none;line-height:1.3;}
-.pricebar{position:fixed;left:0;right:0;bottom:0;z-index:60;max-width:760px;margin:0 auto;background:var(--surface);border-top:1.5px solid var(--line);box-shadow:0 -4px 20px rgba(0,0,0,.10);padding:9px 14px;display:flex;align-items:center;gap:12px;}
+.pricebar{flex:none;background:var(--surface);border-top:1.5px solid var(--line);box-shadow:0 -4px 20px rgba(0,0,0,.10);padding:9px 14px;display:flex;align-items:center;gap:12px;}
 .pbinner{flex:1;min-width:0;}
 .pbmut{color:var(--soft);font-weight:600;font-size:13px;}
 .pbrow{display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
@@ -220,7 +220,18 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 .pbsave{font-size:11px;font-weight:700;color:var(--honey);margin-top:1px;}
 .pbcta{background:var(--pine);color:#fff;font-weight:800;font-size:13px;padding:11px 15px;border-radius:11px;border:none;cursor:pointer;white-space:nowrap;flex:none;display:flex;align-items:center;gap:5px;}
 .pbcta .ic{width:15px;height:15px;}
-.doc{padding-bottom:96px;}
+.doc{padding-bottom:40px;}
+/* ===== ĐẶT HÀNG: modal popup giữa màn hình (chỉ trình bày + show/hide — KHÔNG đụng submit/QR/PEND) ===== */
+.ordermodal{position:fixed;inset:0;z-index:200;display:none;}
+.ordermodal.on{display:block;}
+.omback{position:absolute;inset:0;background:rgba(10,14,10,.62);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);}
+.ordercard{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:calc(100% - 8px);max-width:480px;height:calc(100dvh - 16px);max-height:calc(100dvh - 16px);background:var(--surface);border-radius:18px;box-shadow:0 24px 64px -18px rgba(0,0,0,.62);display:flex;flex-direction:column;overflow:hidden;}
+.omclose{position:absolute;right:12px;top:12px;z-index:8;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-size:18px;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);}
+.omscroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:50px 10px 12px;}
+.ordercard .pbar{position:static;top:auto;margin:0 0 14px;}
+.ordercard .wiz{scroll-margin-top:0;}
+.ordercard .step{margin-top:14px;}
+@media(min-width:600px){ .ordercard{height:auto;max-height:calc(100dvh - 64px);width:calc(100% - 40px);} .omscroll{padding:52px 20px 14px;} }
 .mchscroll{cursor:grab;display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:8px;}
 .mchscroll::-webkit-scrollbar{height:6px;} .mchscroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:9px;}
 .mchscroll .hc{flex:0 0 78%;min-width:78%;scroll-snap-align:start;margin:0!important;}
@@ -240,7 +251,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 .wstep.on{display:block;}
 .pbback{flex:none;width:42px;height:42px;border-radius:11px;border:1.5px solid var(--line);background:var(--surface);color:var(--pine);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;}
 .pbback .ic{width:20px;height:20px;}
-#wiztoast{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;z-index:70;background:var(--ink);color:var(--paper);font-size:13px;font-weight:700;padding:10px 16px;border-radius:12px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s;max-width:88%;text-align:center;}
+#wiztoast{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;z-index:320;background:var(--ink);color:var(--paper);font-size:13px;font-weight:700;padding:10px 16px;border-radius:12px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s;max-width:88%;text-align:center;}
 #wiztoast.on{opacity:.96;}
 .steph{display:flex;align-items:center;gap:10px;margin-bottom:13px;}
 .stepn{width:27px;height:27px;border-radius:50%;background:var(--pine);color:#fff;font-weight:800;display:grid;place-items:center;font-size:14px;flex:none;}
@@ -404,7 +415,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
       <p>Ăn healthy là đạt sự cân bằng giữa dinh dưỡng và hương vị</p>
       <div class="herobtns">
         <a class="hbtn hbsub" href="https://zalo.me/0941751999" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" /></svg> Tư vấn</a>
-        <button type="button" class="hbtn hbmain" onclick="document.getElementById('step1').scrollIntoView({behavior:'smooth'})"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" /><path d="M7 2v20" /><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" /></svg> Đặt ngay</button>
+        <button type="button" class="hbtn hbmain" onclick="openOrder()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" /><path d="M7 2v20" /><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" /></svg> Đặt ngay</button>
       </div>
     </div>
   </div>
@@ -424,8 +435,14 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
       <div class="cdcard"><div class="cdi"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1Z" /><path d="M6 17h12" /></svg></div><div class="cdt">3. Mẹ nấu trong ngày</div></div>
       <div class="cdcard"><div class="cdi"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" /><path d="M15 18H9" /><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" /><circle cx="17" cy="18" r="2" /><circle cx="7" cy="18" r="2" /></svg></div><div class="cdt">4. Giao tận nơi</div></div>
     </div>
+    <button type="button" class="hcta" style="display:flex;margin:14px auto 0" onclick="openOrder()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" /><path d="M7 2v20" /><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" /></svg> Đặt ngay trong 30 giây</button>
   </div>
 
+  <div class="ordermodal" id="ordermodal" aria-hidden="true">
+    <div class="omback" onclick="closeOrder()"></div>
+    <div class="ordercard" role="dialog" aria-modal="true" aria-label="Đặt hàng Beeps">
+      <button type="button" class="omclose" onclick="closeOrder()" aria-label="Đóng">✕</button>
+      <div class="omscroll" id="omscroll">
   <div class="pbar" id="pbar">
     <div class="pstep" data-s="1"><span class="pn">1</span>Chọn gói</div>
     <div class="pstep" data-s="2"><span class="pn">2</span>Chọn ngày</div>
@@ -549,6 +566,10 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
   </div>
   </div>
   </div>
+      </div><!-- /omscroll -->
+      <div class="pricebar" id="pricebar"><button type="button" class="pbback" id="pbback" onclick="wizBack()" aria-label="Quay lại" hidden><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"></svg></button><div class="pbinner" id="pbtxt"><span class="pbmut">Chọn gói để xem giá</span></div><button type="button" class="pbcta" id="pbcta" onclick="pbGo()">Chọn gói <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg></button></div>
+    </div><!-- /ordercard -->
+  </div><!-- /ordermodal -->
 
   <form name="beeps-order" data-netlify="true" netlify-honeypot="bot-field" hidden>
     <input type="text" name="ten"><input type="text" name="sdt"><input type="text" name="diachi"><input type="text" name="goi"><input type="text" name="thoihan"><input type="text" name="gia"><input type="text" name="ngayan"><textarea name="mongmuon"></textarea><input type="text" name="bot-field">
@@ -570,7 +591,6 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
   </div>
 
   <div id="wiztoast"></div>
-  <div class="pricebar" id="pricebar"><button type="button" class="pbback" id="pbback" onclick="wizBack()" aria-label="Quay lại" hidden><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"></svg></button><div class="pbinner" id="pbtxt"><span class="pbmut">Chọn gói để xem giá</span></div><button type="button" class="pbcta" id="pbcta" onclick="pbGo()">Chọn gói <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg></button></div>
 
   <div class="foot">
     <div class="fw">Beeps <span>·</span> bếp của mẹ</div>
@@ -630,7 +650,7 @@ function zoomImg(el){ var z=document.getElementById('imgzoom'), im=document.getE
 function openMenuPop(idx){ var p=document.getElementById('menupop'), st=document.getElementById('mpstrip'); if(!p||!st) return; p.classList.add('on'); try{ document.body.style.overflow='hidden'; }catch(e){}
   var sl=st.querySelectorAll('.mpslide'); var el=sl[idx]||sl[0]; if(el){ st.scrollLeft=el.offsetLeft-(st.clientWidth-el.clientWidth)/2; } }
 function closeMenuPop(){ var p=document.getElementById('menupop'); if(p) p.classList.remove('on'); try{ document.body.style.overflow=''; }catch(e){} }
-document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeMenuPop(); });
+document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ closeMenuPop(); closeOrder(); } });
 var WMENU=[
  ['Gà đùi sốt tiêu đen','Cá basa sốt cà chua','Heo nạc rim mắm tỏi','Bò lúc lắc sốt tiêu','Bún lứt trộn gà xé'],
  ['Ức gà sốt teriyaki mè','Cá nục kho nghệ','Đậu hũ nhồi thịt sốt cà','Heo cuộn nấm teriyaki','Cơm gà Hải Nam healthy'],
@@ -733,11 +753,14 @@ function wizShow(n,noScroll){
   var back=document.getElementById('pbback'); if(back) back.hidden=(n===1);
   var cta=document.getElementById('pbcta'); if(cta) cta.style.display=(n===5?'none':''); // bước cuối: dùng nút submit của form
   updateSum(); // đồng bộ pbar + thanh giá
-  if(!noScroll){ try{ var w=document.getElementById('wiz'); if(w) w.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){} }
+  if(!noScroll){ try{ var sc=document.getElementById('omscroll'); if(sc) sc.scrollTop=0; }catch(e){} }
 }
 function wizNext(){ if(WSTEP>=5) return; if(!wizSat(WSTEP)){ wizToast(wizMsg(WSTEP)); return; } wizShow(WSTEP+1); }
 function wizBack(){ if(WSTEP>1) wizShow(WSTEP-1); }
 function pbGo(){ wizNext(); } // thanh giá dưới đáy = nút Tiếp
+// ===== ĐẶT HÀNG: mở/đóng modal (chỉ show/hide + khoá cuộn nền — KHÔNG đụng state/submit/QR) =====
+function openOrder(){ var m=document.getElementById('ordermodal'); if(!m) return; m.classList.add('on'); m.setAttribute('aria-hidden','false'); try{ document.body.style.overflow='hidden'; }catch(e){} try{ wizShow(WSTEP||1,true); }catch(e){} var sc=document.getElementById('omscroll'); if(sc) sc.scrollTop=0; }
+function closeOrder(){ var m=document.getElementById('ordermodal'); if(!m) return; m.classList.remove('on'); m.setAttribute('aria-hidden','true'); try{ document.body.style.overflow=''; }catch(e){} }
 function updateSum(){
   updatePbar(); renderPriceBar();
   var sp=document.getElementById('spill'); if(sp){ var nt=spillNote(); sp.innerHTML=nt; sp.hidden=!nt; }
