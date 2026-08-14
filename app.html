@@ -265,6 +265,8 @@ const DAYS=[
 ];
 let PEOPLE = [];          // set khi owner đăng nhập (production) / gán sẵn (preview)
 let CUR_TAB="home", FB_SEL=null, FB_NGON=null, CURP=null, IS_ADMIN=false, IS_OWNER=false, SHOW_ADMIN=false, ADM_DAY=0, SHOW_LOGIN=true, WEBORD=null, EXPIRED=null, CANH_SCOPE="today", LIVEMENU=null;
+// Lệnh sản xuất LIVE: đơn thật (?all) + lịch ăn Sheet 3 (?lichan). ADM_ISO = ngày đang xem (YYYY-MM-DD).
+var ADM_ISO=null, ADM_ORDERS=null, ADM_LICHAN=null, ADM_ORDERS_LOADING=false, ADM_LICHAN_LOADING=false;
 var UPG_OPEN=false, UPG_TAB='tier', UPG_SUATDUR='tuan', UPG_CANH='nho', UPG_CANHSCOPE='all', UPG_DONE=null;
 var VIWALLET=null, VI_LOADING=false, NGHI_OPEN=false, ANBU_OPEN=false;
 var WELCOME_OPEN=false, WELCOME_CHECKED=false; // #5 pop-up "đăng ký thành công" lần đầu đăng nhập (1 lần/SĐT)
@@ -645,8 +647,8 @@ function ownerHome(){
     ownerUpgBox(box)+
     ownerYcBox(box)+
     ownerPushBox(box)+
-    '<button class="ownbtn" onclick="SHOW_ADMIN=true; route();"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1Z" /><path d="M6 17h12" /></svg> Xem lệnh sản xuất (bản cũ) →</button>'+
-    '<div class="note">Lệnh sản xuất đang chuyển sang đọc thẳng từ Google Sheet (đơn đã CK) — sẽ cập nhật sau.</div>'+
+    '<button class="ownbtn" onclick="SHOW_ADMIN=true; route();"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1Z" /><path d="M6 17h12" /></svg> Lệnh sản xuất hôm nay →</button>'+
+    '<div class="note">Lệnh sản xuất tính LIVE từ đơn đã CK + lịch ăn Sheet 3 (ai ăn ngày nào), khẩu phần đo theo từng người.</div>'+
     foot()+'</div></div>';
 }
 function isDoniGoi(g){ return /Đo\s*Ni|Do\s*Ni/i.test(String(g||'')); }
@@ -690,7 +692,7 @@ var AF_DONI={"0":1.2,"1-2":1.375,"3-4":1.55,"5-6":1.725,"7+":1.9};
 var GOAL_DONI={"giảm mỡ":0.80,"giảm cân":0.80,"cân bằng":1.00,"tăng cơ":1.10};
 var MAXBOX={com:150,rau:300,thit:180}, MIN_COM_DONI=50, TRUA_FR=0.33; // hộp 3 ngăn — cap ƯỚC, chờ Menu 1 đong thật
 var MAX_COM_SONG=65; // TRẦN CƠM (anh QA chốt 13/08): ≤65g gạo SỐNG = 150g cơm chín. CHỈ áp carb 'com' (khoai/bún/miến/cơm gà không dính). Áp cả v1+v2, VX+ĐN.
-var THIT_FIX={"0905734529":115,"0900000000":100,"0917195098":100}; // đạm ĐẶT TAY anh QA 13/08: PhucNN 115 · Đào Xuân Quý 100 · HảiKM 100. (Hoàng ĐN 110 + Quang Anh 110 chưa có SĐT login nên chưa key được.)
+var THIT_FIX={"0905734529":115,"0900000000":100,"0917195098":100,"0941751999":110}; // đạm ĐẶT TAY anh QA 13/08: PhucNN 115 · Đào Xuân Quý 100 · HảiKM 100 · Quang Anh (chủ bếp) 110. (Hoàng ĐN 110 chưa có SĐT login nên chưa key được.)
 function curSdt(){ return (WEBORD&&WEBORD.sdt)||''; }
 function nsdt(s){ s=String(s||'').replace(/[^0-9]/g,''); if(s.indexOf('84')===0&&s.length>=11) s='0'+s.slice(2); return s; }
 function thitFixFor(){ return THIT_FIX[nsdt(curSdt())]||0; }
@@ -920,25 +922,69 @@ function webCustView(){
   return h;
 }
 
+// ===== LỆNH SẢN XUẤT (LIVE) — đọc đơn thật (?all) + lịch ăn Sheet 3 (?lichan); suất tính bằng CHÍNH engine Đo Ni =====
+function admDateFromISO(iso){ var p=String(iso||'').split('-'); if(p.length<3) return null; var d=new Date(+p[0],+p[1]-1,+p[2]); d.setHours(0,0,0,0); return d; }
+function admWeekMon(){ var now=new Date(); now.setHours(0,0,0,0); var dow=(now.getDay()+6)%7; var mon=new Date(now); mon.setDate(now.getDate()-dow); mon.setHours(0,0,0,0); return mon; }
+function admDays(){ var mon=admWeekMon(), out=[]; for(var i=0;i<5;i++){ var d=new Date(mon); d.setDate(mon.getDate()+i); d.setHours(0,0,0,0); out.push(d); } return out; }  // Thứ 2 – Thứ 6 tuần này
+function admDefaultISO(){ var days=admDays(); var now=new Date(); now.setHours(0,0,0,0); var t=now.getTime(); for(var i=0;i<days.length;i++){ if(days[i].getTime()===t) return actISO(days[i]); } for(var j=0;j<days.length;j++){ if(days[j].getTime()>=t) return actISO(days[j]); } return actISO(days[0]); }
+// VX (Vừa Xinh) = hộp CHUẨN (không đo). Đạm nạp chuẩn 28g -> đạm chín tính bằng CHÍNH công thức damThitG (hydrat 0.26, trứng 1.6). Cơm/rau reuse engine (goal 'cân bằng'). THIT_FIX (đặt tay theo SĐT) vẫn đè nếu có.
+var VX_DAM_NAP=28, VX_Q=3;
+function admVXthit(){ return r5((VX_DAM_NAP - VX_Q*1.6)/0.26); } // = 90g chín
+function admVX(person, ma){ var M=monInfo(ma); if(!M) return null; var phoi=(M.nhom==='phối');
+  var thit=phoi?0:admVXthit(); var tf=THIT_FIX[nsdt(person.sdt||'')]||0; if(tf&&!phoi) thit=tf;
+  var q=phoi?0:VX_Q; var com=comDoNi(ma,'cân bằng')||0; var rau=rauDoNi('cân bằng');
+  return { thit:thit, q:q, com:com, rau:rau, calo:null, phoi:phoi, vx:true }; }
+// Đo Ni: reuse ĐÚNG doniPortion() — tạm gán WEBORD = hồ sơ người này (đạm+cơm+rau+trứng+calo, THIT_FIX theo SĐT, v2 nếu đủ 6 yếu tố).
+function admDoni(person, ma){ var saved=WEBORD;
+  WEBORD={ sdt:person.sdt||'', ten:person.ten||'', list:[{ goi:person.goi||'Đo Ni', cao:person.cao||'', nang:person.nang||'', tuoi:person.tuoi||'', gioitinh:person.gioitinh||'', cuongdo:person.cuongdo||'', muctieu:person.muctieu||'', ghichu:person.ghichu||'' }] };
+  var out=null; try{ out=doniPortion(ma); }catch(e){ out=null; } WEBORD=saved; return out; }
+function admPortion(person, ma){ return isDoniGoi(person.goi)?admDoni(person, ma):admVX(person, ma); }
+// Ai ăn ngày iso = dòng Sheet 3 có trangthai ∈ [X,S,E,B] (loại O = nghỉ). Map sang đơn thật theo SĐT rồi tên (chuẩn hoá trim/thường) để lấy số đo. +1 Quang Anh (chủ bếp, không ở Sheet 3).
+function admEaters(iso){
+  var la=ADM_LICHAN||[], ords=ADM_ORDERS||[], byName={}, bySdt={}, out=[];
+  ords.forEach(function(o){ if(o&&o.ten) byName[String(o.ten).trim().toLowerCase()]=o; if(o&&o.sdt) bySdt[nsdt(o.sdt)]=o; });
+  la.forEach(function(r){ if(String(r.ngay)!==String(iso)) return; var tt=String(r.trangthai||'').trim().toUpperCase();
+    if(tt!=='X'&&tt!=='S'&&tt!=='E'&&tt!=='B') return; // O (nghỉ) loại ra
+    var ord=(r.sdt&&bySdt[nsdt(r.sdt)])||byName[String(r.ten||'').trim().toLowerCase()]||{};
+    var goi=(tt==='S')?'Đo Ni':((tt==='X')?'Vừa Xinh':(ord.goi||r.goi||'')); // X/S mã trực tiếp gói bữa; E/B lấy gói theo đơn
+    out.push({ ten:ord.ten||r.ten||'—', sdt:ord.sdt||r.sdt||'', goi:goi, cao:ord.cao||'', nang:ord.nang||'', tuoi:ord.tuoi||'', gioitinh:ord.gioitinh||'', cuongdo:ord.cuongdo||'', muctieu:ord.muctieu||'', ghichu:ord.ghichu||'', trangthai:tt, chubep:false }); });
+  out.push({ ten:'Quang Anh', sdt:'0941751999', goi:'Đo Ni', cao:'172', nang:'74', tuoi:'', gioitinh:'Nam', cuongdo:'', muctieu:'Tăng cơ', ghichu:'Chủ bếp - không thu tiền', trangthai:'S', chubep:true });
+  return out;
+}
+function admGaoLbl(ma){ var M=monInfo(ma); return (M&&CARB_LB[M.carb])?CARB_LB[M.carb]:'cơm'; }
 function adminView(){
-  const D = DAYS[ADM_DAY];
-  let trang=0, lut=0, quart=0, rauTot=0, damTot=0;
-  let rows = "";
-  PEOPLE.forEach(P=>{
-    const m = computeMeal(P, ADM_DAY);
-    if (m.gaoKey==="lut") lut += m.grams; else trang += m.grams;
-    quart += P.q; rauTot += m.rauG; damTot += m.damG;
-    rows += '<tr><td><b>'+esc(P.ten)+'</b><br><span style="font-size:10px;color:var(--soft)">'+(P.real?'':'~')+P.kg+'kg</span></td><td><b style="color:var(--pine)">'+m.damG+'g</b></td><td>'+m.grams+'g '+(m.gaoKey==="lut"?"lứt":"trắng")+'</td><td>'+m.rauG+'g</td><td><b>'+P.q+'</b></td><td style="font-size:10.5px">'+esc(P.notes.join(" · ")||"—")+'</td></tr>';
+  if(!ADM_ISO) ADM_ISO=admDefaultISO();
+  var days=admDays();
+  var back=(IS_OWNER?'<button class="ownbtn back" onclick="SHOW_ADMIN=false; CUR_TAB=\''+'home'+'\'; route();">← Về màn quản lý</button>':'');
+  var picker='<div class="dayspicker">'+days.map(function(d){ var iso=actISO(d); return '<button class="'+(iso===ADM_ISO?'on':'')+'" onclick="ADM_ISO=\''+iso+'\'; route();">'+dWeekday(d)+'<br>'+dDate(d)+'</button>'; }).join('')+'</div>';
+  var date=admDateFromISO(ADM_ISO); var ma=date?monCode(date):null; var dish=date?dishName(dishOf(date)):'—';
+  var head='<div class="app">'+masthead()+'<div class="head"><div class="hi"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1Z" /><path d="M6 17h12" /></svg> Lệnh sản xuất</div><div class="sub">'+(date?dWeekday(date)+' '+dDate(date)+' · ':'')+esc(dish)+'</div></div><div class="body">'+back+picker;
+  if(ADM_ORDERS===null||ADM_LICHAN===null){ return head+'<div class="abox"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M5 22h14" /><path d="M5 2h14" /><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" /><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" /></svg> Đang tải đơn thật + lịch ăn (Sheet 3)…</div>'+foot()+'</div></div>'; }
+  if(!ma){ return head+'<div class="abox">Ngày này ngoài lịch nấu (Thứ 2 – Thứ 6).</div>'+foot()+'</div></div>'; }
+  var eaters=admEaters(ADM_ISO);
+  var damTot=0, comTot=0, rauTot=0, quart=0, phoiN=0, rows='', warns=[];
+  eaters.forEach(function(p){ var pt=admPortion(p, ma);
+    var kgLbl=(isDoniGoi(p.goi)&&p.nang)?(String(p.nang).replace(/[^0-9]/g,'')+'kg'):'';
+    var goiTag=isDoniGoi(p.goi)?'Đo Ni':'Vừa Xinh';
+    var damCell, comCell, rauCell, eggCell;
+    if(!pt){ damCell='<span style="color:#B03A2E">thiếu số đo</span>'; comCell='—'; rauCell='—'; eggCell='—'; }
+    else if(pt.phoi){ phoiN++; comTot+=pt.com||0; rauTot+=pt.rau||0;
+      damCell='phối'; comCell=(pt.com||0)+'g'; rauCell=(pt.rau||0)+'g'; eggCell='—'; }
+    else { damTot+=pt.thit||0; comTot+=pt.com||0; rauTot+=pt.rau||0; quart+=pt.q||0;
+      damCell='<b style="color:var(--pine)">'+pt.thit+'g</b>'; comCell=(pt.com||0)+'g'; rauCell=(pt.rau||0)+'g'; eggCell='<b>'+(pt.q||0)+'</b>'; }
+    if(p.ghichu) warns.push('<b>'+esc(p.ten)+'</b>: '+esc(p.ghichu));
+    rows+='<tr><td><b>'+esc(p.ten)+'</b>'+(p.chubep?' <span style="font-size:9px;color:var(--honey);font-weight:800">CHỦ BẾP</span>':'')+'<br><span style="font-size:10px;color:var(--soft)">'+goiTag+(kgLbl?' · '+kgLbl:'')+'</span></td><td>'+damCell+'</td><td>'+comCell+'</td><td>'+rauCell+'</td><td>'+eggCell+'</td><td style="font-size:10.5px">'+esc(p.ghichu||'—')+'</td></tr>';
   });
-  return '<div class="app">'+masthead()+'<div class="head"><div class="hi"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1Z" /><path d="M6 17h12" /></svg> Lệnh sản xuất</div><div class="sub">'+PEOPLE.length+' hộp/ngày · đạm theo cân nặng</div></div><div class="body">'+
-    (IS_OWNER?'<button class="ownbtn back" onclick="SHOW_ADMIN=false; CUR_TAB=\''+'home'+'\'; route();">← Về thẻ của tôi</button>':'')+
-    '<div class="dayspicker">'+DAYS.map((d,i)=>'<button class="'+(i===ADM_DAY?'on':'')+'" onclick="ADM_DAY='+i+'; route();">Ngày '+(i+1)+'<br>'+d.ten+'</button>').join("")+'</div>'+
-    '<div class="warn"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg> '+esc(D.warn)+' · Trang Kao giáp xác — 3 món đều AN TOÀN.</div>'+
-    '<div class="abox"><b>A. TỔNG NẤU:</b><br>'+esc(D.prodDam)+': <b>'+damTot+'g chín</b> (~'+(damTot*1.4/1000).toFixed(1)+'kg sống)<br>'+
-    'Gạo trắng: <b>'+trang+'g</b> · Gạo lứt: <b>'+lut+'g</b> · '+esc(D.prodRau)+': <b>'+(rauTot>=1000?(rauTot/1000).toFixed(2)+'kg':rauTot+'g')+'</b> · Trứng: <b>'+Math.ceil(quart/4)+' quả</b> (cắt tư = '+quart+' miếng)</div>'+
-    '<div class="sect">B. CHIA HỘP</div><table class="atbl"><tr><th>Tên</th><th>Đạm</th><th>Cơm</th><th>Rau</th><th>Trứng¼</th><th>Ghi chú</th></tr>'+rows+'</table>'+
-    '<div class="note">Đạm = thịt/cá CHÍN theo cân nặng (chia từ mẻ chung). Trứng cắt tư bù đạm 1–4 miếng/hộp. Cơm = gạo SỐNG. KHÔNG canh.</div>'+
-    foot()+'</div></div>';
+  var eggQ=Math.ceil(quart/4);
+  var rauTxt=(rauTot>=1000?(rauTot/1000).toFixed(2)+'kg':rauTot+'g');
+  var warnBox=warns.length?('<div class="warn"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg> '+warns.join(' · ')+'</div>'):'';
+  var abox='<div class="abox"><b>A. TỔNG NẤU</b> ('+eaters.length+' hộp/ngày)<br>'+
+    'Đạm (thịt/cá): <b>'+damTot+'g chín</b> (~'+(damTot*1.4/1000).toFixed(1)+'kg sống)<br>'+
+    esc(admGaoLbl(ma))+' (gạo SỐNG): <b>'+comTot+'g</b> · Rau: <b>'+rauTxt+'</b> · Trứng: <b>'+eggQ+' quả</b> (cắt tư = '+quart+' miếng)'+
+    (phoiN?'<br><span style="font-size:11px;color:var(--soft)">'+phoiN+' suất món phối — đạm nằm trong món, không cân riêng.</span>':'')+'</div>';
+  var table='<div class="sect">B. CHIA HỘP</div><table class="atbl"><tr><th>Tên</th><th>Đạm</th><th>Cơm</th><th>Rau</th><th>Trứng¼</th><th>Ghi chú</th></tr>'+rows+'</table>';
+  var note='<div class="note">Đạm = thịt/cá CHÍN theo cân nặng · Cơm = gạo SỐNG · số liệu tính LIVE từ đơn thật + Sheet 3. Quang Anh (chủ bếp) +1 suất, không thu tiền.</div>';
+  return head+warnBox+abox+table+note+foot()+'</div></div>';
 }
 
 function pickNgon(btn, v){ btn.parentElement.querySelectorAll("button").forEach(b=>b.classList.remove("sel")); btn.classList.add("sel"); FB_NGON=v; }
@@ -1262,7 +1308,7 @@ function welcomeSheet(){
 }
 function route(){
   const root = document.getElementById("root");
-  if (IS_ADMIN || (IS_OWNER && SHOW_ADMIN)) root.innerHTML = adminView();
+  if (IS_ADMIN || (IS_OWNER && SHOW_ADMIN)) { if(ADM_ORDERS===null && !ADM_ORDERS_LOADING){ ADM_ORDERS_LOADING=true; admOrdersLoad(); } if(ADM_LICHAN===null && !ADM_LICHAN_LOADING){ ADM_LICHAN_LOADING=true; admLichanLoad(); } root.innerHTML = adminView(); }
   else if (IS_OWNER) { if(OWNER_ACTS===null && !OWNER_ACTS_LOADING){ OWNER_ACTS_LOADING=true; ownerActsLoad(); } if(OWNER_YC===null && !OWNER_YC_LOADING){ OWNER_YC_LOADING=true; ownerYcLoad(); } if(OWNER_PENDING===null && !OWNER_PENDING_LOADING){ OWNER_PENDING_LOADING=true; ownerPendLoad(); } root.innerHTML = ownerHome() + (OCREATE_OPEN?ownerCreateSheet():'') + toastHtml(); }
   else if (CURP) root.innerHTML = custView(CURP);
   else if (WEBORD) { checkWelcome(); if(VIWALLET===null && !VI_LOADING){ VI_LOADING=true; viLoad(WEBORD.sdt); } if(!STATE_SYNCED && !STATE_SYNCING){ STATE_SYNCING=true; syncStateFromActions(); } if(!S3_ENSURED){ S3_ENSURED=true; postS3Ensure(); } root.innerHTML = webCustView() + (UPG_OPEN ? upgradeSheet() : '') + (NGHI_OPEN ? nghiSheet() : '') + (ANBU_OPEN ? anbuSheet() : '') + (WELCOME_OPEN ? welcomeSheet() : '') + toastHtml(); }
@@ -1279,10 +1325,10 @@ function expiredView(o){
     '<button class="gback" onclick="logout()">← Về đầu</button>'+
     '<p class="gtag"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> cơm mẹ nấu, vốn dĩ đã lành</p></div>';
 }
-function logout(){ try{ localStorage.removeItem("beeps_phone"); }catch(e){} CURP=null; WEBORD=null; EXPIRED=null; IS_ADMIN=false; IS_OWNER=false; SHOW_ADMIN=false; CUR_TAB="home"; UPG_OPEN=false; UPG_DONE=null; VIWALLET=null; VI_LOADING=false; NGHI_OPEN=false; ANBU_OPEN=false; NGHI_SEL=null; WELCOME_OPEN=false; WELCOME_CHECKED=false; OWNER_ACTS=null; OWNER_ACTS_LOADING=false; OWNER_YC=null; OWNER_YC_LOADING=false; OWNER_PENDING=null; OWNER_PENDING_LOADING=false; OCREATE_OPEN=false; STATE_SYNCED=false; STATE_SYNCING=false; S3_ENSURED=false; route(); }
+function logout(){ try{ localStorage.removeItem("beeps_phone"); if(WEBORD&&WEBORD.sdt) localStorage.removeItem('beeps_web_'+phoneNorm(WEBORD.sdt)); }catch(e){} CURP=null; WEBORD=null; EXPIRED=null; IS_ADMIN=false; IS_OWNER=false; SHOW_ADMIN=false; CUR_TAB="home"; UPG_OPEN=false; UPG_DONE=null; VIWALLET=null; VI_LOADING=false; NGHI_OPEN=false; ANBU_OPEN=false; NGHI_SEL=null; WELCOME_OPEN=false; WELCOME_CHECKED=false; OWNER_ACTS=null; OWNER_ACTS_LOADING=false; OWNER_YC=null; OWNER_YC_LOADING=false; OWNER_PENDING=null; OWNER_PENDING_LOADING=false; OCREATE_OPEN=false; STATE_SYNCED=false; STATE_SYNCING=false; S3_ENSURED=false; route(); }
 function doLoginKey(e){ if(e.key==="Enter") doLogin(); }
 
-const BLOBS = [{"s":"vHl8IqgZSaep2LP4qeTX5g==","iv":"QNOZ3Wn007wc9454","ct":"JC5sks9M/78+obYoXqV52j10+yJoW80MdO0MfGDrLmBJrycmY6U+3qb/aLls4PdN1T5hGdyJBv0jUZnhZ1zLju/Zeokpmr90RsB3RjMNRxggXaKpmGLg/CObAZSij82XDKcJXNHM7lto6N/PvKR1Zu1IF7WmARmrM+cV4WtFzsYEsAVzVyBVo8gp4tnEcYAPWVm9K4AG7ex9tegbH/a7IEDBH88YqAzGZyb7/MwbHUPvESCPUTiXr0GJjyuR187TcoaA2CR4KbbClfCr2ufaqN2cEAeKMSaB9F0n9NRWVfePhF/suRzhRAJClA4wWwEmvN9qOqK164di2kz5QzletxLEeRM8ntp4IwlG88L7pKocY9YY77CRqAQGdsI6gf1I7DW68dpv/3lNJJKRDQ4L1/0JEQXM14omGe3bN70gfllSHWTkaVeAwdwt4IknvwoEia70O/NsbQo7TfQLqY1jY22a42Q4jtBgq1jjvnMJK+CWAR5OZRl3a6sU3dOxD8ScybJwI0vTRKZno2sIDazqCTZDkgkWrngCzsqfpNLs8Lq88KQz7T4Pqa9I6hXIcsPbNekYKDMRX+uBizQqsdC4Aj3RRQ+3IuUPIYClXOJfSeQElCCttUebe6eKpxJQ2qC1d6YfCKRgYGJhkBk36lkE3GUGOcBnMUflCmY+CSTdRfWa/eBbzNV8N8fegMikYwHuVoRHJltxJRfCCeBjdWUqX7TVOzwRFFYApDcW87kzmZahhvUbS3YtnsHuClOn5wsGpum03LiS5L+DlzEymdX6+Ryzn2WX7Tm5M+pWAQXgv8/XEILda/unHeXBxHXoJgD/xgbPnfELEUb+FQ+Apw=="},{"s":"Z4gLIVN6vMOjF5pY5JDwmA==","iv":"uAuQUl75U5HxS82b","ct":"8mP2/dZYuVUxCuQWFJteG9RGiMHWkVm1C5yhojwAhuaJD0cAiUDq9dGhVCrJDnQxQxHyqZxzLVoztO29iBkLdnBkrpnOIpSjzmwJPRy0wYZdQLEOcnrGXfdH6akVfRovLBozd5WbZruONgnjHaS0KKtYWp4u4ieGp7YhmqFcTnDpYfJlkYhOGJ4pBgYedyKwg0aoSgUqVz5GVOvXcs8cjaI+ZoXpdmY3/6eDC0KWMR+MhZHzFrl3Z5T60HdkQn1AkQI9JkI+MKxdsFlw9XCneU/HvRdZUCuHqQz9pO0FlIc="},{"s":"/gdwrUV3mIaUPP2+lRLAYQ==","iv":"1Hvb3ypuswMQlMQX","ct":"wU2/8ZpgjWWE5pSUehNJk2GSpp4vYXhYJ3OqtcsJ4PU3o0+wDxtbTjJrczwGuug5HWXeiVmz4d9hIpGvNwztm4vpSe7N3qFkAiUbaaXU5Y9963FpiZIEjVtm3+0yQO0Yyoiy817SD1kOcsniJmaVKB/KrWGjP9pPuZOlYvYAJ75eoFHJYSvHGgyvapc7Xv7350IYWqnDqzHSoGS0k6DwVzvIrvBasfTGJDmyfsJjdzDKIrxJbfwT2axWICJz7V5CbldBCD858q0OzI8eQO2jLmAtERljM7ZG6y484Duifwwsja/ZjLuwl01KIq0="},{"s":"QyIe76JOd5hE1qpyi4BCwg==","iv":"ZbQ8HPFhw0Iq1nzA","ct":"JYN5rsx+QQJ/Ro/dv6erBjrrpNRluDnCk+1de6tGqbkMjOYL8d4owlwh6gQJl4ofl94ZGgYo/YhLRrciTjrxIv/Hmlr6ducwwFxQRzLiqeE7TiHRd7u1lTkn54y4dzEiSoJY0UaFCGBn5X9/AR6lZ+nBVHOq0dQBV5BRmWIYdt/GB23sw2SwItxImWb7s8KJGemYElSR1rrjrMHHSxxYUO2uyv+NygXgaSG3JQCn2yuz/1LWS5XqayXwohJ3ubd3cRTX+xCTN63BkpAGLc4wM9wJlEufwHE="},{"s":"2jQaJ22FPWj66zKUM1iEcg==","iv":"Tbv9/iuDpCookUJR","ct":"SAXuXjIwapz1CKcOGHBgSoYsvkZFkx877iITkeytEUWtY0anRnomEoO8t+OT0TsfD4dK08R3juX78hBjivHChxDCAaxBBi+bkNizFtHQKwlvbyt3p5TTYShmAN0l8+ZJ8CNbuVulxClGR4aiVJQQEaJotl6vRErZ/vQUHpq29fC6kAJ61NJ6TpGLygT1Cfhs4uwFYDiqKoghWoNayok3Z4ZitVSpUms2SCbGkkWG4/DCXuLSutAS+W6LT2cTfzsCuVNPgrDgqqbQyv6E5cYoLWEHK9TpxnuUlVq8IV2umGK3jhosXLZb/g=="},{"s":"M/vWe7FMRBeDAPbt7qOxIA==","iv":"NXA+AsI86dbfUItY","ct":"M3OT7SpUEoZW3zgwRI9P5zbPzvY2WqH9RP22gMAnN4/PTcLVX/l4Mu23JDF+onigFSIm+PDFvzYohcxD9RlDs/IcfhTgBBKCToM4A3ue+BxrRCzPGczXq9p+jsaenR7cURtFHZxf4CbMHhhmiKovJ2S1hS4tRXBzgN64cTl/3JGgFhcUUxfzY8W0aepw416miNb0uGTLokq9Ql398tu+ecSxwqOPLPlV4NF5Vok/lQ/UBPQbVEiTifGJA2k/oEzCSexLqoMbagY9"},{"s":"B+d+qn17iL7QwG2eIf1ejA==","iv":"ANniw8CV3BGyN5eQ","ct":"slpyfOnD+r1egClmBdh5V30Nc2dLX2N9elo9mNHqoMZ/xzjGevPGf1Xwj0p7jtwn/NRJwHNmjpcyu1v7ju1mbVZw4nQUFAG3CabsKg/mg+hzXY0++rsQOSUtvglMqK82uOjT5o43GWHGJEOYxMWu890QRMdHaKMuYYjBA9JoPLkZhUfXn9f0gU/Jn763OXZHAABSVGVyP0o4fBsHPQZUYscLawR5WbwqWRjdHOYF7kV3U0Coo77UUfL5dSoMlbSQ84QkmCwitD8ceKC6ZAeBgxBcY54+wv1ApmgRThFZolhCug5jfIgqnHYPycrgsZ4/9GeZqQn+fBOtYcKi"},{"s":"F6AZBJOCBQxQwYnpydfLVQ==","iv":"CV8loA5x9A1oDmGt","ct":"1YNQlWmuQOG5rHdzonOUocDrF5rQMKzLTTWpNnnSUA1CeYCtfqLIeJeEu6sXOHpDy4DXPEEQYGYkL7SUppLvAu1PEC+DCvKwshktktcn2ynBLVXddemG3plnU+BMKPdYcZpjF1DdlJuWTRkNbgnO3+LlcVkkfWgsOBGJJcdBTkfA6RDLb3Y1sATeShSTNMFvHiebeob9zkTljWwdGejbTMz+PWo39VfMiHvfh9ZXKQ5I6haO/pBm9U/JRWkXQFhg/15r/4y9"},{"s":"1xhIpF7xrsV0LSfCV/ecZw==","iv":"Xd7Y4wE6KjoPMYah","ct":"lzjE3aEBgemCytE9pAd+PqptlIc+iQuth/tk058ZOg3KMmVbDyIZ2/YYL+5fcKXnCr65Oi14EGsmjuADyT1ZuUDdz8wd1FksizIlbIXXPiWVPtyLlLN/QIqTSL3nCgwF8yui0IH4W0OcSrGZiV6i1Fsf7w4rQbf+INmIKUL3RSzPIxobDFwM4eyLo9B6jE9kJ/IKecBMvNsowpEczIyZgx5aTenBmgi4ReOQev8bMgI8s/pLxwSEKj1/VXBII6GHyDrEADv/Q6RkBOB7en/i+/nyBFI7THbv3bw/Ft3LxhJJUCLoymsh+B9WyIGZ94ibVrLstHht+a7a0ni4wzJp+OsSUYHWNz5hsGtbqw=="},{"s":"uphOBKVqz2zAqIWd+9o76A==","iv":"T2SE9AqiMgojG8r0","ct":"6+laH/dlHKMdJcRwYmh96K2e+ZZEKeug33pMyVS1rlg1U0pb/t74+Gd+SPDFiTDGxeC9dFFYpEFvAv3RzvFJxfXvrfIpN5PaUXoYR+RPPZgTrWXRNoocS5EnR2ChlZaO1k8Bgd4gCkg5mWdeqivK9yt9wQ+U4YuqqELXK6PVpamdESKkjderciz7CpV0Uy3tUtefxHsRKU2TpxXCdNTsWtNv7j6Q8sC7WdlEXISQ/0YoTy3/I9dBGkeEwEq/J3j6oDehYwAntmh92GLP+2PTkrNPhCfl7TayxcR3JHmMCsuP"},{"s":"pk2CBpLFr9ku3bFbfSbhUw==","iv":"HHfmgSsqhzo/jsW5","ct":"6yFuNr1Ipn6fEXH1rMInOaJGICdSTDYIXN2adhA7EtKvfzpoM9ZpSlmW2b/sm7ZZAZqG6p0Z3Uuj5SjLE2VUqGgWfkUN51D8Vhno9XyapDoGvE/RMIMKEaUfm/WL1tCdRwJsnux0QTMdBDMlhbTTUCtuasP/+bhH3Ggs3wVCF9N7ehD5ZrAvD2D8efdbdsSEJGBtbkCKN4gXCSiEDpno5+nbCsFEO3xqP++Mc30Q+EwAwb4v6EdrZmw5FOEyTxFjd+hB+rDt2qVWMKAA3Uc="},{"s":"NPBDzrRBvOmW8chZrq/zYg==","iv":"SOBHsOQfq6r0hXZw","ct":"fUdAMUxu8ZA3sYKf5uKYvzu73pvxfFguJfj/bCAU56tMUY6WdyznIjGqfso65kNfMXSboGyIqG1OwTJEqHEzCyWHDrD+LKwyIEieY6iqgNN7JxdqORjXKatqwKw5W7AKZvK2zzbwHn1HWPz3SA6vzEb5lFVlf5DQPQdUx+tM9umKQpQY3wMR2JRbp5sKpRM+nKAl6JorR2+rwlvxR6yp+iYBNPoxwRLf65nwGFEx8YkPmFdRwRerrjQFMmpgZVGCOFtAljQYEquHDQ=="}];
+const BLOBS = [{"s":"KA775zB0WuGqjj9rZnSWxw==","iv":"mUIDP6P0zvvjjdae","ct":"gG4QR0XhftJCiEORUyo2npy3lgMkmTnY4UeRFeUuxaIXw63aIgbB2qCo5mzP4rmAU66vaMyFcD2meLtdih3xfCKNARNZ3zi4ZJ/eEgA/THgq8wOnIvHE676HjPUerMKUGH+i7XiwNMDfGkYxmzQ2f/03CSfpbBT98wFzJDqQui8Qr2Me8egTrwf7fcrCqCjvRWFk1QvUhBOQHXOl2vMOxoJEulP3Af6rbxfDlA192AClWNQU3NrD/5DByXoUuRSAMM+qs0TGdTIOHhxIq9bFEAetF42KCPpmnFgEGmBmmlY="},{"s":"ELe6T+2ywruRGi9C/Llheg==","iv":"+KAKX7fNpp6osLXI","ct":"lCRtKA/JKEEEl929ZEluj1FxQFUuTr6EeD5D0FIew+5bcpd5Vo2eVR0IE9b6K9FXVDPm5beTK0dUt8Xt3hL/WduFKHK3RXqy4NnhC2vzdUS2ORj3PuwMVBq5VTeqUeK8m9GcQ6ct4VOC/s60gfcbdudkzyRh6XgYRasQyez7Vuu64T1HYm51ld3aHhj7puHwdi/Zw4sSeAwfvxPw19KyMI/VWJJY+7YAj0KkC9NUXFvLwzChlhwDP19w+KU1RYijUBpgPA/Uel73qarzhO7B/Dd1593NmkF6Gsu8aTGeGVnA+LCCRWqjHkQdCkE="},{"s":"ylzlo1msY5jdmz/Qw3nXwA==","iv":"3MNOxhR878a4/O+7","ct":"UbEmQttHz92vc/kGTmGlor00Z1DPiKtQBN38HoB64689ypnDRGo0VwQ4qwGlrgQnv+QPJyucNC8EGmQc6YHXenuSh70zkrGcEFfe5opmbTkeaN54fHydrA6MdkIMVGiYUpQDheMx2gR3gepyhWhgFBIxhpIMwYmZzgLAyCM7f0jS+PzCwV3N9jJAf4T5/qyuG/MigppOKpUUEreJV/zVbG83ZbGv288PL/q88jOc5WUkORbXkSvqWYB9Oz+ZD55K2RNKxbAxXDd5j5klHVsIobS/NvHITrlEyez5AQ/5kL9R"},{"s":"b7GNbZKcEkEvdR/+5lw7YQ==","iv":"+HQSHtTC588fnDjJ","ct":"21EkbJJG36Ij5kQY5F9R7JgKwPGwh7lxHU3EvQGPeaUG9lp1NCp+O3NPyg3+Wm1oAYGoT3lE7swOlVAW9QBvw8FRFX8vkCUHj0N/gxGMrPzLn9lT/oxqTHJW69EnrOV1LQfrZAqQlhtkaU0F1+8DtoEEYM86KWWdx3UAnY6u6jNi0DQYhXq7Bh555/dFkK/fPyDY5+eJ1DeTgNUJgWRkD1aKLhihfxjvHagRVMQbYF2swtNuILld7hte2oXEolkw+p5QJ8xr17lZzZZPaTflSuQ1XrISeiTbwMA6JJhlmMs/qAN0PQx0jNNXhgNXASIQH4yQdMAbrFB7wZgovtvsNYWcHyyCBkyXcOLFazY6fRht9jN3MUHPasvsjM/k/Zje6hzD3qUj7faOkbvOnfycJiKtgd/teZtAGrf1aydpuvOg+Wigr28T2Hdq+g+S6PzyT2kWaG4RCNZkagpUQzHFzJl/CPmsjL4OZm3OxoYUTB0HdGQB3CSPdSA1QNZKaBfJCXko51eXtmR8j2nanavpZjg9FceMNxsMoPrDGsWjlns9rjcsQJHZxRFeI9cCEovHLwwFhZK91eLjvFtQtNHm1ST3x+AH1W8l6d15sgjetfUupVhIK472i5xajwgc1UyaupfX4aJxrKozutLAjXQMiwUb3oy2Le2PX4mup9Qe0ud6iWP0QysOQXYvUHGrcXfbpQAFYzuliLlZkkrtiDELwAOPwBsrLM7xxdUYHibAhgiGqaw1VvIYzpNN32rvL578ZgLAFIBEmEn4yDBR3M5uRO7IrZG1jvE0LloD3988kd66vFjIcFJreNHFVSkbhthfrvetzZs8KCBZgXh/RQ=="},{"s":"7MSobfrl37yirpXk+YTipA==","iv":"5XwOpDLK++PH+tG0","ct":"rMkF58cmqEYdZUiguZCtcty3aH53yNfxhyKJTc48rlNXPyrIofXn/ppet60+Woa1Xr3nsOkl0zbj3oX34UZNiUsjQC8DP/zI/U8vGtLzoKyxMP73/KpzVq6gOMylFoxCSV2ldtj8HgAbvVRC+s9HnRDg5kyjr/OsBCKOwD+0bIwTZMeEcvd2AGZybhafFNrgM6BhYM5VjC9u3cn1mnpmsOFTRi+eeVUjktpH8EIop19iOWOSBUD2vN8sOjwk7IdpN6qpDnDRiYJ/7+CgPrs="},{"s":"KShMaUsc3zYl3ebcJMX33Q==","iv":"yOoTDyTPl3GiKOib","ct":"bbyRFvWTk/4G/7SzwWLx4nS3LSRO1UF9BAS+3NI90bhP/Uj9kykMtsoYfHFyWj1XJlb/Jgpritg27bXF20+C0glkQEhkyTO5Wg0Fp12FkMGdo+/UwYCC8ggcs2NNbvzjqCY+Z0yYiIG1c+gkN/pKjmQ71k02Jy6cpSCOzr9WiQeXl702Nx9IHLEY0XIJSpeUsEcRmzpj+oTU/mNLkaiC8HSp5zgL2+50FxN4NKFep8mQjv2bvWLALX0NYuGXbdlFk49nRtcMhgx24EINcK5l+CturagfZjc="},{"s":"r0aY6yYlAUsRu+Fl2PcNcQ==","iv":"yE13ErfboZDG2TqZ","ct":"cb3IvSjND8oPMG0qiOYPkIYOk8QrbkZEiixn/V207WfSTck8Kj6NxtO/4U0eb0eJt9bc7KN+Gwo/Vj5RKhYmUqQEf5BWTFubwtZk+RGLAbY43svxmQagMhcF/vGnoGRaplUv3ZN/MwWbrmN/SUeJHSzVUmI8fihMOjj03/0W3PN0ULlCn6uoDAwMwPX9v0ykVgCPncgPBGDvehu604toF8SyIgM9AeMYov52X35A5V4/NUOyLHbQO1QmTAI70yN9aLJwfAvXw7brCWubpWX/lxspejJmvYjR/sENCm1/EXjy9OdsJpPzGMdHI9MDRAQb49sILrq1UoA8+7gAMAEtsVHnScXQNTiObSjMYA=="},{"s":"jpgo7OnhhgIKm7P0hlboLw==","iv":"/BEqfd6GCvx7uJ6v","ct":"rBBoPEdPVYTcYn49A7/tOCBAZbT1oIDEsAuvRAmH/Rw5FxnRQMQwcFzr7YJGhiHnYHiSjNpOQITUWls1jfq/OdzmusNZDKkgsafBkZurbKbAfReudUqW7hk8lhrxWFR5EiD6t/Voxd+giBDYl4JCvCeuThD9JXvQr4hUgPzAhBLQeF43F/8WENN6kRz9Eyzd9SkzDc7WEzglc/TKRVfHscsYIWBVeQ0dw278nbJG0+qxtucjww+rmSZ0XPH+HYs4fI9vemnhBJjmv6dE5G3f+4B5U5PfV2hryYgzjKY+tPOmLnYtagkaFw=="},{"s":"cYP0DoYQTqzFFser9eFpDA==","iv":"rR+u3MW1ZS8WJ7Hb","ct":"DDxWaR0coiErPDLi53CeJBjjIaZrezrrSCZnvwU2RPdhb3HyL4XUfNLCz7TLnuB8dedL1Jsv0bfn9zaNZSsJMZabDosQD/cfDSGu9U3bC+4yctodkKR+NaJqVqzu1QKHWtwJp1RjfAwvz7giMzCmu+2hwrHpraWgStKKZSZKz4Z/9oRA6T2lCE8VgTxi9wzqtcr8KDZfcbg2Sv8DHC/Y/PtjHv57FhtcLRUmCi+ROS6N8W8IUUlsbcNx/1AO5qyltnNYPIUp5fGH"},{"s":"ru8y+nWcL2OXaxTo/PNd/g==","iv":"cLsuEdPI4W0R6XaA","ct":"ij8uqElnBdhEeizV+4YAesI6kK4opJIDN7Yv/Ha/j0S/dDvz4G6RPeK4Fyj6j8XGKdG5TJiG6WeB34pEubKWj+8NSVnk41KXguz9VUg97mtgPoDFbzEvl6CN5jHHK1u74QA8jNDrutgh3Xq261qGqoPG4LlYnKFLIdJE+KHW87zUJooK31x0wAHAFaq0tY+rXV+v6kJPNEiaqcnml6o6gTKjxM301hfslDEMvI2HSmV3XKulYsZVCy5pRXgpFYd/MN3vg/uW"},{"s":"wH1KE7TgrLtuDvlRJuqgtA==","iv":"J0bDRCJv2adiej3a","ct":"gX6KsJXhCyT0YRKIV/HtgO5Dz0vHitBUeaiojEGZlgtisGmqxxcvW3eB7th245as6WK1uADJFldiS3zgP50mb32wrPN1rwREaA/TIe0ENuKEKvyH867/g83bfqZcHrW2kAgwZrEjXp4GRsNN+roYRuw8Kzr0HUROIQBFw5wyzafwnq+CmBdiWTG1nwcxNJFGRjZTunvGULbunSca8dMKZcQzxUH8OuW1WmYR7xx3WdUMkkr++s0Surf5oM4QYKHTjOSqWooRYycCaA=="},{"s":"6yKHOT2AapSzyUhqUJ8JjQ==","iv":"znG2K9+xJ04Y2DU5","ct":"FSAUHrunof27MaCIaV8RqjKLlckEcF8V30MZ22LE2uZSsZ/a3wkJWGGUXMIUGgDKpGyuLYVSr3P/jq8URSQEHFgEcoSVgDkG0lL/QLMRAvdbxHSOb4gtBQ8WEeczpy2cWotSzpaeMdBCV2EHCI0mjGmHFGOnsCJ4o5fvObpkj37U7FHf1wpHQHzwd4gUwl8iGsTCtnI8+LLc7fIusY461dwDImfC4D0jL9FGLiHZcLx5tiRZbvKytJU0bGPu5A9RyioBjGqA7YDw8zTHuabSiXX5tdmSLQmteQNusTtIIoIXhklV1OEshnT4jbEuGN04QVBSddxaAi5E8mep"}];
 const ITER = 100000;
 const te = new TextEncoder(), td = new TextDecoder();
 function b64d(s){ const bin=atob(s); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; }
@@ -1429,6 +1475,21 @@ function ownerPendLoad(){
 }
 function postApproveOrder(sdt, id){ try{ fetch(SHEET_API,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify({approve:true,sdt:sdt||"",id:id||""})}); }catch(e){} }
 function postCreateOrder(d){ try{ fetch(SHEET_API,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify({id:'adm-'+(new Date()).getTime()+'-'+Math.floor(Math.random()*1e6),data:d})}); }catch(e){} }
+// ---- Lệnh sản xuất LIVE: mọi đơn ĐÃ CK (?all=1) + lịch ăn Sheet 3 (?lichan=1) ----
+function admOrdersLoad(){
+  var name="__aocb"+(new Date()).getTime(); var s=document.createElement("script"); var done=false;
+  var to=setTimeout(function(){ if(done)return; done=true; if(s.parentNode)s.parentNode.removeChild(s); ADM_ORDERS=ADM_ORDERS||[]; ADM_ORDERS_LOADING=false; route(); },20000);
+  window[name]=function(res){ if(done)return; done=true; clearTimeout(to); try{delete window[name];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s); ADM_ORDERS=(res&&res.orders)||[]; ADM_ORDERS_LOADING=false; route(); };
+  s.onerror=function(){ if(done)return; done=true; clearTimeout(to); ADM_ORDERS=ADM_ORDERS||[]; ADM_ORDERS_LOADING=false; route(); };
+  s.src=SHEET_API+"?all=1&key=beeps26&callback="+name; document.body.appendChild(s);
+}
+function admLichanLoad(){
+  var name="__alcb"+(new Date()).getTime(); var s=document.createElement("script"); var done=false;
+  var to=setTimeout(function(){ if(done)return; done=true; if(s.parentNode)s.parentNode.removeChild(s); ADM_LICHAN=ADM_LICHAN||[]; ADM_LICHAN_LOADING=false; route(); },20000);
+  window[name]=function(res){ if(done)return; done=true; clearTimeout(to); try{delete window[name];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s); ADM_LICHAN=(res&&res.lichan)||[]; ADM_LICHAN_LOADING=false; route(); };
+  s.onerror=function(){ if(done)return; done=true; clearTimeout(to); ADM_LICHAN=ADM_LICHAN||[]; ADM_LICHAN_LOADING=false; route(); };
+  s.src=SHEET_API+"?lichan=1&key=beeps26&callback="+name; document.body.appendChild(s);
+}
 async function doLogin(){
   const inp=document.getElementById("ph"), err=document.getElementById("gerr"), btn=document.getElementById("gbtn");
   const v=(inp.value||"").trim(); if(!v) return;
@@ -1436,7 +1497,7 @@ async function doLogin(){
   const ok = await attempt(v);
   if(ok){ route(); return; }
   sheetLookup(phoneNorm(v), function(orders){
-    if(orders && orders.length){ orders=webNormOrders(orders); WEBORD={ ten:orders[0].ten, sdt:v, list:orders }; try{ localStorage.setItem("beeps_phone", v); }catch(e){} route(); }
+    if(orders && orders.length){ orders=webNormOrders(orders); WEBORD={ ten:orders[0].ten, sdt:v, list:orders }; try{ localStorage.setItem("beeps_phone", v); localStorage.setItem('beeps_web_'+phoneNorm(v), JSON.stringify(WEBORD)); }catch(e){} route(); }
     else { btn.disabled=false; btn.textContent="Xem suất của tôi"; if(err){ err.textContent="Chưa thấy số này - có thể mạng chậm, bạn bấm lại lần nữa giúp Beeps nhé. Vẫn không được thì nhắn Zalo 0941 751 999."; err.style.display="block"; } }
   });
 }
@@ -1473,7 +1534,10 @@ function goBack(){ location.href="./"; }
 try{ menuLoad(); }catch(e){}
 (function(){ let p=null; try{ p=localStorage.getItem("beeps_phone"); }catch(e){}
   if(!p){ route(); return; }
-  var after=function(ok){ if(ok){ route(); return; } sheetLookup(p, function(orders){ if(orders&&orders.length){ orders=webNormOrders(orders); WEBORD={ ten:orders[0].ten, sdt:p, list:orders }; } route(); }); };
+  var after=function(ok){ if(ok){ route(); return; }
+    // #1 cache: hiện NGAY từ máy (nếu có) rồi cập nhật ngầm — khỏi chờ Google mỗi lần mở
+    try{ var c=localStorage.getItem('beeps_web_'+phoneNorm(p)); if(c){ var cw=JSON.parse(c); if(cw&&cw.list&&cw.list.length){ WEBORD=cw; route(); } } }catch(e){}
+    sheetLookup(p, function(orders){ if(orders&&orders.length){ orders=webNormOrders(orders); WEBORD={ ten:orders[0].ten, sdt:p, list:orders }; try{ localStorage.setItem('beeps_web_'+phoneNorm(p), JSON.stringify(WEBORD)); }catch(e){} } route(); }); };
   if(window.crypto && window.crypto.subtle){ attempt(p).then(after); } else { after(false); } })();
 </script>
 </body></html>
