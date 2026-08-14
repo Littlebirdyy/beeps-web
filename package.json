@@ -1,0 +1,9 @@
+{
+  "name": "beeps-deploy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Beeps PWA static site + Web Push sender (Vercel serverless function).",
+  "dependencies": {
+    "web-push": "^3.6.7"
+  }
+}

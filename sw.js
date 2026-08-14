@@ -1,6 +1,6 @@
-/* Beeps service worker — PWA app shell (phase 1).
+/* Beeps service worker — PWA app shell + Web Push.
    Network-first for the app HTML with cache fallback (mở offline = thấy shell gần nhất).
-   Push SENDING = phase 2: các handler push/notificationclick bên dưới mới là STUB. */
+   Push: handler 'push' hiện notification, 'notificationclick' mở /app.html. */
 const CACHE = 'beeps-shell-v1';
 const SHELL = ['/app.html', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png'];
 
@@ -52,20 +52,30 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-/* ---- PHASE 2 STUBS (push SENDING chưa build ở bản này) ----
-   Khi làm push server: tạo VAPID keys, cho client subscribe qua pushManager,
-   lưu subscription, rồi server gửi Web Push → 'push' event bên dưới hiện notification. */
+/* ---- Web Push: server (Vercel /api/push) gửi -> hiện notification, bấm vào mở app ---- */
 self.addEventListener('push', (event) => {
-  // TODO phase 2: parse event.data + self.registration.showNotification(title, options)
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (e) { try { data = { body: event.data && event.data.text() }; } catch (e2) { data = {}; } }
+  const title = data.title || 'Beeps';
+  const options = {
+    body: data.body || '',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    data: { url: data.url || '/app.html' }
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 
 self.addEventListener('notificationclick', (event) => {
-  // TODO phase 2: event.notification.close(); focus/mở /app.html qua clients.openWindow
   event.notification.close();
+  const target = (event.notification.data && event.notification.data.url) || '/app.html';
   event.waitUntil(
-    self.clients.matchAll({ type: 'window' }).then((cs) => {
-      for (const c of cs) { if ('focus' in c) return c.focus(); }
-      if (self.clients.openWindow) return self.clients.openWindow('/app.html');
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((cs) => {
+      for (const c of cs) {
+        if (c.url && c.url.indexOf(target) >= 0 && 'focus' in c) return c.focus();
+      }
+      for (const c of cs) { if ('focus' in c) { c.navigate && c.navigate(target); return c.focus(); } }
+      if (self.clients.openWindow) return self.clients.openWindow(target);
     })
   );
 });

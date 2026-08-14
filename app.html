@@ -313,8 +313,17 @@ function todayInfo(){
 function transMsg(P){ return '<div class="trans"><div class="tt"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M16 7h.01" /><path d="M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20" /><path d="m20 7 2 .5-2 .5" /><path d="M10 18v3" /><path d="M14 17.75V21" /><path d="M7 18a6 6 0 0 0 3.84-10.61" /></svg> Đợt ăn thử 27–29/07 đã xong — cảm ơn '+esc(P.ten)+' đã tin Beeps!</div><div class="tb">Beeps đang lên <b>lịch tuần chính thức (Thứ 2 – Thứ 6)</b>. Suất của bạn sẽ hiện ngay ở đây khi tuần mới bắt đầu.</div><a class="tzalo" href="https://zalo.me/0941751999" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" /></svg> Đặt / hỏi suất tuần này → nhắn Zalo</a></div>'; }
 
 /* ===== PWA (Progressive Web App): cài app "add to home screen" + xin quyền thông báo.
-   PHASE 1 (bản này): manifest + service worker (offline shell) + nút cài + xin quyền Notification.
-   PHASE 2 (CHƯA làm): push subscription + server đẩy thông báo — xem TODO trong enableNotif(). ===== */
+   PHASE 1: manifest + service worker (offline shell) + nút cài + xin quyền Notification.
+   PHASE 2 (bản này): push subscription (client) → lưu vào Sheet "PushSub" → server (Vercel /api/push) đẩy Web Push. ===== */
+// VAPID PUBLIC KEY (an toàn để nhúng client). PRIVATE key = biến môi trường Vercel, KHÔNG bao giờ ở đây.
+var VAPID_PUBLIC="BOWQ4QgmCADRzbNtXTSesZlA5sW2Duj1WI4dBbDveu-bHnHvsexSYCNq5b0ny9nxapJSQw0wFShfdV3GIiFZWrc";
+function urlBase64ToUint8Array(base64String){
+  var padding='='.repeat((4 - base64String.length % 4) % 4);
+  var base64=(base64String + padding).replace(/\-/g,'+').replace(/_/g,'/');
+  var raw=window.atob(base64); var out=new Uint8Array(raw.length);
+  for(var i=0;i<raw.length;i++){ out[i]=raw.charCodeAt(i); }
+  return out;
+}
 var BIP_EVENT=null, PWA_DISMISS=false;
 function pwaStandalone(){ try{ return (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true; }catch(e){ return false; } }
 function pwaIsIOS(){ try{ return /iphone|ipad|ipod/i.test(navigator.userAgent||'') && !(window.MSStream); }catch(e){ return false; } }
@@ -328,9 +337,26 @@ function installApp(){
 function enableNotif(){
   if(!('Notification' in window)){ alert('Trình duyệt này chưa hỗ trợ thông báo.'); return; }
   try{ Notification.requestPermission().then(function(p){
-    if(p==='granted'){ try{ showToast('<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0" /><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></svg> Đã bật thông báo Beeps. Beeps sẽ nhắc giờ cơm ở bản sau nhé!'); }catch(e){} try{ new Notification('Beeps 🐦',{body:'Đã bật thông báo. Beeps sẽ nhắc bạn giờ cơm trưa!'}); }catch(e){} }
+    if(p==='granted'){
+      try{ new Notification('Beeps 🐦',{body:'Đã bật thông báo - Beeps sẽ nhắc bạn giờ cơm trưa!'}); }catch(e){}
+      // Đăng ký nhận đẩy (Web Push): cần service worker + PushManager + đã bake VAPID_PUBLIC.
+      var pushOk=false;
+      try{
+        if('serviceWorker' in navigator && 'PushManager' in window && window.atob){
+          pushOk=true;
+          navigator.serviceWorker.ready.then(function(reg){
+            return reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC) });
+          }).then(function(sub){
+            try{ postPushSub(sub); }catch(e){}
+            try{ showToast('<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0" /><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></svg> Đã bật thông báo - Beeps sẽ nhắc giờ cơm'); }catch(e){}
+          }).catch(function(){
+            try{ showToast('<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0" /><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></svg> Đã cho phép thông báo trên máy này.'); }catch(e){}
+          });
+        }
+      }catch(e){}
+      if(!pushOk){ try{ showToast('<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0" /><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></svg> Đã bật thông báo trên máy này.'); }catch(e){} }
+    }
     else if(p==='denied'){ try{ showToast('Bạn đã tắt thông báo. Có thể bật lại trong cài đặt trình duyệt.'); }catch(e){} }
-    /* TODO phase 2: navigator.serviceWorker.ready → registration.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:VAPID}) rồi gửi subscription lên server để đẩy thông báo. CHƯA làm ở bản này. */
   }); }catch(e){}
 }
 function pwaBannerHtml(){
@@ -549,6 +575,39 @@ function ownerYcBox(box){
   OWNER_YC.forEach(function(y){ h+='<div style="display:flex;align-items:center;gap:10px;background:rgba(224,163,46,.08);border:1px solid rgba(224,163,46,.3);border-radius:11px;padding:9px 11px"><span style="flex:1"><span style="font-size:13px;font-weight:800">'+esc(y.ten||y.sdt)+'</span> <span style="font-size:11px;color:var(--soft,#5A645D)">· '+esc(y.ngay||'')+'</span><br><span style="font-size:12.5px">'+esc(y.noidung||'')+'</span></span><button onclick="doYcDone('+y.row+')" style="background:var(--pine,#2C6A4A);color:#fff;font-weight:800;font-size:11.5px;padding:8px 10px;border-radius:9px;border:none;cursor:pointer;white-space:nowrap">✓ Đã xử lý</button></div>'; });
   h+='</div></div>'; return h;
 }
+// ===== Gửi thông báo (Web Push) cho khách đã bật thông báo =====
+function pushSecretSaved(){ try{ return localStorage.getItem('beeps_push_secret')||''; }catch(e){ return ''; } }
+function ownerPushBox(box){
+  var inp='width:100%;box-sizing:border-box;border:1.5px solid rgba(0,0,0,.15);border-radius:10px;padding:11px 12px;font-size:15px;font-family:inherit;margin-bottom:9px';
+  var h='<div style="'+box+'">'+
+    '<div style="font-size:13px;font-weight:800;color:var(--pine,#2C6A4A)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0" /><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></svg> Gửi thông báo cho khách</div>'+
+    '<div style="font-size:11.5px;color:var(--soft,#5A645D);margin:6px 0 10px">Gửi tới tất cả khách đã cài app và bật thông báo (ví dụ: "Cơm trưa tới rồi", "Còn 1 suất", "Nhắc gia hạn").</div>'+
+    '<input id="op_secret" type="password" autocomplete="off" placeholder="Mật khẩu gửi thông báo" value="'+esc(pushSecretSaved()).replace(/"/g,"&quot;")+'" style="'+inp+'">'+
+    '<input id="op_title" type="text" placeholder="Tiêu đề (ví dụ: Cơm trưa tới rồi)" style="'+inp+'">'+
+    '<textarea id="op_body" placeholder="Nội dung (ví dụ: Beeps vừa giao cơm cho bạn, chúc ngon miệng nhé)" rows="2" style="'+inp+'"></textarea>'+
+    '<button id="op_btn" onclick="sendOwnerPush()" style="display:block;width:100%;text-align:center;background:var(--pine,#2C6A4A);color:#fff;font-weight:800;font-size:14px;padding:12px;border-radius:11px;border:none;cursor:pointer"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0" /><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></svg> Gửi cho tất cả khách đã bật thông báo</button>'+
+    '</div>';
+  return h;
+}
+function sendOwnerPush(){
+  var g=function(id){ var e=document.getElementById(id); return e?String(e.value||'').trim():''; };
+  var secret=g('op_secret'), title=g('op_title'), body=g('op_body');
+  if(!secret){ alert('Nhập mật khẩu gửi thông báo giúp Beeps nhé.'); return; }
+  if(title.length<2 && body.length<2){ alert('Nhập tiêu đề hoặc nội dung thông báo nhé.'); return; }
+  var btn=document.getElementById('op_btn'); if(btn){ btn.disabled=true; btn.textContent='Đang gửi...'; }
+  ownerSendPush(secret, title, body, function(res){
+    if(res && res.ok){
+      try{ localStorage.setItem('beeps_push_secret', secret); }catch(e){}
+      showToast('<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg> Đã gửi '+(res.sent||0)+' thông báo'+((res.failed)?' - '+res.failed+' máy không nhận được':'')+'.');
+    } else if(res && res.error==='unauthorized'){
+      if(btn){ btn.disabled=false; btn.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0" /><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></svg> Gửi cho tất cả khách đã bật thông báo'; }
+      alert('Mật khẩu gửi thông báo chưa đúng. Kiểm tra lại nhé.');
+    } else {
+      if(btn){ btn.disabled=false; btn.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0" /><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></svg> Gửi cho tất cả khách đã bật thông báo'; }
+      alert('Chưa gửi được. Kiểm tra kết nối và thử lại nhé.');
+    }
+  });
+}
 function openCreate(){ OCREATE_OPEN=true; OC_GOI='Vừa Xinh'; OC_DUR='ba'; route(); }
 function closeCreate(){ OCREATE_OPEN=false; route(); }
 function ocSetGoi(g){ OC_GOI=g; route(); }
@@ -585,6 +644,7 @@ function ownerHome(){
     ownerVeCanhBox(box)+
     ownerUpgBox(box)+
     ownerYcBox(box)+
+    ownerPushBox(box)+
     '<button class="ownbtn" onclick="SHOW_ADMIN=true; route();"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1Z" /><path d="M6 17h12" /></svg> Xem lệnh sản xuất (bản cũ) →</button>'+
     '<div class="note">Lệnh sản xuất đang chuyển sang đọc thẳng từ Google Sheet (đơn đã CK) — sẽ cập nhật sau.</div>'+
     foot()+'</div></div>';
@@ -1222,7 +1282,7 @@ function expiredView(o){
 function logout(){ try{ localStorage.removeItem("beeps_phone"); }catch(e){} CURP=null; WEBORD=null; EXPIRED=null; IS_ADMIN=false; IS_OWNER=false; SHOW_ADMIN=false; CUR_TAB="home"; UPG_OPEN=false; UPG_DONE=null; VIWALLET=null; VI_LOADING=false; NGHI_OPEN=false; ANBU_OPEN=false; NGHI_SEL=null; WELCOME_OPEN=false; WELCOME_CHECKED=false; OWNER_ACTS=null; OWNER_ACTS_LOADING=false; OWNER_YC=null; OWNER_YC_LOADING=false; OWNER_PENDING=null; OWNER_PENDING_LOADING=false; OCREATE_OPEN=false; STATE_SYNCED=false; STATE_SYNCING=false; S3_ENSURED=false; route(); }
 function doLoginKey(e){ if(e.key==="Enter") doLogin(); }
 
-const BLOBS = [{"s":"6D6O1Xf8I5y6nWOfx1yMPw==","iv":"hZETINX0ib1IJF6r","ct":"uHw4TTvIe9W678Lc30vsQ+GKXt44SJBcoyJ6HFE+F7LMgKXS1uS9Fv3fz3CIug7yyvV99ykkYlGP/aHsnPs4Jbr/KQu89aRFkJruxqjGU5OMzot48Jc23IO4VmlPoNujqQ1GKkixHCnH03j+XBPuav49Xf0lh8/Y2P/E4dq7iphsAprwXu+8j1547lqD5tlzo55ceT9Ex4mSRO41cYiG0vr+8ZrfUex42vv5oZyhnBO2Fmka0WA1IjQQ+X8fNhjIbCL0PgeW"},{"s":"RUNQ697Btibz+2MCoMUniw==","iv":"7O3a2vaHjS+0pxJ6","ct":"ph/+Y7J96zc/7avGJ91+d4BbDdGwlux78U8pZYPLvfFClAd8OLOPv5a1qbf+MCOvfgEe8uhxylhRr596Mn2e2OPj19KPJA9H1e4h8ZEBydOvpsAHGspr7Ew79ParJgPn9lfHKy+dI6AwzH/Qqyp9GHEOObCcOjhtEwr9rFjQmPF/R5DiTJWoigJ3bq3DcySnRMtxMqho2MAliPWUqp2CInyNnWUd+SB3axd28RTAqd95/eoqkSVlYsvJ4NyPmOndaur+mcOZIxgBTKF7XCzfCwiEKJugnPFh8ErNjNeW8JU="},{"s":"2YN3J20HRVFLBYKgxTaxFQ==","iv":"LPtsWumh2e9p3jxl","ct":"Jz2iVN7EE/8VIW0xLJ40uQSgXGtGRIbhBtkdnL1gTJVIcaE9Hqsl/SnpgzPlVDnjRn1fcc6NeMSgt6Klm+O8qi5Bte9O6rMtM11lPVwVeg+W0iTXuO5JM0fAmIGU6VEw7CouYiaNnQ4t0rHbiEQYZHHEXvAjTf2OQDYdUkN8LHZPfV5oWz/H13QMOvfN0PdjOGsF6CyhKlR50ud6l3QVREb/NWw4P4rRXnb3fy7VmSnJofexZZ6veF2WAcv18ROd9HbdnSFpfu1yBpoL6lPYcylKqmyXgAXyBHozsqTCArI8XW01linZ+NEHrQeLTm0/6rIkXws7IIO2uxFeacVsFuRJ2VTF86phg05ThQ=="},{"s":"eC5pa1hOD76SL66n8rh/YQ==","iv":"tDpjtHF5V2/7Dpd3","ct":"lfiAhwCu8GJ1R7UC/8bCUrAF7oco0ilhxnmmUp/qrD9GJoPYB8T1ca6cJa4kqOSh3yyn9ok3aM62fDzl1U2xFokWCrdDBp1bq2f20vtdwwgD5GRTEp7Qr50EQPXewU+UQBd/4kBojzxCJoc/vDsiosf2LiOuJnFOwTV/cHRSUyBVFpZjyghbPWRHvlJVt20iaeWmVg4iHIb7wj3om2aC8Twcfvf1q7a99e5WsOqytDjE5YfUF1aTybP+EvLfj5cAB5pja3vWat5PfQ=="},{"s":"pBQVarF9qh3wxhxujgieHQ==","iv":"X6frNOqyhLjth+4F","ct":"7RrKv3q8U4b4B3t/RKIlK3N1X4QSUHk6ZekZic55dTJk4m6dhbH61Wod6z56vVTc04KEpVJmCrS0PEwsWGhGy1Hedo4Ru+y0dNWmnSrNPP0b4ejs1/fBLh9EYLKSD9mVm+Feh7/jEapym135LEUWmVXo3g7qVH134Kj962KVFiQCYye1YP2MZtkxF+Dh498VSJOSYOv22J0qRsjwikjDC5NXIYGgqKr8uwq10c58El2ttM+pPc2UQZl16KZPZ8g9qOxgwzcGf++qKDVTJU59BbvSQKg/Z3afnBi/QCTR6svLsuzTgs1r0g=="},{"s":"pIAnNTqxo7y6zuHri7Mddw==","iv":"c7m5EvMWmjPUr5RB","ct":"Cjbjxx4IMKpyNHjiKs9HGJKUMd1Vp5meHkUui8ZpCt8YKwysfaSQYbD9SlGRRObUMt921SOz7SbH6wqXUEKY98ISQKZ4m+JOmVYHBQIJdWK3JE2BWhVQCz1xKPgfs8MKDi2V0pfoU/91JUDGvAIYBDL61XqJQcyv2CGVeXSTePVjOlQyvfiNP6VqpIvO9DQcRxoH/diDTzK/gT2sXhnAj7oO+BDQXujDZNk4ESEQyMj/TXUJPsGbqRk1ZRxi2V8EFbcPZTL7mD6ccJsH7v4="},{"s":"4tjT21DF0xTJOhjvv7Dpmg==","iv":"ABAFSY5LrtT5g3aY","ct":"E6iq+M+3NfeqihUvGQoxny3jpscKNddVwJZko0ewBC9KSohLpM2OqMgKW2WAgXIrw+RatbvAH82AR579X9HtozWyZ3McfEKrONbUhBjJZA/sR87t3zloixNLxmnXeY3rc+sIiW2Q0I8+U/UimsTKd4GdoTq0Q3lQbMz5jDNJJ63hZoM1dWa/4ZcTBmxKHLjOIDXvMpSF0pqEknvtrcSY2tHdBqfXsx36ocsj3Gr0LZM//d9d07TljBZknHTV/jXmt2+eOIE3pZni"},{"s":"YSEgx4Tyeqwa08gFqisEng==","iv":"VPxbaSgROCKezGEH","ct":"pGA7zQxcXMb6OGe+TOtXUWY3djUiHOoQK3YjkSKomMh049xAwhALA0kk+2ETVPkuC1FzJJljWgr/xJobLIyjS6X7YxWKnuA4kkc/UGk0NzjCUHdyTva7wasqTUlHuI/VCvZB2ZEJwtpFBp7hdaC6nDqeF+O3Nznk9qATdkFA+VwZp2SQBN6JaxriTW7j78oZPGA9VmrhK7WjD8T9/8duzTmE4HY/BqoRY3/PoB9kooPewfLWwlEFTQXInR6Pkz2qKuIZB5UN0zGM8iWoEFs+Yyo7J6YpW8pb1P7GUaDW39LV"},{"s":"TSUyFCfnt6fBDKe8KW58kA==","iv":"Nf6zJahRk8aJrlef","ct":"SolznkUiejtGcz7rXF+XpDZVx6cCtlRNkix/0WoLixDrr6W2Z9dpx44uwsorLhGM3ha0YMZD0syc4qIF3xYOoOhMDrOx6toHCnfPoIfZeoVKTYA2px5gTgoAJprQARcO709hqik9GTo0+0p7mgysVbjvcgRUwspOTsG0WBKShUoKlmnmk8O5+AY+KZC8lmKJ2xUECSKjiL/Nsq0gREn3nl5BOiigpdQ1eoO05WAJCG8lsUDi7YUjQVuSV4QVNjeJtx06G6k0ru896nQa43Ps2EDH2uTEbwrHmcFFTHqN9GBnHlVKMLZSHxfVsyN/bomhqKbrGb1Tquc4yw64"},{"s":"alcLezTDMcEVPI5c6tCdSw==","iv":"HFwVu0fbLzkyAD2j","ct":"QYMBCm+dM6pRox2xlvaJdRgcYDCtAp+UVA0ON6BhftZb/YHNJHm4/0kxV/QY56zEDSWenzCfgPSW07Cjb8IqqlNrynMzVmXam/bIrk6s8wjulyGb+0wJs2rbtzUNeKEBXdfJnGgiXK9okHuDOB0WPS5uaHRE65UnGMFo8yghmcGjXpQGK9XVGjYDHcoDdjOg93w6+Wq3kZIhvyBNT2v76zJXfspnt1V0IVe+YGWWOiVJppRWg1KDSnKJmd9xBMldU6p6QZCvK4VWdnsKNJBPHt/uapL/xCh4j2A595uRzMGCTOQDsZcoARRThPk="},{"s":"w3V78KIxMHSUfiSx+2mQ1A==","iv":"rYCCUa8yzaIcwrNq","ct":"sXjUv1+LTfZdJ7F387y7NB6hNa9ThKnenSK8sRzSjK85cNic92zqbcRubjIBwQtDJVAQ/bcAxTwELxaMfpcU+3vcdGUJ7PLQUpAQuL4BRMWMu9Y7SrAsvfpLecmbwuT9waJnoznuvbOnvLVTC3J1orvczdxY8TyxWQ0IGuX8CXQCIG5kNNTYOsWJiv8UeyOXeswwqB38IQg9sLrgULJ2qOsIP65d2i6NBQE0wFi+KLNKhTTwZZn0dlCA4CrQgGLxt/wTbQHO52Djc6xJJrLl+EhIZhmScRu7DhheDxoT3/Z7h1DX5pRLpwoQmfInNrVt1rUwV63YF24I0tBQJKUGfOJi60pIikGM7WzJBZIYyj9KdaBKa1yIOm9fk0FiDP54S9f4nezt5gyc3ZJ2X1l9O1gzzNuRyI5U6SGo6uIHC7NyC+nDLowr2lpVv7QFf2vrxUT59Vn8dMz1PIxJUuZUD0hGQP8rRj8eT+fJbtUSUh+VAycDqLa9met2RZEmWKNCRjgKYOLzY+b88aTRHJLDRr7VSW2u3RO9lP82jx2nE2/SArFoIwGNi4t5s5qT/N7+Rt8jBvdcIfhTZE+YorRIv+yibLEbMvbcHWbkvD/jGErOuftIhiUp/KgjAbXKzAtlBn/jI6rzoCCvcX4asQaP6g+0pDCa970/JbdxG47LocUq1phgAQpcx87ngTt/nQjI4EIZ/atSs9rvovwCP7gFIkXTMsqNyPYP4cIxuCu8ByobDwQgPsvX5JtmUBJeijW+lvXfscGVMz2dBarCvwU1vkfmXy7sh0WDv3xtgRxnlvDEWOvpBr9cbXPaSRGPORC/hiHAd62GsPafPa+DkQ=="},{"s":"jI8oZHOUJ8z7f9diLjihyg==","iv":"4b0r8w23cmveVyl3","ct":"udBxkEpJhcmKfurJ4+S7PbKBSylb1dCtDBVCWoRzz33UD5RE8qc9aT3XTIXGp6tqCMwMgBjNp3aWTcD9MN7MoTYgwsvnjLInh7/+e66QRckTMUvgSD/PJE6u3BTqHe3YpNagcpOHO4on4hBZgzWdyd337fLX60dGOh4Z1p4ut60wFD16Y0LspJFj1gz+j5SsRORLKGalPqsMNB1W2CiL5kJmtu+Yf0rFhjTQ3sdqIkrEje2u+Yk/M6p7RFlpVW8pMcM1Bxn8b5mzQPAfnJaoJHfPSBP+bgY="}];
+const BLOBS = [{"s":"Kl5dianG8/sVbVB5yt/fag==","iv":"th61ovFiTZczakXk","ct":"w44QwIjltZTVFAxz3gnb+8E7Whhafa/0Y2s6n0/jSI5+Ga3xzESQc7dJHhh35YJxZ2zHlNPIkwf+ogph2QrCd84cwc+gnEKBMDvMGZ2mBLIbp8NJnJ6tJJXECuxaromBnzgGu+W4yh30w57RjkU+T4dWnrOGvp8WtQ+WJtkqZ7CGAkDiYXcd/WgTu4Lx/gJIcSwtmsbSKoxLZ+liNotvTqYxCJgRPHpVYL8C94Fa+E5XBlo2OdDKouCh+X++YDKdL3NDvuJ5wvJ52RZmXvPolzuUioLyb764pQput9YfRZ8="},{"s":"Ilk+2/RQBs9o9IM6DNH5TQ==","iv":"eSOBzNksDdplyVfO","ct":"yX6lFHOCkH0MUhvDTQnmyQU11e2nCzSNjI0RKK5BmM+qvqfXF7N2isf9sc+Sv+CeABGND5VQRY0N9oNQoegIttMxExpRnHBFQIjhxObtnrAyCaosr7XMaMUV6I+a0QdhCcv6sS7HXzin/J94kqWF3wLY5yDxJB8PFOdH2LRLUTEU8cot4fG0crbMAHi1MDFCgMqvu6owpr9QGFnK1xWSiCJgp/DTnUrV/+hn3CSf/Nys+NNyUnmyK5yboAOBjtmEaZ5InzqQN0j8mkoKURBy6KBxs0gSs/e4y9gcVbH/teOmYEDdBTX66hsfe/0="},{"s":"Kw8g8wZGPrV8ezxQHzH/Pw==","iv":"Bw+kNpzz7A2Y0+dv","ct":"cD3iHOmW8cIFmu/qCque3UwRMmMP6hLOwyNjjJYg9I4H3uf2DNiDPxM6USx99Mn/onnIQmEi9GRXpHZ6vHdczoCS76VSJyaMJKKKFWYaRt4VSwDiB/ZVN8bWE2H85JhEX7T0nJByeiSdYuOucwzTp8aczb7v2oXdhCc64jwqR9CqnvFoHg03lSf5+JZ52iJ7spX1/qRoIBl8X6KYGbN5pfrGzAoX+lSwOvkp+E30NrbCi7hDNRTyDUhs8Hspm/2MlRVpOQQarWpyirKaAgcdes3h1YF/284zNdM0hal3y+m3TV7OsBCkGg=="},{"s":"GAlQSz/tiM9iM4C2v3ZseQ==","iv":"GG9Pe0PM1rCBwbT+","ct":"XPOWArBbOG4LhfazCjzSPQRHLZxWi0B4f0BLqhC2OP+lQw7j9Pnzkv8z81RpNn/0nODD23g3IBAuzyYJEZHY7Hy0DQJov5RNuEsT6n2cmSRAk9I2KOgk+msUmxljJvpO6h/ZoPKb76S3GWQESrop/6pM6WwPYFcibFKb01UNSk/mPJC2oig5K+/VZwLoGt6oopnjXUkxcNFdz5itEC/4uzoAEt8mwsWaEHG+4seTwpbl4HOZWBJJhPtAkm+iaO14L3qZu0Gd+7WHm0k2KxW62JILwGzhTqM="},{"s":"5rq0Ws72MJB/rE70t/0KLA==","iv":"j7urbnjPuePA1Pem","ct":"gZq2b9iZmRv62ptv+fJzWdL027c7EuJJXxFd2llDuQld5ibrMV3SPF5WTI9bEO3uxwdpEDBrUbUmmzxqUJAcvWwZUJd+9MtXKC6xfB6SSN1vaFGBlr3WplMR8tW1pUIdQqI8ZYrC8+sMQUmqooZEoY3ROhlQwGI0DhDkLJHR1fb5JCv4z/R4PmjzBBijoMQ6CxzOflmBB1eEuzM1jfhT7XCayi+b7cobzpKoewrczQfEepyXnLdFOAY4Z5qmTcZ/QAQPWdRAPUAjhm+P6JN11xTUJ8SPr7CAqPyc+ZiKzTDy"},{"s":"8ule2CGwcTtKITXh/duGZQ==","iv":"H2YhHuqzbl0GfSlx","ct":"Ffxj3SzenNVIqS4Upra9xjTSBZWfxlNBKL64hIrHtLgYodUBqMmT9jq0o2XJKVFzPAownqbLEFqUnOwb/I5IjEfEqn7DF26ujJ4L115Af3xUIg4NIPFrzCE63cPT1EsFKqKqarETHzwbyQFAq8kJSADZbf7AxrRXkXZvIk34vhQ7E06GQDT/t23e5/xvKgoDRv0RPw5XFo9oVaC1a371wBGJeRRgbTl2We1cQoCpoV9Z2PYSEc6rdKGAdPI/3TtlwNWKBeqZDjBEFA=="},{"s":"7qL3CusqKMTI7EBMHGwV/g==","iv":"hNkzqAY/47waUYKN","ct":"0rYU2/4W3+TXA/uEeQuJpDKjcIaa3Ps4UlZ7el0kzeb5/9ooOOnldyPgGvbSfyNYP+VKle/V8A5l2AbL8q/Vyb1SOqDaMGYI1A5PE4H9ZQXqYNfqtJpN3dPZUDg4BCGyuKUya18hAa2gvkEiiJc37zOqoRg4zIxff5Xnl/n5tFUeGcDL2S+EykRDzyF+c42oex6H/K1J6dJFiDz2FlvzaBM+Uu5vW0jjW6GKa0BQq4Lgb9e0KM0bydZlYHprPlOkBE3xp2yZmuYL+f+nI+tCeGTEdyvpVQzr35xro/P+u3V6g5r5Fuv/2hLjsuOxi/I3Gwjs39dxO3bL7fX3"},{"s":"vUKdsxyBRDLUgyRYOqJ7mg==","iv":"J8xAXhFAdUqT/Wlx","ct":"s17hTZeWe7jzJoSDm4YmUpqZZ6siLqcxVMuK/VyHarxumaJyLU8J+zCSsW6QI5ueGvtzZ5yOO3YfDuK9iWcB3dpETga6rtqBoqkkmzQstKz6Gp/75T267TZ/1CRAyqHzdlqFTN5/TTWBaw/c4oYAKjCi72//21zTt5J/WSYjYd5MpvWGania0f3pk7UfQwKMjD+5mB8ALAuO+g1QNEnoBAAE8TMHjPt15Msbs4qOnnfwGAg0A4r7gN7gVeSkoaxHTTp4bamZPOrdNIIbG2M="},{"s":"h7a5JJ+xWXEruW2blm1bhQ==","iv":"Vvvbo5YBKwq0ndUh","ct":"jUZ4uo5tX9+4vgFySQdUyzZ24sbNa247uFUNufSr3lYEiCfZExVqKgS6dn/AWQcfJLQLyplwdCgsIqhj8aX0k8vWxMEreLaubnRqIBsOnmT0IiKCuz64H1FKnSJGbZVzq9Of5NijW+AhjDHQ9BeoFZcVw3mA1DQJ5bV559Jd3BuFfapwUK/Y4PRoUSqfZJcdrC0TcGvuwtb3of+O7kPJW9mnG5Ez2qKqc0uXuSW5nCrxEiiPqESwI77jr0vSuUeiHnT+8M5ImZFrUX7AmVO5iCb7/Do4GvC8VALgXLP2FQnConFKlj9ha4aDCmXjV9Qln7rUBrC6vjfoAeCsY09oBmD+Mzv+vRO0nyeVfw=="},{"s":"dX6OPymN0yI96ybRcwMMig==","iv":"f/r7Qos6R3jKta8p","ct":"MDTJD6Y78wPbohIqcrK0W5o5gx5/sZ4hnJ4tPspcpeFq89XKvrffBxgzWAjTjHSDPcnFiMtAjBj0bY33SBNASHGJzJ5/nCpSze3Y4B2qADzeUzLzipB14GRyHJ48AP13/BWvd/tE/xEPXWpWC2IiKBdgzFsfFGuz/e+kqNPrXzZs4VwDiyfRmqrkHY0bTahq9upicMLucMej9Hw280Gd54pmeNEhdLbfXIlywCeKZzDVNEKH0+o/5dBBa/JCEbIHRdRI408v"},{"s":"DJwsyp2QqnR+/sANlrqljQ==","iv":"32dPOo3PmSb2iQMF","ct":"EpZzYcFcfj5oKwiFdkzKcmWGSCn83DuwoqV9dK4tr6TMhM4CsVLb+G2iIwZocxVpJR4jG2BvP28zleCn2OrvAzzDzBHYiwuX7vOImvxLqN0a45LRRm8fC3EH8ecNEPRy1Iwvy/Dmre3oLMSxaFUK/pSiu15Q1DMXMnoKH0MG/gE1ODrJ1I8vlcNy0C/9KxDCcbIVvQPqQvvg2zrOQVZFs1YYrWORdHEH+QMOqPWJMy7YxyZcAmaSHCe0hgwuC0hjmq4dMmpV1c2R"},{"s":"GtECTH0XWj8xHgEvqM4ADA==","iv":"wFqQWYF1KECHgCab","ct":"0QXlKSPh1TBMaAkTMaJ5urmKLnla0mdFZzd+zy4KbZCzsX5g85kPuE4oHPsm+pjVfFowIJQl+a0O4pxegBACBXlK1IweNI88ALzKAmtrhZek43NRJ3HHTtsNe3fH5j3uJ/mHRDm3EPR/VJWFOKrVJvNp2Sl2hgOv7gizkF3FFsNVxGFD9wxJVWEu9czMf1tNNr88q0bbePumgd20o8DMZ3LzXt2XuyLoc6kfM5jtqxXl72djxG5+IvWajtKbYxnw3+W2JqJbPnAFoSjSsdE+J26SREYU5OiaIbMhFgJkHMU9knDCT7KwqBF91x3fjGLapA5V2sfJZ+TdZGVkxIvUBAtuBPDI0soxHipgsc+gSmhsCG0hfyF+BmZNIRDYiMLji6o5cPYEr7VCRFVTYyivwbOiOUtTSv8BaVhwLSrbCU43qntZZClJNJMRAzFxCOCua971xZlcfzF1sB3GIKlByYwq2kJi0O1WBlu/VlZSivtwK05czhbHjk75fZTAnJqllkWzWzvAYbhwHJ9DUrP6G7X1duk/ShdH218SJW+MwoMhJste+YTCKrPSdbXak3l+362sTjQpwvouK7hjRpsS6Euku7R3T3/cXY+XlWmeofbNL2Bdy+YARy0orrVpAByNLuIzQH718UnYXvPjNzlsOozBlsgY1KPKNh2qfkylOc/K/skoQSedFgk9543w9eaIONrFVn3RdkiSdj/LK+v17TngXZ6jDmO5lw4M98hL0PCwGsCnizoUfWtubXwe2KJ4GpPUiCAiRf5Rszze8NNkHnQ72ALOf5nrWV5Xr5uJUIywuogNt2NJVyJcRh724wbVHmLfMNuDWPDypARyxw=="}];
 const ITER = 100000;
 const te = new TextEncoder(), td = new TextDecoder();
 function b64d(s){ const bin=atob(s); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; }
@@ -1349,6 +1409,17 @@ function ownerYcLoad(){
   s.src=SHEET_API+"?yeucau=1&key=beeps26&callback="+name; document.body.appendChild(s);
 }
 function postYcDone(row){ try{ fetch(SHEET_API,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify({ycdone:true,row:row})}); }catch(e){} }
+// Web Push: gửi subscription của khách lên Sheet (tab PushSub). sub = PushSubscription (JSON.stringify tự gọi toJSON()).
+function postPushSub(sub){ try{ fetch(SHEET_API,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify({pushsub:true,sdt:(WEBORD&&WEBORD.sdt)||"",sub:sub})}); }catch(e){} }
+// Owner gửi thông báo: POST tới Vercel function /api/push (cùng origin). cb nhận {ok,sent,failed} hoặc {ok:false,error}.
+function ownerSendPush(secret, title, body, cb){
+  try{
+    fetch('/api/push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:secret,title:title,body:body})})
+      .then(function(r){ return r.json().then(function(j){ return j; }).catch(function(){ return {ok:false,error:'badjson',status:r.status}; }); })
+      .then(function(j){ cb(j||{ok:false}); })
+      .catch(function(){ cb({ok:false,error:'network'}); });
+  }catch(e){ cb({ok:false,error:'exception'}); }
+}
 function ownerPendLoad(){
   var name="__pcb"+(new Date()).getTime(); var s=document.createElement("script"); var done=false;
   var to=setTimeout(function(){ if(done)return; done=true; if(s.parentNode)s.parentNode.removeChild(s); OWNER_PENDING=OWNER_PENDING||[]; OWNER_PENDING_LOADING=false; route(); },20000);
