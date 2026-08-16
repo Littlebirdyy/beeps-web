@@ -562,7 +562,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
       <div class="osum" id="osum">Chọn gói, thời hạn & ngày ăn ở trên nhé.</div>
       <form id="oform" onsubmit="return submitOrder(event)">
         <div class="ofield"><label>Tên của bạn</label><input id="f_ten" type="text" placeholder="VD: Nguyễn Văn A" autocomplete="name"></div>
-        <div class="ofield"><label>Số điện thoại (Zalo)</label><input id="f_sdt" type="tel" inputmode="numeric" placeholder="VD: 09xx xxx xxx" autocomplete="tel"></div>
+        <div class="ofield"><label>Số điện thoại (Zalo)</label><input id="f_sdt" type="tel" inputmode="numeric" placeholder="VD: 09xx xxx xxx" autocomplete="tel" onblur="chkSdt()"><div id="sdtwarn" style="display:none;margin-top:7px;font-size:12.5px;background:#FDF3DC;border:1px solid #E0A32E;color:#5a4200;border-radius:9px;padding:9px 11px;line-height:1.5"></div></div>
         <div class="ofield"><label>Địa chỉ giao</label><input id="f_diachi" type="text" placeholder="Số nhà, đường, phường/quận…" autocomplete="street-address"></div>
         <div id="doniFields" hidden>
           <div class="donihd"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z" /><path d="m14.5 12.5 2-2" /><path d="m11.5 9.5 2-2" /><path d="m8.5 6.5 2-2" /><path d="m17.5 15.5 2-2" /></svg> Thông tin để Beeps đo ni suất riêng cho bạn <span class="req">* bắt buộc</span></div>
@@ -921,6 +921,24 @@ function srvQuote(cb){
     window[cbn]=function(d){ fin(d); }; s.onerror=function(){ fin(null); };
     document.body.appendChild(s); setTimeout(function(){ fin(null); }, 12000);
   }catch(e){ cb(null); }
+}
+// #3: SĐT nhập vào đã có tài khoản chưa -> cảnh báo, hướng khách ĐĂNG NHẬP thay vì đăng ký trùng (không chặn cứng: có thể đặt hộ người khác)
+function chkSdt(){
+  var el=document.getElementById('f_sdt'), warn=document.getElementById('sdtwarn'); if(!el||!warn) return;
+  var digits=(el.value||'').replace(/[^0-9]/g,''); if(digits.length<9){ warn.style.display='none'; return; }
+  try{
+    var cbn='__s'+Date.now()+Math.floor(Math.random()*1e6), done=false;
+    var s=document.createElement('script'); s.src=SHEET_URL+'?sdt='+encodeURIComponent(el.value.trim())+'&callback='+cbn+'&_='+Date.now();
+    var fin=function(d){ if(done)return; done=true; try{delete window[cbn];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s);
+      var ords=(d&&d.orders)||[];
+      if(ords.length){ var g=ords[0].goi||'';
+        warn.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg> Số này đã là khách Beeps'+(g?(' (gói <b>'+esc2(g)+'</b>)'):'')+'. <a href="/app.html" target="_blank" rel="noopener" style="color:var(--pine);font-weight:800">Đăng nhập để xem suất / mua thêm →</a><br><span style="opacity:.75">Nếu bạn đang đặt hộ người khác thì cứ điền tiếp nhé.</span>';
+        warn.style.display='block';
+      } else { warn.style.display='none'; }
+    };
+    window[cbn]=function(d){ fin(d); }; s.onerror=function(){ fin(null); };
+    document.body.appendChild(s); setTimeout(function(){ fin(null); }, 10000);
+  }catch(e){}
 }
 function confirmOrder(){
   var btn=document.getElementById('ocbtn'); btn.disabled=true; btn.textContent='Đang ghi nhận…';
