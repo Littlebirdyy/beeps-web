@@ -911,21 +911,34 @@ function submitOrder(e){
   return false;
 }
 function editOrder(){ document.getElementById('oconfirm').hidden=true; document.getElementById('oform').style.display=''; document.getElementById('osum').style.display=''; document.getElementById('f_ten').scrollIntoView({behavior:'smooth',block:'center'}); }
+// Lấy GIÁ + QR CHUẨN từ server (?quote) — client KHÔNG tự đặt số tiền nữa (bảo mật)
+function srvQuote(cb){
+  try{
+    var cbn='__q'+Date.now()+Math.floor(Math.random()*1e6), done=false;
+    var qs='quote=1&goi='+encodeURIComponent(PEND.goi)+'&thoihan='+encodeURIComponent(PEND.dur)+'&canh='+encodeURIComponent(selCanh||0)+'&rau='+(selAdd&&selAdd.rau?1:0)+'&thit='+(selAdd&&selAdd.thit?1:0)+'&ma='+encodeURIComponent(PEND.mauudai||'')+'&callback='+cbn+'&_='+Date.now();
+    var s=document.createElement('script'); s.src=SHEET_URL+'?'+qs;
+    var fin=function(d){ if(done)return; done=true; try{delete window[cbn];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s); cb(d||null); };
+    window[cbn]=function(d){ fin(d); }; s.onerror=function(){ fin(null); };
+    document.body.appendChild(s); setTimeout(function(){ fin(null); }, 12000);
+  }catch(e){ cb(null); }
+}
 function confirmOrder(){
-  var err=document.getElementById('oerr2');
-  var params='form-name=beeps-order&ten='+encodeURIComponent(PEND.ten)+'&sdt='+encodeURIComponent(PEND.sdt)+'&diachi='+encodeURIComponent(PEND.diachi)+'&goi='+encodeURIComponent(PEND.goi)+'&thoihan='+encodeURIComponent(PEND.dur)+'&gia='+encodeURIComponent(PEND.gia+'k')+'&ngayan='+encodeURIComponent(PEND.ngay)+'&mongmuon='+encodeURIComponent(PEND.mm);
   var btn=document.getElementById('ocbtn'); btn.disabled=true; btn.textContent='Đang ghi nhận…';
-  // (a) ĐƯỜNG CHÍNH: ghi thẳng vào Google Sheet qua Apps Script (fire-and-forget, chắc chắn)
-  try{ fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({id:'web-'+Date.now()+'-'+Math.floor(Math.random()*1e6),data:{ten:PEND.ten,sdt:PEND.sdt,diachi:PEND.diachi,goi:PEND.goi,thoihan:PEND.dur,gia:PEND.gia+'k',ngayan:PEND.ngay,mongmuon:PEND.mm,canh:String(selCanh||0),tong:String(PEND.total||''),cao:PEND.cao||'',nang:PEND.nang||'',muctieu:PEND.muctieu||'',cuongdo:PEND.cuongdo||'',tuoi:PEND.tuoi||'',gioitinh:PEND.gioitinh||'',mauudai:PEND.mauudai||''}})}); }catch(e){}
-  // (b) DỰ PHÒNG: lưu vào Netlify Forms + hiện QR
-  fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params})
-    .then(function(){ showQR(); })
-    .catch(function(){ showQR(); });
+  srvQuote(function(q){
+    if(q && q.total){ PEND.total=q.total; PEND.qr=q.qr||null; }   // GIÁ CHUẨN từ server (đè giá client)
+    var params='form-name=beeps-order&ten='+encodeURIComponent(PEND.ten)+'&sdt='+encodeURIComponent(PEND.sdt)+'&diachi='+encodeURIComponent(PEND.diachi)+'&goi='+encodeURIComponent(PEND.goi)+'&thoihan='+encodeURIComponent(PEND.dur)+'&gia='+encodeURIComponent(PEND.gia+'k')+'&ngayan='+encodeURIComponent(PEND.ngay)+'&mongmuon='+encodeURIComponent(PEND.mm);
+    // (a) ĐƯỜNG CHÍNH: ghi vào Google Sheet — kèm cờ addon để SERVER tự tính lại tổng (bỏ qua tong client)
+    try{ fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({id:'web-'+Date.now()+'-'+Math.floor(Math.random()*1e6),data:{ten:PEND.ten,sdt:PEND.sdt,diachi:PEND.diachi,goi:PEND.goi,thoihan:PEND.dur,gia:PEND.gia+'k',ngayan:PEND.ngay,mongmuon:PEND.mm,canh:String(selCanh||0),addon_rau:String(selAdd&&selAdd.rau?1:0),addon_thit:String(selAdd&&selAdd.thit?1:0),tong:String(PEND.total||''),cao:PEND.cao||'',nang:PEND.nang||'',muctieu:PEND.muctieu||'',cuongdo:PEND.cuongdo||'',tuoi:PEND.tuoi||'',gioitinh:PEND.gioitinh||'',mauudai:PEND.mauudai||''}})}); }catch(e){}
+    // (b) DỰ PHÒNG: Netlify Forms + hiện QR
+    fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params})
+      .then(function(){ showQR(); }).catch(function(){ showQR(); });
+  });
 }
 function showQR(){
   var note='Beeps '+PEND.ten;
-  var qr='https://img.vietqr.io/image/970432-183037412-compact2.png?amount='+PEND.total+'&addInfo='+encodeURIComponent(note)+'&accountName='+encodeURIComponent('NGUYEN QUANG ANH');
+  // QR ưu tiên URL server trả về (?quote); fallback dựng từ tổng server đã set vào PEND.total
+  var qr=PEND.qr||('https://img.vietqr.io/image/970432-183037412-compact2.png?amount='+PEND.total+'&addInfo='+encodeURIComponent(note)+'&accountName='+encodeURIComponent('NGUYEN QUANG ANH'));
   document.getElementById('oconfirm').hidden=true;
   var od=document.getElementById('odone'); od.hidden=false; updatePbar();
   od.innerHTML=
