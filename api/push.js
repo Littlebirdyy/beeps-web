@@ -71,6 +71,11 @@ module.exports = async function handler(req, res) {
     return res.end(JSON.stringify({ ok: false, error: 'fetch_subs_failed', detail: String(e) }));
   }
 
+  // onlyOwner: chỉ gửi tới máy OWNER (đã bật thông báo khi đăng nhập owner) — dùng cho noti "đơn mới"
+  if (body.onlyOwner) {
+    subs = (subs || []).filter(function (s) { return s && (s.owner === 1 || s.owner === true || s.owner === '1'); });
+  }
+
   const payload = JSON.stringify({
     title: title || 'Beeps',
     body: bodyText || '',
