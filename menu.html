@@ -539,7 +539,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
       <div class="canhlb"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z" /><path d="M7 21h10" /><path d="M19.5 12 22 6" /><path d="M16.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.73 1.62" /><path d="M11.25 3c.27.1.8.53.74 1.36-.05.83-.93 1.2-.98 2.02-.06.78.33 1.24.72 1.62" /><path d="M6.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.74 1.62" /></svg> Thêm canh? <span class="canhopt">tuỳ chọn</span></div>
       <div class="canhs">
         <button type="button" class="canh on" data-c="0" onclick="pickCanh(0)">Không canh</button>
-        <button type="button" class="canh" data-c="7" onclick="pickCanh(7)">Có canh<span class="cp">+7.000đ mỗi bữa</span></button>
+        <button type="button" class="canh" data-c="5" onclick="pickCanh(5)">Có canh<span class="cp">+5.000đ mỗi bữa</span></button>
       </div>
       <div class="canhnote">Chọn nhanh cho <b>cả gói</b> ở đây. <b>Canh chọn được theo từng ngày</b> — muốn ngày có ngày không thì ghi chú ở dưới hoặc nhắn Beeps.<br><span style="display:block;margin-top:6px">Canh cho ấm bụng, dễ ăn - nhưng suất Beeps đã đo đủ chuẩn nên canh là <b>tuỳ chọn</b>. Đang giảm mỡ thì nên bỏ canh, để no bằng <b>đạm &amp; rau</b> thay vì nước muối nhé.</span></div>
     </div>
@@ -890,14 +890,14 @@ function submitOrder(e){
   err.style.display='none';
   var g=GOIDATA[selGoi], suat=DURN[selDur], unit=uprice(g), total=(unit+ocanhCost()+addonCost())*suat*1000;
   if(addonAny()) mm='[Thêm: '+addonTxt()+'/bữa × '+suat+'] '+mm;
-  if(selCanh>0) mm='[Canh +7.000đ/bữa × '+suat+(gCanh()?' - MIỄN PHÍ':'')+'] '+mm;
+  if(selCanh>0) mm='[Canh +5.000đ/bữa × '+suat+(gCanh()?' - MIỄN PHÍ':'')+'] '+mm;
   PEND={ten:ten,sdt:sdt,diachi:diachi,mm:mm,goi:g.name,dur:DURNAME[selDur],gia:unit,suat:suat,total:total,ngay:daysLabel(),canh:gCanh()?0:selCanh,cao:cao,nang:nang,muctieu:muctieu,cuongdo:cuongdo,tuoi:tuoi,gioitinh:gioitinh,mauudai:(GIFT?GIFT_CODE:'')};
   document.getElementById('ocrev').innerHTML=
     '<div><b>Gói:</b> '+esc2(g.name)+' · '+DURNAME[selDur]+'</div>'+
     (selGoi==='doni'?'<div><b>Đo ni:</b> '+esc2(gioitinh)+' · '+esc2(tuoi)+' tuổi · cao '+esc2(cao)+'cm · nặng '+esc2(nang)+'kg · '+esc2(muctieu)+' · tập '+esc2(cuongdo)+'</div>':'')+
     '<div><b>Ngày ăn:</b> '+esc2(daysLabel())+'</div>'+
     '<div><b>Số suất:</b> '+suat+' × <b>'+vnd(unit)+'</b>'+(gSan()?' <span style="color:var(--pine)">· giá sàn ưu đãi</span>':'')+'</div>'+
-    (selCanh>0?'<div><b>Canh:</b> +7.000đ mỗi bữa'+(gCanh()?' - <b style="color:var(--pine)">miễn phí</b>':'')+'</div>':'')+
+    (selCanh>0?'<div><b>Canh:</b> +5.000đ mỗi bữa'+(gCanh()?' - <b style="color:var(--pine)">miễn phí</b>':'')+'</div>':'')+
     (addonAny()?'<div><b>Thêm:</b> '+esc2(addonTxt())+'/bữa</div>':'')+
     (GIFT?'<div style="color:var(--pine)"><b><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M12 7v14" /><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8" /><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5" /><rect x="3" y="7" width="18" height="4" rx="1" /></svg> GIFTCODE '+esc2(GIFT_CODE)+':</b> '+giftTxt()+'</div>':'')+
     '<div><b>Tên:</b> '+esc2(ten)+' · <b>SĐT:</b> '+esc2(sdt)+'</div>'+
