@@ -880,6 +880,7 @@ function submitOrder(e){
   if(!isComplete()){ err.textContent=(FREE[selDur]?'Bạn chưa chọn đủ '+DURN[selDur]+' ngày ở bước 2.':'Bạn chưa chọn ngày ăn ở bước 2.'); err.style.display='block'; return false; }
   if(ten.length<2){ err.textContent='Nhập tên giúp Beeps nhé.'; err.style.display='block'; return false; }
   if(sdt.replace(/[^0-9]/g,'').length<9){ err.textContent='Số điện thoại chưa đúng rồi.'; err.style.display='block'; return false; }
+  if(SDT_EXISTS){ err.innerHTML='Số điện thoại này đã có tài khoản Beeps. <a href="/app.html" target="_blank" rel="noopener" style="color:var(--pine);font-weight:800">Đăng nhập để mua thêm →</a><br>Đặt cho người khác thì nhắn Zalo 0941 751 999 giúp Beeps nhé.'; err.style.display='block'; document.getElementById('f_sdt').scrollIntoView({behavior:'smooth',block:'center'}); return false; }
   if(diachi.length<5){ err.textContent='Nhập địa chỉ giao giúp Beeps nhé.'; err.style.display='block'; return false; }
   var cao='',nang='',muctieu='',cuongdo='',tuoi='',gioitinh='';
   if(selGoi==='doni'){ cao=document.getElementById('f_cao').value.trim(); nang=document.getElementById('f_nang').value.trim(); tuoi=document.getElementById('f_tuoi').value.trim();
@@ -923,16 +924,18 @@ function srvQuote(cb){
   }catch(e){ cb(null); }
 }
 // #3: SĐT nhập vào đã có tài khoản chưa -> cảnh báo, hướng khách ĐĂNG NHẬP thay vì đăng ký trùng (không chặn cứng: có thể đặt hộ người khác)
+var SDT_EXISTS=false;  // Option 1: SĐT đã có tài khoản -> chặn đăng ký trùng (khớp CHỈ theo SĐT)
 function chkSdt(){
   var el=document.getElementById('f_sdt'), warn=document.getElementById('sdtwarn'); if(!el||!warn) return;
+  SDT_EXISTS=false;
   var digits=(el.value||'').replace(/[^0-9]/g,''); if(digits.length<9){ warn.style.display='none'; return; }
   try{
     var cbn='__s'+Date.now()+Math.floor(Math.random()*1e6), done=false;
     var s=document.createElement('script'); s.src=SHEET_URL+'?sdt='+encodeURIComponent(el.value.trim())+'&callback='+cbn+'&_='+Date.now();
     var fin=function(d){ if(done)return; done=true; try{delete window[cbn];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s);
       var ords=(d&&d.orders)||[];
-      if(ords.length){ var g=ords[0].goi||'';
-        warn.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg> Số này đã là khách Beeps'+(g?(' (gói <b>'+esc2(g)+'</b>)'):'')+'. <a href="/app.html" target="_blank" rel="noopener" style="color:var(--pine);font-weight:800">Đăng nhập để xem suất / mua thêm →</a><br><span style="opacity:.75">Nếu bạn đang đặt hộ người khác thì cứ điền tiếp nhé.</span>';
+      if(ords.length){ var g=ords[0].goi||''; SDT_EXISTS=true;
+        warn.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg> <b>Số này đã là khách Beeps'+(g?(' — gói '+esc2(g)):'')+'.</b><br>Đăng nhập bằng chính SĐT này để xem suất / mua thêm — không cần đăng ký lại. <a href="/app.html" target="_blank" rel="noopener" style="color:var(--pine);font-weight:800">Mở app →</a><br><span style="opacity:.75">Muốn đặt cho người khác nữa? Nhắn Zalo 0941 751 999 để Beeps thêm suất giúp.</span>';
         warn.style.display='block';
       } else { warn.style.display='none'; }
     };
