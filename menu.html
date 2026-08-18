@@ -356,6 +356,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 .wknav .wkbtn{width:40px;height:40px;border-radius:11px;border:1.5px solid var(--line);background:var(--surface);font-size:22px;font-weight:800;color:var(--pine);cursor:pointer;line-height:1;}
 .wknav .wkbtn:disabled{opacity:.3;cursor:default;}
 .dprow{display:flex;flex-direction:column;gap:8px;margin-bottom:11px;}
+.dprow.locked .dcard{cursor:default;} .dprow.locked .dcard:not(.on){opacity:.32;} .dprow.locked .dcard .dctick{display:none;}
 .dcard{display:flex;align-items:center;gap:11px;padding:8px;border:2px solid var(--line);border-radius:14px;background:var(--surface);cursor:pointer;font-family:inherit;text-align:left;width:100%;}
 .dcard img{width:58px;height:58px;border-radius:10px;object-fit:cover;flex:none;} .dcard .dcnoimg{width:58px;height:58px;border-radius:10px;background:var(--zebra);display:grid;place-items:center;font-size:24px;flex:none;}
 .dcard .dcb{flex:1;min-width:0;} .dcard .dcd{font-size:11px;font-weight:800;color:var(--pine);} .dcard .dcn{font-size:13px;font-weight:700;color:var(--ink);line-height:1.25;margin-top:2px;}
@@ -775,9 +776,9 @@ function pickDur(d){
   selDur=d; selStart=null; selDays=[]; curWk=0;
   var durs=document.querySelectorAll('.dur'); for(var i=0;i<durs.length;i++){ durs[i].classList.toggle('on', durs[i].getAttribute('data-d')===d); }
   var N=DURN[d];
-  if(d==='thang'){ for(var q=0;q<N&&q<WD.length;q++) selDays.push(q); document.getElementById('dpn').innerHTML='Gói <b>1 tháng</b> = trọn <b>20 suất</b>, Beeps chọn sẵn hết (kèm món mỗi ngày). Ngày nào bận thì <b>bỏ tick</b> → giữ vé ăn bù sau. <span style="color:var(--pine);font-weight:700"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M12 7v14" /><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8" /><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5" /><rect x="3" y="7" width="18" height="4" rx="1" /></svg> Đặc quyền: 5 bữa được HUỶ GẤP — báo trước giờ giao là được (bình thường phải báo trước 20h hôm trước).</span>'; }
-  else if(FREE[d]) document.getElementById('dpn').innerHTML='Gói <b>'+DURNAME[d]+'</b> = '+N+' suất, <b>CHỌN NGÀY TỰ DO</b> — tích đúng '+N+' ngày bạn muốn (mỗi ngày kèm món luôn):';
-  else document.getElementById('dpn').innerHTML=(N===1?'Chọn 1 ngày bạn muốn ăn:':'Bấm ngày <b>BẮT ĐẦU</b> — Beeps tự lấy '+N+' ngày <b>liên tục</b> (nhảy qua T7/CN):');
+  if(d==='thang'){ for(var q=0;q<N&&q<WD.length;q++) selDays.push(q); document.getElementById('dpn').innerHTML='Gói <b>1 tháng</b> = <b>20 suất</b>, Beeps <b>xếp sẵn từ ngày gần nhất</b> (kèm món mỗi ngày). Ngày nào bận thì <b>bỏ tick</b> để đổi.'; }
+  else if(FREE[d]){ for(var q2=0;q2<N&&q2<WD.length;q2++) selDays.push(q2); document.getElementById('dpn').innerHTML='Gói <b>'+DURNAME[d]+'</b> = '+N+' suất, Beeps <b>xếp sẵn '+N+' ngày gần nhất</b> — muốn đổi thì bỏ tick ngày bận rồi tick ngày khác:'; }
+  else { selStart=0; document.getElementById('dpn').innerHTML=(N===1?'Beeps xếp <b>ngày gần nhất</b> cho bạn — gói lẻ không đổi ngày:':'Gói <b>'+DURNAME[d]+'</b> = <b>'+N+' ngày liên tục</b> từ ngày gần nhất — gói ngắn Beeps xếp sẵn, không đổi ngày:'); }
   renderDays();
   updateSum();
 }
@@ -789,7 +790,7 @@ function renderDays(){
   var html='';
   if(FREE[selDur]) html+='<div class="dsel" id="dselc"></div>';
   html+='<div class="wknav"><button type="button" class="wkbtn" onclick="wkGo(-1)"'+(curWk===0?' disabled':'')+'>‹</button><span class="wklab">Tuần '+mon.getDate()+'/'+(mon.getMonth()+1)+' – '+fr.getDate()+'/'+(fr.getMonth()+1)+'</span><button type="button" class="wkbtn" onclick="wkGo(1)"'+(curWk>=WEEKS.length-1?' disabled':'')+'>›</button></div>';
-  html+='<div class="dprow">';
+  html+='<div class="dprow'+(FREE[selDur]?'':' locked')+'">';
   wk.idx.forEach(function(i){ var d=WD[i], info=dayInfo(d); html+='<button type="button" class="dcard" data-gi="'+i+'" onclick="pickDay('+i+')">'+(info&&info.img?'<img src="'+info.img+'" alt="">':'<span class="dcnoimg"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" /><path d="M7 2v20" /><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" /></svg></span>')+'<div class="dcb"><div class="dcd">'+WDVN(d.getDay())+' '+d.getDate()+'/'+(d.getMonth()+1)+'</div><div class="dcn">'+esc2(info?info.name:'')+'</div></div><span class="dctick"></span></button>'; });
   html+='</div>';
   host.innerHTML=html; refreshDaySel();
@@ -798,7 +799,7 @@ function wkGo(dir){ curWk+=dir; renderDays(); }
 function selIdx(){ if(!selDur) return []; if(FREE[selDur]) return selDays.slice().sort(function(a,b){return a-b;}); if(selStart===null) return []; var r=[],N=DURN[selDur]; for(var k=selStart;k<selStart+N&&k<WD.length;k++) r.push(k); return r; }
 function isComplete(){ if(!selDur) return false; if(selDur==='thang') return true; if(FREE[selDur]) return selDays.length===DURN[selDur]; return selStart!==null; }
 function refreshDaySel(){ var slots=document.querySelectorAll('.dcard'); var set=selIdx(); for(var k=0;k<slots.length;k++){ var g=parseInt(slots[k].getAttribute('data-gi'),10); slots[k].classList.toggle('on', set.indexOf(g)>=0); } var c=document.getElementById('dselc'); if(c){ if(selDur==='thang') c.innerHTML='Đang ăn <b>'+selDays.length+'/'+DURN.thang+'</b> ngày · bỏ tick ngày bận (giữ vé)'; else if(FREE[selDur]) c.innerHTML='Đã chọn <b>'+selDays.length+'/'+DURN[selDur]+'</b> ngày'+(selDays.length===DURN[selDur]?' ✓ đủ rồi':''); } }
-function pickDay(gi){ if(!selDur) return; if(FREE[selDur]) toggleDay(gi); else pickStart(gi); }
+function pickDay(gi){ if(!selDur) return; if(FREE[selDur]) toggleDay(gi); /* le/ba/tuan: KHOÁ — Beeps xếp sẵn ngày liên tục, không cho chọn */ }
 function pickStart(gi){ var N=DURN[selDur]; if(gi+N>WD.length) gi=WD.length-N; if(gi<0) gi=0; selStart=gi; refreshDaySel(); updateSum(); }
 function toggleDay(gi){ var N=DURN[selDur], i=selDays.indexOf(gi); if(i>=0) selDays.splice(i,1); else { if(selDays.length>=N) return; selDays.push(gi); } refreshDaySel(); updateSum(); }
 function daysLabel(){ var ix=selIdx(); if(!ix.length) return ''; return ix.map(function(k){ var d=WD[k]; return WDVN(d.getDay())+' '+d.getDate()+'/'+(d.getMonth()+1); }).join(', '); }
