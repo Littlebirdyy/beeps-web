@@ -252,7 +252,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 .pbrow{display:flex;align-items:baseline;gap:8px;}
 .pblabel{font-size:12.5px;font-weight:700;color:var(--soft);white-space:nowrap;}
 .pbgift{color:var(--pine);font-weight:800;background:var(--cream);padding:1px 6px;border-radius:6px;font-size:10.5px;}
-.pbprice{font-size:20px;font-weight:800;color:var(--ink);white-space:nowrap;line-height:1.1;}
+.pbprice{font-size:27px;font-weight:900;color:var(--ink);white-space:nowrap;line-height:1.05;}
 .pbprice b{color:var(--pine);}
 .pbcta{background:var(--pine);color:#fff;font-weight:800;font-size:13px;padding:11px 15px;border-radius:11px;border:none;cursor:pointer;white-space:nowrap;flex:none;display:flex;align-items:center;gap:5px;}
 .pbcta .ic{width:15px;height:15px;}
@@ -660,6 +660,26 @@ function gSan(){ return !!(GIFT&&GIFT.indexOf('s')>=0); }
 function gCanh(){ return !!(GIFT&&GIFT.indexOf('c')>=0); }
 function gShip(){ return !!(GIFT&&GIFT.indexOf('p')>=0); }
 function giftTxt(){ if(!GIFT) return ''; var a=[]; if(gSan())a.push('giá sàn'); if(gCanh())a.push('canh miễn phí'); if(gShip())a.push('freeship'); return a.join(' · '); }
+// #3: popup chúc mừng khi áp mã ưu đãi thành công — cho khách thấy benefit
+function closeGiftPop(){ var d=document.getElementById('giftpopwrap'); if(d&&d.parentNode) d.parentNode.removeChild(d); }
+function showGiftPop(){
+  closeGiftPop();
+  var items=[];
+  if(gSan()) items.push(['<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" /><circle cx="7.5" cy="7.5" r=".5" fill="currentColor" /></svg>','Giá SÀN','Mức giá tốt nhất — rẻ như gói dài nhất, cho mọi thời hạn.']);
+  if(gCanh()) items.push(['<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z" /><path d="M7 21h10" /><path d="M19.5 12 22 6" /><path d="M16.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.73 1.62" /><path d="M11.25 3c.27.1.8.53.74 1.36-.05.83-.93 1.2-.98 2.02-.06.78.33 1.24.72 1.62" /><path d="M6.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.74 1.62" /></svg>','Canh MIỄN PHÍ','Thêm canh mỗi bữa mà không mất thêm đồng nào.']);
+  if(gShip()) items.push(['<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" /><path d="M15 18H9" /><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" /><circle cx="17" cy="18" r="2" /><circle cx="7" cy="18" r="2" /></svg>','Miễn phí GIAO HÀNG','Beeps giao tận nơi, không tính phí ship.']);
+  if(!items.length) return;
+  var rows=items.map(function(it){ return '<div style="display:flex;align-items:flex-start;gap:10px;background:var(--cream);border:1px solid var(--honey);border-radius:12px;padding:11px 12px;text-align:left"><span style="display:flex;color:var(--pine);font-size:20px;flex-shrink:0">'+it[0]+'</span><span><b style="font-size:13.5px;color:#8a5a00">'+it[1]+'</b><br><span style="font-size:11.5px;color:var(--soft);line-height:1.4">'+it[2]+'</span></span></div>'; }).join('');
+  var html='<div id="giftpopwrap"><div onclick="closeGiftPop()" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:120;display:flex;align-items:center;justify-content:center;padding:16px">'+
+    '<div onclick="event.stopPropagation()" style="background:var(--surface,#fff);border-radius:22px;max-width:360px;width:100%;padding:26px 22px 22px;text-align:center;box-shadow:0 22px 64px rgba(0,0,0,.42)">'+
+    '<div style="font-size:46px;line-height:1">🎉</div>'+
+    '<div style="font-size:20px;font-weight:900;color:var(--pine);margin:8px 0 4px">Chúc mừng thực khách iu!</div>'+
+    '<div style="font-size:13px;color:var(--soft);margin-bottom:15px">Mã <b>'+esc2(GIFT_CODE)+'</b> đã áp dụng. Bạn nhận được:</div>'+
+    '<div style="display:flex;flex-direction:column;gap:9px;margin-bottom:18px">'+rows+'</div>'+
+    '<button onclick="closeGiftPop()" style="width:100%;background:var(--pine);color:#fff;font-weight:800;font-size:15px;padding:13px;border-radius:12px;border:none;cursor:pointer">Tuyệt vời, tiếp tục →</button>'+
+    '</div></div></div>';
+  var d=document.createElement('div'); d.innerHTML=html; document.body.appendChild(d.firstChild);
+}
 function uprice(g){ return gSan() ? g.floor : g.p[selDur]; }
 function ocanhCost(){ return gCanh() ? 0 : selCanh; }
 async function applyGift(){
@@ -671,7 +691,7 @@ async function applyGift(){
     var buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(v));
     var h=Array.from(new Uint8Array(buf)).map(function(x){return x.toString(16).padStart(2,'0');}).join('');
     var found=null; for(var i=0;i<GIFT_CODES.length;i++){ if(GIFT_CODES[i].h===h){ found=GIFT_CODES[i]; break; } }
-    if(found){ GIFT=found.ben; GIFT_CODE=v; inp.disabled=true; btn.textContent='✓ Đã áp dụng'; msg.style.display='block'; msg.style.color='var(--pine)'; msg.innerHTML='✓ <b>Ưu đãi:</b> '+giftTxt()+'.'; }
+    if(found){ GIFT=found.ben; GIFT_CODE=v; inp.disabled=true; btn.textContent='✓ Đã áp dụng'; msg.style.display='block'; msg.style.color='var(--pine)'; msg.innerHTML='✓ <b>Ưu đãi:</b> '+giftTxt()+'.'; try{ updateSum(); }catch(e){} showGiftPop(); }
     else { GIFT=null; GIFT_CODE=''; btn.disabled=false; btn.textContent='Áp dụng'; msg.style.display='block'; msg.style.color='#C15B5B'; msg.textContent='Mã không đúng. Kiểm tra lại giúp Beeps nhé.'; }
   }catch(e){ btn.disabled=false; btn.textContent='Áp dụng'; msg.style.display='block'; msg.style.color='#C15B5B'; msg.textContent='Máy chưa kiểm được mã (thử mở bằng link web).'; }
   updateSum();
