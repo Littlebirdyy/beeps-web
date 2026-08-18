@@ -805,7 +805,7 @@ function pickDur(d){
   var N=DURN[d];
   if(d==='thang'){ for(var q=0;q<N&&q<WD.length;q++) selDays.push(q); document.getElementById('dpn').innerHTML='Gói <b>1 tháng</b> = <b>20 suất</b>, Beeps <b>xếp sẵn từ ngày gần nhất</b> (kèm món mỗi ngày). Ngày nào bận thì <b>bỏ tick</b> để đổi.'; }
   else if(FREE[d]){ for(var q2=0;q2<N&&q2<WD.length;q2++) selDays.push(q2); document.getElementById('dpn').innerHTML='Gói <b>'+DURNAME[d]+'</b> = '+N+' suất, Beeps <b>xếp sẵn '+N+' ngày gần nhất</b> — muốn đổi thì bỏ tick ngày bận rồi tick ngày khác:'; }
-  else { selStart=0; document.getElementById('dpn').innerHTML=(N===1?'Beeps xếp <b>ngày gần nhất</b> cho bạn — gói lẻ không đổi ngày:':'Gói <b>'+DURNAME[d]+'</b> = <b>'+N+' ngày liên tục</b> từ ngày gần nhất — gói ngắn Beeps xếp sẵn, không đổi ngày:'); }
+  else { document.getElementById('dpn').innerHTML=(N===1?'Bấm chọn <b>1 ngày</b> bạn muốn ăn:':'Bấm ngày <b>BẮT ĐẦU</b> — Beeps tự lấy <b>'+N+' ngày liên tục</b> (nhảy qua T7/CN):'); }  // #2: gói ngắn chọn ngày bắt đầu
   renderDays();
   updateSum();
 }
@@ -817,7 +817,7 @@ function renderDays(){
   var html='';
   if(FREE[selDur]) html+='<div class="dsel" id="dselc"></div>';
   html+='<div class="wknav"><button type="button" class="wkbtn" onclick="wkGo(-1)"'+(curWk===0?' disabled':'')+'>‹</button><span class="wklab">Tuần '+mon.getDate()+'/'+(mon.getMonth()+1)+' – '+fr.getDate()+'/'+(fr.getMonth()+1)+'</span><button type="button" class="wkbtn" onclick="wkGo(1)"'+(curWk>=WEEKS.length-1?' disabled':'')+'>›</button></div>';
-  html+='<div class="dprow'+(FREE[selDur]?'':' locked')+'">';
+  html+='<div class="dprow">';
   wk.idx.forEach(function(i){ var d=WD[i], info=dayInfo(d); html+='<button type="button" class="dcard" data-gi="'+i+'" onclick="pickDay('+i+')">'+(info&&info.img?'<img src="'+info.img+'" alt="">':'<span class="dcnoimg"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" /><path d="M7 2v20" /><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" /></svg></span>')+'<div class="dcb"><div class="dcd">'+WDVN(d.getDay())+' '+d.getDate()+'/'+(d.getMonth()+1)+'</div><div class="dcn">'+esc2(info?info.name:'')+'</div></div><span class="dctick"></span></button>'; });
   html+='</div>';
   host.innerHTML=html; refreshDaySel();
@@ -826,7 +826,7 @@ function wkGo(dir){ curWk+=dir; renderDays(); }
 function selIdx(){ if(!selDur) return []; if(FREE[selDur]) return selDays.slice().sort(function(a,b){return a-b;}); if(selStart===null) return []; var r=[],N=DURN[selDur]; for(var k=selStart;k<selStart+N&&k<WD.length;k++) r.push(k); return r; }
 function isComplete(){ if(!selDur) return false; if(selDur==='thang') return true; if(FREE[selDur]) return selDays.length===DURN[selDur]; return selStart!==null; }
 function refreshDaySel(){ var slots=document.querySelectorAll('.dcard'); var set=selIdx(); for(var k=0;k<slots.length;k++){ var g=parseInt(slots[k].getAttribute('data-gi'),10); slots[k].classList.toggle('on', set.indexOf(g)>=0); } var c=document.getElementById('dselc'); if(c){ if(selDur==='thang') c.innerHTML='Đang ăn <b>'+selDays.length+'/'+DURN.thang+'</b> ngày · bỏ tick ngày bận (giữ vé)'; else if(FREE[selDur]) c.innerHTML='Đã chọn <b>'+selDays.length+'/'+DURN[selDur]+'</b> ngày'+(selDays.length===DURN[selDur]?' ✓ đủ rồi':''); } }
-function pickDay(gi){ if(!selDur) return; if(FREE[selDur]) toggleDay(gi); /* le/ba/tuan: KHOÁ — Beeps xếp sẵn ngày liên tục, không cho chọn */ }
+function pickDay(gi){ if(!selDur) return; if(FREE[selDur]) toggleDay(gi); else pickStart(gi); /* #2: gói ngắn chọn ngày BẮT ĐẦU, phần còn lại nối liền */ }
 function pickStart(gi){ var N=DURN[selDur]; if(gi+N>WD.length) gi=WD.length-N; if(gi<0) gi=0; selStart=gi; refreshDaySel(); updateSum(); }
 function toggleDay(gi){ var N=DURN[selDur], i=selDays.indexOf(gi); if(i>=0) selDays.splice(i,1); else { if(selDays.length>=N) return; selDays.push(gi); } refreshDaySel(); updateSum(); }
 function daysLabel(){ var ix=selIdx(); if(!ix.length) return ''; return ix.map(function(k){ var d=WD[k]; return WDVN(d.getDay())+' '+d.getDate()+'/'+(d.getMonth()+1); }).join(', '); }
