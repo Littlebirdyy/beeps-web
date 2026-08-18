@@ -536,13 +536,17 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
   <div class="wstep" data-w="4">
   <div class="step">
     <div class="steph"><span class="stepn foodn"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z" /><path d="M7 21h10" /><path d="M19.5 12 22 6" /><path d="M16.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.73 1.62" /><path d="M11.25 3c.27.1.8.53.74 1.36-.05.83-.93 1.2-.98 2.02-.06.78.33 1.24.72 1.62" /><path d="M6.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.74 1.62" /></svg></span><h2>Thêm canh &amp; món</h2></div>
-    <div class="canhwrap">
+    <div class="canhwrap" id="canhpick">
       <div class="canhlb"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z" /><path d="M7 21h10" /><path d="M19.5 12 22 6" /><path d="M16.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.73 1.62" /><path d="M11.25 3c.27.1.8.53.74 1.36-.05.83-.93 1.2-.98 2.02-.06.78.33 1.24.72 1.62" /><path d="M6.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.74 1.62" /></svg> Thêm canh? <span class="canhopt">tuỳ chọn</span></div>
       <div class="canhs">
         <button type="button" class="canh on" data-c="0" onclick="pickCanh(0)">Không canh</button>
         <button type="button" class="canh" data-c="5" onclick="pickCanh(5)">Có canh<span class="cp">+5.000đ mỗi bữa</span></button>
       </div>
       <div class="canhnote">Chọn nhanh cho <b>cả gói</b> ở đây. <b>Canh chọn được theo từng ngày</b> — muốn ngày có ngày không thì ghi chú ở dưới hoặc nhắn Beeps.<br><span style="display:block;margin-top:6px">Canh cho ấm bụng, dễ ăn - nhưng suất Beeps đã đo đủ chuẩn nên canh là <b>tuỳ chọn</b>. Đang giảm mỡ thì nên bỏ canh, để no bằng <b>đạm &amp; rau</b> thay vì nước muối nhé.</span></div>
+    </div>
+    <div class="canhwrap" id="canhinc" hidden style="border-color:var(--honey);background:var(--cream)">
+      <div class="canhlb"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z" /><path d="M7 21h10" /><path d="M19.5 12 22 6" /><path d="M16.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.73 1.62" /><path d="M11.25 3c.27.1.8.53.74 1.36-.05.83-.93 1.2-.98 2.02-.06.78.33 1.24.72 1.62" /><path d="M6.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.74 1.62" /></svg> Canh đi kèm <span class="canhopt" style="color:var(--pine)">MIỄN PHÍ với Đo Ni</span></div>
+      <div class="canhnote">Gói <b>Đo Ni</b> đã có <b>canh mỗi bữa miễn phí</b> — không cần chọn, không tính thêm tiền. (Chỉ Vừa Xinh mới cần mua canh.)</div>
     </div>
     <div class="canhwrap" id="vxaddon" hidden>
       <div class="canhlb"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M2 22 16 8" /><path d="M3.47 12.53 5 11l1.53 1.53a3.5 3.5 0 0 1 0 4.94L5 19l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z" /><path d="M7.47 8.53 9 7l1.53 1.53a3.5 3.5 0 0 1 0 4.94L9 15l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z" /><path d="M11.47 4.53 13 3l1.53 1.53a3.5 3.5 0 0 1 0 4.94L13 11l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z" /><path d="M20 2h2v2a4 4 0 0 1-4 4h-2V6a4 4 0 0 1 4-4Z" /><path d="M11.47 17.47 13 19l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L5 19l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z" /><path d="M15.47 13.47 17 15l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L9 15l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z" /><path d="M19.47 9.47 21 11l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L13 11l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z" /></svg> Thêm cho suất Vừa Xinh? <span class="canhopt">tuỳ chọn · mỗi bữa</span></div>
@@ -681,7 +685,7 @@ function showGiftPop(){
   var d=document.createElement('div'); d.innerHTML=html; document.body.appendChild(d.firstChild);
 }
 function uprice(g){ return gSan() ? g.floor : g.p[selDur]; }
-function ocanhCost(){ return gCanh() ? 0 : selCanh; }
+function ocanhCost(){ if(selGoi==='doni') return 0; return gCanh() ? 0 : selCanh; }  // #4: Đo Ni canh miễn phí
 async function applyGift(){
   var inp=document.getElementById('giftin'), msg=document.getElementById('giftmsg'), btn=document.getElementById('giftbtn');
   if(!inp) return; var v=(inp.value||'').trim().toUpperCase().replace(/\s+/g,'');
@@ -774,7 +778,10 @@ function pickGoi(k){
   selGoi=k; selDur=null; selStart=null; selDays=[];
   var df=document.getElementById('doniFields'); if(df) df.hidden=(k!=='doni');
   if(k==='doni'){ selGoal='Giảm mỡ'; selInt='1-2 buổi/tuần'; selSex=''; var gg=document.querySelectorAll('.goal'); for(var gi2=0;gi2<gg.length;gi2++){ var b=gg[gi2]; if(b.getAttribute('data-g')!==null) b.classList.toggle('on', b.getAttribute('data-g')==='Giảm mỡ'); else if(b.getAttribute('data-i')!==null) b.classList.toggle('on', b.getAttribute('data-i')==='1-2 buổi/tuần'); else if(b.getAttribute('data-s')!==null) b.classList.remove('on'); } }
-  selCanh=0; var cc=document.querySelectorAll('.canh[data-c]'); for(var ci=0;ci<cc.length;ci++) cc[ci].classList.toggle('on', cc[ci].getAttribute('data-c')==='0');
+  var isDo=(k==='doni'); selCanh = isDo ? 5 : 0;  // #4: Đo Ni canh đi kèm (miễn phí, ocanhCost trả 0)
+  var cc=document.querySelectorAll('.canh[data-c]'); for(var ci=0;ci<cc.length;ci++) cc[ci].classList.toggle('on', cc[ci].getAttribute('data-c')===(isDo?'5':'0'));
+  var cpk=document.getElementById('canhpick'); if(cpk) cpk.hidden=isDo;
+  var cin=document.getElementById('canhinc'); if(cin) cin.hidden=!isDo;
   resetAddon(); var vx=document.getElementById('vxaddon'); if(vx) vx.hidden=(k!=='vuaxinh'); // thêm rau/thịt/cơm chỉ cho Vừa Xinh
   var cards=document.querySelectorAll('.gsel'); for(var i=0;i<cards.length;i++){ cards[i].classList.toggle('on', cards[i].getAttribute('data-goi')===k); }
   var g=GOIDATA[k];
@@ -912,7 +919,8 @@ function submitOrder(e){
   err.style.display='none';
   var g=GOIDATA[selGoi], suat=DURN[selDur], unit=uprice(g), total=(unit+ocanhCost()+addonCost())*suat*1000;
   if(addonAny()) mm='[Thêm: '+addonTxt()+'/bữa × '+suat+'] '+mm;
-  if(selCanh>0) mm='[Canh +5.000đ/bữa × '+suat+(gCanh()?' - MIỄN PHÍ':'')+'] '+mm;
+  if(selGoi==='doni') mm='[Canh đi kèm Đo Ni - miễn phí] '+mm;
+  else if(selCanh>0) mm='[Canh +5.000đ/bữa × '+suat+(gCanh()?' - MIỄN PHÍ':'')+'] '+mm;
   PEND={ten:ten,sdt:sdt,diachi:diachi,mm:mm,goi:g.name,dur:DURNAME[selDur],gia:unit,suat:suat,total:total,ngay:daysLabel(),canh:gCanh()?0:selCanh,cao:cao,nang:nang,muctieu:muctieu,cuongdo:cuongdo,tuoi:tuoi,gioitinh:gioitinh,mauudai:(GIFT?GIFT_CODE:'')};
   document.getElementById('ocrev').innerHTML=
     '<div><b>Gói:</b> '+esc2(g.name)+' · '+DURNAME[selDur]+'</div>'+
