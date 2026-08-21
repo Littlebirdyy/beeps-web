@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Beeps 🐦 — Đặt cơm trưa</title><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#2C6A4A"><link rel="apple-touch-icon" href="/icon-192.png"></head><body>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Beeps 🐦, Đặt cơm trưa</title><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#2C6A4A"><link rel="apple-touch-icon" href="/icon-192.png"></head><body>
 <style>
 /* vietnamese */
 @font-face {
@@ -161,7 +161,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 .hbmain{background:var(--honey);color:#3a2a00;box-shadow:0 10px 22px -10px rgba(224,163,46,.9);}
 .hbsub{background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.55);}
 @media(min-width:600px){ .hero2{min-height:400px;} .hero2 h1{font-size:32px;} }
-/* ===== MÓN NGON HÔM NAY (featured dish) — to & nổi bật hơn card menu thường ===== */
+/* ===== MÓN NGON HÔM NAY (featured dish), to & nổi bật hơn card menu thường ===== */
 #todaydish{margin:18px 0 4px;}
 .tdcard{background:var(--surface);border:2px solid var(--honey);border-radius:22px;overflow:hidden;box-shadow:0 18px 40px -22px rgba(224,163,46,.85);}
 .tdhead{display:flex;align-items:center;gap:9px;background:var(--pine);color:#fff;padding:12px 16px;}
@@ -197,7 +197,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 .imgzoom{position:fixed;inset:0;z-index:9999;background:rgba(10,14,10,.92);display:none;align-items:center;justify-content:center;padding:20px;cursor:zoom-out;}
 .imgzoom.on{display:flex;}
 .imgzoom img{max-width:100%;max-height:100%;border-radius:14px;box-shadow:0 12px 48px rgba(0,0,0,.5);}
-/* gallery popup thực đơn — 20 món 1 màn, vuốt/kéo ngang */
+/* gallery popup thực đơn, 20 món 1 màn, vuốt/kéo ngang */
 .menupop{position:fixed;inset:0;z-index:9998;background:rgba(10,14,10,.94);display:none;flex-direction:column;}
 .menupop.on{display:flex;}
 .mptop{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px 8px;flex:none;}
@@ -206,7 +206,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 .mpclose{flex:none;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:20px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;}
 .mpstrip{flex:1;min-height:0;display:flex;gap:18px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding:6px 16px 22px;align-items:center;cursor:grab;}
 .mpstrip::-webkit-scrollbar{height:7px;} .mpstrip::-webkit-scrollbar-thumb{background:rgba(255,255,255,.3);border-radius:9px;}
-/* khung gom theo TUẦN — nhãn tuần là THANH NGANG phía TRÊN nhóm món (không che tên món) */
+/* khung gom theo TUẦN, nhãn tuần là THANH NGANG phía TRÊN nhóm món (không che tên món) */
 .mpweek{flex:0 0 auto;display:flex;flex-direction:column;gap:12px;padding:12px;border:1.6px solid var(--wc);border-radius:22px;background:rgba(255,255,255,.05);position:relative;}
 /* nhãn tuần = pill gọn, dính mép trái khi vuốt (không kéo full khung, không đè lên ảnh món) */
 .mpwlab{position:sticky;left:12px;align-self:flex-start;z-index:3;background:var(--wc);color:#fff;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.4);font-weight:800;font-size:15px;letter-spacing:2px;white-space:nowrap;padding:9px 18px 10px;}
@@ -257,7 +257,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 .pbcta{background:var(--pine);color:#fff;font-weight:800;font-size:13px;padding:11px 15px;border-radius:11px;border:none;cursor:pointer;white-space:nowrap;flex:none;display:flex;align-items:center;gap:5px;}
 .pbcta .ic{width:15px;height:15px;}
 .doc{padding-bottom:40px;}
-/* ===== ĐẶT HÀNG: modal popup giữa màn hình (chỉ trình bày + show/hide — KHÔNG đụng submit/QR/PEND) ===== */
+/* ===== ĐẶT HÀNG: modal popup giữa màn hình (chỉ trình bày + show/hide, KHÔNG đụng submit/QR/PEND) ===== */
 .ordermodal{position:fixed;inset:0;z-index:200;display:none;}
 .ordermodal.on{display:block;}
 .omback{position:absolute;inset:0;background:rgba(10,14,10,.62);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);}
@@ -542,11 +542,11 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
         <button type="button" class="canh on" data-c="0" onclick="pickCanh(0)">Không canh</button>
         <button type="button" class="canh" data-c="5" onclick="pickCanh(5)">Có canh<span class="cp">+5.000đ mỗi bữa</span></button>
       </div>
-      <div class="canhnote">Chọn nhanh cho <b>cả gói</b> ở đây. <b>Canh chọn được theo từng ngày</b> — muốn ngày có ngày không thì ghi chú ở dưới hoặc nhắn Beeps.<br><span style="display:block;margin-top:6px">Canh cho ấm bụng, dễ ăn - nhưng suất Beeps đã đo đủ chuẩn nên canh là <b>tuỳ chọn</b>. Đang giảm mỡ thì nên bỏ canh, để no bằng <b>đạm &amp; rau</b> thay vì nước muối nhé.</span></div>
+      <div class="canhnote">Chọn nhanh cho <b>cả gói</b> ở đây. <b>Canh chọn được theo từng ngày</b>, muốn ngày có ngày không thì ghi chú ở dưới hoặc nhắn Beeps.<br><span style="display:block;margin-top:6px">Canh cho ấm bụng, dễ ăn - nhưng suất Beeps đã đo đủ chuẩn nên canh là <b>tuỳ chọn</b>. Đang giảm mỡ thì nên bỏ canh, để no bằng <b>đạm &amp; rau</b> thay vì nước muối nhé.</span></div>
     </div>
     <div class="canhwrap" id="canhinc" hidden style="border-color:var(--honey);background:var(--cream)">
       <div class="canhlb"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z" /><path d="M7 21h10" /><path d="M19.5 12 22 6" /><path d="M16.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.73 1.62" /><path d="M11.25 3c.27.1.8.53.74 1.36-.05.83-.93 1.2-.98 2.02-.06.78.33 1.24.72 1.62" /><path d="M6.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.74 1.62" /></svg> Canh đi kèm <span class="canhopt" style="color:var(--pine)">MIỄN PHÍ với Đo Ni</span></div>
-      <div class="canhnote">Gói <b>Đo Ni</b> đã có <b>canh mỗi bữa miễn phí</b> — không cần chọn, không tính thêm tiền. (Chỉ Vừa Xinh mới cần mua canh.)</div>
+      <div class="canhnote">Gói <b>Đo Ni</b> đã có <b>canh mỗi bữa miễn phí</b>, không cần chọn, không tính thêm tiền. (Chỉ Vừa Xinh mới cần mua canh.)</div>
     </div>
     <div class="canhwrap" id="vxaddon" hidden>
       <div class="canhlb"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M2 22 16 8" /><path d="M3.47 12.53 5 11l1.53 1.53a3.5 3.5 0 0 1 0 4.94L5 19l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z" /><path d="M7.47 8.53 9 7l1.53 1.53a3.5 3.5 0 0 1 0 4.94L9 15l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z" /><path d="M11.47 4.53 13 3l1.53 1.53a3.5 3.5 0 0 1 0 4.94L13 11l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z" /><path d="M20 2h2v2a4 4 0 0 1-4 4h-2V6a4 4 0 0 1 4-4Z" /><path d="M11.47 17.47 13 19l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L5 19l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z" /><path d="M15.47 13.47 17 15l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L9 15l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z" /><path d="M19.47 9.47 21 11l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L13 11l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z" /></svg> Thêm cho suất Vừa Xinh? <span class="canhopt">tuỳ chọn · mỗi bữa</span></div>
@@ -555,7 +555,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
         <button type="button" class="canh" id="add_rau" data-add="rau" onclick="pickAdd('rau')">+ Rau<span class="cp">+5.000đ mỗi bữa</span></button>
         <button type="button" class="canh" id="add_thit" data-add="thit" onclick="pickAdd('thit')">+ Thịt<span class="cp">+10.000đ mỗi bữa</span></button>
       </div>
-      <div class="canhnote">Chọn cho <b>cả gói</b>, bấm lại để bỏ. Gói <b>Đo Ni</b> đã đo chuẩn theo cơ thể nên không cần thêm — mục này dành cho <b>Vừa Xinh</b> ai ăn khoẻ.</div>
+      <div class="canhnote">Chọn cho <b>cả gói</b>, bấm lại để bỏ. Gói <b>Đo Ni</b> đã đo chuẩn theo cơ thể nên không cần thêm, mục này dành cho <b>Vừa Xinh</b> ai ăn khoẻ.</div>
     </div>
   </div>
   </div>
@@ -597,7 +597,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
             <button type="button" class="goal" data-i="5-6 buổi/tuần" onclick="pickInt(this)">5-6 buổi</button>
             <button type="button" class="goal" data-i="7+ buổi/tuần" onclick="pickInt(this)">Hằng ngày</button>
           </div>
-          <div class="doninote" style="margin-top:12px"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /><path d="M9 18h6" /><path d="M10 22h4" /></svg> Suất <b>giảm mỡ</b> sẽ khiến bạn <b>hơi đói một chút</b> — đó chính là mục đích của giảm cân (thâm hụt calo có kiểm soát). Beeps vẫn tính đủ đạm để bạn không tụt cơ.</div>
+          <div class="doninote" style="margin-top:12px"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /><path d="M9 18h6" /><path d="M10 22h4" /></svg> Suất <b>giảm mỡ</b> sẽ khiến bạn <b>hơi đói một chút</b>, đó chính là mục đích của giảm cân (thâm hụt calo có kiểm soát). Beeps vẫn tính đủ đạm để bạn không tụt cơ.</div>
         </div>
         <div class="ofield"><label>Mong muốn / ghi chú (nếu có)</label><textarea id="f_mm" placeholder="VD: dị ứng tôm, không ăn cay, ít cơm, giao trước 12h…"></textarea></div>
         <div class="ofield"><label><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M12 7v14" /><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8" /><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5" /><rect x="3" y="7" width="18" height="4" rx="1" /></svg> Mã ưu đãi (nếu có)</label>
@@ -612,7 +612,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
       </form>
       <div class="oconfirm" id="oconfirm" hidden>
         <div class="ocrev" id="ocrev"></div>
-        <div class="ocnote"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M12 17v5" /><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" /></svg> Kiểm tra kỹ giúp Beeps nhé — bấm xác nhận là Beeps chuẩn bị suất cho bạn.</div>
+        <div class="ocnote"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M12 17v5" /><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" /></svg> Kiểm tra kỹ giúp Beeps nhé, bấm xác nhận là Beeps chuẩn bị suất cho bạn.</div>
         <button class="obtn" id="ocbtn" type="button" onclick="confirmOrder()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg> Xác nhận &amp; lấy mã QR chuyển khoản</button>
         <button class="obtn ghost" type="button" onclick="editOrder()">← Sửa lại thông tin</button>
         <div class="oerr" id="oerr2"></div>
@@ -664,12 +664,12 @@ function gSan(){ return !!(GIFT&&GIFT.indexOf('s')>=0); }
 function gCanh(){ return !!(GIFT&&GIFT.indexOf('c')>=0); }
 function gShip(){ return !!(GIFT&&GIFT.indexOf('p')>=0); }
 function giftTxt(){ if(!GIFT) return ''; var a=[]; if(gSan())a.push('giá sàn'); if(gCanh())a.push('canh miễn phí'); if(gShip())a.push('freeship'); return a.join(' · '); }
-// #3: popup chúc mừng khi áp mã ưu đãi thành công — cho khách thấy benefit
+// #3: popup chúc mừng khi áp mã ưu đãi thành công, cho khách thấy benefit
 function closeGiftPop(){ var d=document.getElementById('giftpopwrap'); if(d&&d.parentNode) d.parentNode.removeChild(d); }
 function showGiftPop(){
   closeGiftPop();
   var items=[];
-  if(gSan()) items.push(['<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" /><circle cx="7.5" cy="7.5" r=".5" fill="currentColor" /></svg>','Giá SÀN','Mức giá tốt nhất — rẻ như gói dài nhất, cho mọi thời hạn.']);
+  if(gSan()) items.push(['<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" /><circle cx="7.5" cy="7.5" r=".5" fill="currentColor" /></svg>','Giá SÀN','Mức giá tốt nhất, rẻ như gói dài nhất, cho mọi thời hạn.']);
   if(gCanh()) items.push(['<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z" /><path d="M7 21h10" /><path d="M19.5 12 22 6" /><path d="M16.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.73 1.62" /><path d="M11.25 3c.27.1.8.53.74 1.36-.05.83-.93 1.2-.98 2.02-.06.78.33 1.24.72 1.62" /><path d="M6.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.74 1.62" /></svg>','Canh MIỄN PHÍ','Thêm canh mỗi bữa mà không mất thêm đồng nào.']);
   if(gShip()) items.push(['<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" /><path d="M15 18H9" /><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" /><circle cx="17" cy="18" r="2" /><circle cx="7" cy="18" r="2" /></svg>','Miễn phí GIAO HÀNG','Beeps giao tận nơi, không tính phí ship.']);
   if(!items.length) return;
@@ -804,8 +804,8 @@ function pickDur(d){
   var durs=document.querySelectorAll('.dur'); for(var i=0;i<durs.length;i++){ durs[i].classList.toggle('on', durs[i].getAttribute('data-d')===d); }
   var N=DURN[d];
   if(d==='thang'){ for(var q=0;q<N&&q<WD.length;q++) selDays.push(q); document.getElementById('dpn').innerHTML='Gói <b>1 tháng</b> = <b>20 suất</b>, Beeps <b>xếp sẵn từ ngày gần nhất</b> (kèm món mỗi ngày). Ngày nào bận thì <b>bỏ tick</b> để đổi.'; }
-  else if(FREE[d]){ for(var q2=0;q2<N&&q2<WD.length;q2++) selDays.push(q2); document.getElementById('dpn').innerHTML='Gói <b>'+DURNAME[d]+'</b> = '+N+' suất, Beeps <b>xếp sẵn '+N+' ngày gần nhất</b> — muốn đổi thì bỏ tick ngày bận rồi tick ngày khác:'; }
-  else { selStart=0; document.getElementById('dpn').innerHTML=(N===1?'Beeps chọn sẵn <b>ngày gần nhất</b> — muốn đổi thì bấm ngày khác:':'Beeps xếp sẵn <b>'+N+' ngày liên tục từ gần nhất</b> — muốn dời thì bấm ngày <b>BẮT ĐẦU</b> khác:'); }  // #6: auto-fill từ ngày gần nhất (vẫn đổi start được)
+  else if(FREE[d]){ for(var q2=0;q2<N&&q2<WD.length;q2++) selDays.push(q2); document.getElementById('dpn').innerHTML='Gói <b>'+DURNAME[d]+'</b> = '+N+' suất, Beeps <b>xếp sẵn '+N+' ngày gần nhất</b>, muốn đổi thì bỏ tick ngày bận rồi tick ngày khác:'; }
+  else { selStart=0; document.getElementById('dpn').innerHTML=(N===1?'Beeps chọn sẵn <b>ngày gần nhất</b>, muốn đổi thì bấm ngày khác:':'Beeps xếp sẵn <b>'+N+' ngày liên tục từ gần nhất</b>, muốn dời thì bấm ngày <b>BẮT ĐẦU</b> khác:'); }  // #6: auto-fill từ ngày gần nhất (vẫn đổi start được)
   renderDays();
   updateSum();
 }
@@ -835,7 +835,7 @@ function daysShort(){ var ix=selIdx(); if(!ix.length) return 'chưa chọn ngày
   var fl=WDVN(f.getDay())+' '+f.getDate()+'/'+(f.getMonth()+1);
   if(ds.length===1) return fl;
   return ds.length+' bữa · '+fl+' → '+WDVN(l.getDay())+' '+l.getDate()+'/'+(l.getMonth()+1); }
-function spillNote(){ var ix=selIdx(); if(!ix.length) return ''; var a=WD[ix[0]], b=WD[ix[ix.length-1]]; if(a.getMonth()!==b.getMonth()||a.getFullYear()!==b.getFullYear()) return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M8 2v3" /><path d="M16 2v3" /><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" /></svg> Lịch của bạn kéo sang tháng '+(b.getMonth()+1)+' (đến '+WDVN(b.getDay())+' '+b.getDate()+'/'+(b.getMonth()+1)+') — Beeps giữ đủ suất, không lo mất nhé.'; return ''; }
+function spillNote(){ var ix=selIdx(); if(!ix.length) return ''; var a=WD[ix[0]], b=WD[ix[ix.length-1]]; if(a.getMonth()!==b.getMonth()||a.getFullYear()!==b.getFullYear()) return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M8 2v3" /><path d="M16 2v3" /><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" /></svg> Lịch của bạn kéo sang tháng '+(b.getMonth()+1)+' (đến '+WDVN(b.getDay())+' '+b.getDate()+'/'+(b.getMonth()+1)+'), Beeps giữ đủ suất, không lo mất nhé.'; return ''; }
 function updatePbar(){
   var od=document.getElementById('odone'), done=(od&&!od.hidden);
   // ánh xạ 5 màn wizard -> 4 nấc pbar: (1,2)->Chọn gói · (3,4)->Chọn ngày · 5->Thông tin · xong->Xong
@@ -859,7 +859,7 @@ function renderPriceBar(){
   el.innerHTML=note+'<div class="pbrow"><span class="pbprice"><b>'+vnd(grand)+'</b></span></div>';  // #1: chỉ pill giá, bỏ chữ "Tổng cộng" cho khỏi tràn
   if(cta) cta.innerHTML=(isComplete()?'Tiếp tục <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>':'Chọn ngày <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>');  // #1: rút gọn nút cho khỏi che giá
 }
-// ===== WIZARD ngang: 1 màn / bước, Tiếp + Quay lại, gate theo bước (chỉ điều hướng — KHÔNG đụng submit/QR/PEND) =====
+// ===== WIZARD ngang: 1 màn / bước, Tiếp + Quay lại, gate theo bước (chỉ điều hướng, KHÔNG đụng submit/QR/PEND) =====
 var WTOAST_T=null;
 function wizToast(msg){ var t=document.getElementById('wiztoast'); if(!t||!msg) return; t.textContent=msg; t.classList.add('on'); clearTimeout(WTOAST_T); WTOAST_T=setTimeout(function(){ t.classList.remove('on'); },1800); }
 function wizSat(n){ if(n===1) return !!selGoi; if(n===2) return !!selDur; if(n===3) return isComplete(); return true; } // 4 (canh) + 5 (form có nút riêng) không gate ở đây
@@ -876,7 +876,7 @@ function wizShow(n,noScroll){
 function wizNext(){ if(WSTEP>=5) return; if(!wizSat(WSTEP)){ wizToast(wizMsg(WSTEP)); return; } wizShow(WSTEP+1); }
 function wizBack(){ if(WSTEP>1) wizShow(WSTEP-1); }
 function pbGo(){ wizNext(); } // thanh giá dưới đáy = nút Tiếp
-// ===== ĐẶT HÀNG: mở/đóng modal (chỉ show/hide + khoá cuộn nền — KHÔNG đụng state/submit/QR) =====
+// ===== ĐẶT HÀNG: mở/đóng modal (chỉ show/hide + khoá cuộn nền, KHÔNG đụng state/submit/QR) =====
 function openOrder(){ var m=document.getElementById('ordermodal'); if(!m) return; m.classList.add('on'); m.setAttribute('aria-hidden','false'); try{ document.body.style.overflow='hidden'; }catch(e){} try{ wizShow(WSTEP||1,true); }catch(e){} var sc=document.getElementById('omscroll'); if(sc) sc.scrollTop=0; }
 function closeOrder(){ var m=document.getElementById('ordermodal'); if(!m) return; m.classList.remove('on'); m.setAttribute('aria-hidden','true'); try{ document.body.style.overflow=''; }catch(e){} }
 function updateSum(){
@@ -885,7 +885,7 @@ function updateSum(){
   var s=document.getElementById('osum'); if(!s) return;
   if(!selGoi){ s.innerHTML='Chọn gói, thời hạn & ngày ăn ở trên nhé.'; return; }
   var g=GOIDATA[selGoi];
-  if(!selDur){ s.innerHTML='Gói <b>'+g.name+'</b> — chọn thời hạn ở trên.'; return; }
+  if(!selDur){ s.innerHTML='Gói <b>'+g.name+'</b>, chọn thời hạn ở trên.'; return; }
   var N=DURN[selDur], gia=uprice(g), tong=gia*N, canh=ocanhCost()*N, add=addonCost()*N, grand=tong+canh+add;
   var goc=gSan()?(g.p[selDur]*N):(g.p.le*N);
   var pr=(!gSan() && selDur==='le')?('<span class="osnew">'+vnd(tong)+'</span>')
@@ -949,7 +949,7 @@ function submitOrder(e){
   return false;
 }
 function editOrder(){ document.getElementById('oconfirm').hidden=true; document.getElementById('oform').style.display=''; document.getElementById('osum').style.display=''; document.getElementById('f_ten').scrollIntoView({behavior:'smooth',block:'center'}); }
-// Lấy GIÁ + QR CHUẨN từ server (?quote) — client KHÔNG tự đặt số tiền nữa (bảo mật)
+// Lấy GIÁ + QR CHUẨN từ server (?quote), client KHÔNG tự đặt số tiền nữa (bảo mật)
 function srvQuote(cb){
   try{
     var cbn='__q'+Date.now()+Math.floor(Math.random()*1e6), done=false;
@@ -972,7 +972,7 @@ function chkSdt(){
     var fin=function(d){ if(done)return; done=true; try{delete window[cbn];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s);
       var ords=(d&&d.orders)||[];
       if(ords.length){ var g=ords[0].goi||''; SDT_EXISTS=true;
-        warn.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg> <b>Số này đã là khách Beeps'+(g?(' — gói '+esc2(g)):'')+'.</b><br>Đăng nhập bằng chính SĐT này để xem suất / mua thêm — không cần đăng ký lại. <a href="/app.html" target="_blank" rel="noopener" style="color:var(--pine);font-weight:800">Mở app →</a><br><span style="opacity:.75">Muốn đặt cho người khác nữa? Nhắn Zalo 0941 751 999 để Beeps thêm suất giúp.</span>';
+        warn.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg> <b>Số này đã là khách Beeps'+(g?(', gói '+esc2(g)):'')+'.</b><br>Đăng nhập bằng chính SĐT này để xem suất / mua thêm, không cần đăng ký lại. <a href="/app.html" target="_blank" rel="noopener" style="color:var(--pine);font-weight:800">Mở app →</a><br><span style="opacity:.75">Muốn đặt cho người khác nữa? Nhắn Zalo 0941 751 999 để Beeps thêm suất giúp.</span>';
         warn.style.display='block';
       } else { warn.style.display='none'; }
     };
@@ -985,7 +985,7 @@ function confirmOrder(){
   srvQuote(function(q){
     if(q && q.total){ PEND.total=q.total; PEND.qr=q.qr||null; }   // GIÁ CHUẨN từ server (đè giá client)
     var params='form-name=beeps-order&ten='+encodeURIComponent(PEND.ten)+'&sdt='+encodeURIComponent(PEND.sdt)+'&diachi='+encodeURIComponent(PEND.diachi)+'&goi='+encodeURIComponent(PEND.goi)+'&thoihan='+encodeURIComponent(PEND.dur)+'&gia='+encodeURIComponent(PEND.gia+'k')+'&ngayan='+encodeURIComponent(PEND.ngay)+'&mongmuon='+encodeURIComponent(PEND.mm);
-    // (a) ĐƯỜNG CHÍNH: ghi vào Google Sheet — kèm cờ addon để SERVER tự tính lại tổng (bỏ qua tong client)
+    // (a) ĐƯỜNG CHÍNH: ghi vào Google Sheet, kèm cờ addon để SERVER tự tính lại tổng (bỏ qua tong client)
     try{ fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({id:'web-'+Date.now()+'-'+Math.floor(Math.random()*1e6),data:{ten:PEND.ten,sdt:PEND.sdt,diachi:PEND.diachi,goi:PEND.goi,thoihan:PEND.dur,gia:PEND.gia+'k',ngayan:PEND.ngay,mongmuon:PEND.mm,canh:String(selCanh||0),addon_rau:String(selAdd&&selAdd.rau?1:0),addon_thit:String(selAdd&&selAdd.thit?1:0),tong:String(PEND.total||''),cao:PEND.cao||'',nang:PEND.nang||'',muctieu:PEND.muctieu||'',cuongdo:PEND.cuongdo||'',tuoi:PEND.tuoi||'',gioitinh:PEND.gioitinh||'',mauudai:PEND.mauudai||''}})}); }catch(e){}
     // (b) DỰ PHÒNG: Netlify Forms + hiện QR
@@ -1015,7 +1015,7 @@ function showQR(){
     '<button type="button" class="obtn" id="qtf_paid" style="display:block;width:100%;margin-top:6px"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg> Tôi đã chuyển khoản xong</button>'+
     '<div class="qrinfo" style="border-color:var(--pine);border-style:solid;background:var(--cream)"><div style="font-weight:800;color:var(--pine);margin-bottom:3px"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" /></svg> Theo dõi suất của bạn</div><div style="font-size:12.5px;color:var(--soft);line-height:1.65">Sau khi Beeps xác nhận đơn, <b>đăng nhập bằng số '+esc2(PEND.sdt)+'</b> để xem: <b>hôm nay ăn gì · mai ăn gì · còn mấy suất</b>.</div><a class="obtn" style="display:block;text-align:center;text-decoration:none;margin-top:9px" href="app.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" /></svg> Mở trang đăng nhập</a></div>'+
     '<a class="obtn ghost" style="display:block;text-align:center;text-decoration:none;margin-top:10px" href="https://zalo.me/0941751999" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" /></svg> Nhắn Zalo cho Beeps</a>';
-  // Chuyển khoản nhanh: lưu QR + sao chép số TK / số tiền / nội dung (không đụng dữ liệu đơn — chỉ đọc lại các giá trị showQR đã dùng)
+  // Chuyển khoản nhanh: lưu QR + sao chép số TK / số tiền / nội dung (không đụng dữ liệu đơn, chỉ đọc lại các giá trị showQR đã dùng)
   var qSave=document.getElementById('qtf_save'); if(qSave) qSave.onclick=function(){ bpSaveQR(qr, qSave); };
   var qAcc=document.getElementById('qtf_acc'); if(qAcc) qAcc.onclick=function(){ bpCopy('183037412', qAcc); };
   var qAmt=document.getElementById('qtf_amt'); if(qAmt) qAmt.onclick=function(){ bpCopy(String(PEND.total), qAmt); };
@@ -1062,12 +1062,12 @@ function bpSaveQR(url, btn){
 (function(){ var dd=document.getElementById('menu_dinhduong'); if(!dd) return; dd.hidden=false; var _w=beepsWeek(); var mh=document.getElementById('mhint'); if(mh) mh.innerHTML='20 món · 4 tuần không trùng. Bấm ‹ › để đổi tuần.'; MC_WK=((_w.tuan-1)%4+4)%4; renderMC(); })();
 try{ renderTodayDish(); }catch(e){}
 (function(){ var imgs=document.querySelectorAll('#herobg .hbgimg'); if(imgs.length<2) return; var i=0; setInterval(function(){ imgs[i].classList.remove('on'); i=(i+1)%imgs.length; imgs[i].classList.add('on'); }, 3000); })();
-// #1: kéo chuột để cuộn ngang menu (PC) — mobile đã vuốt được
+// #1: kéo chuột để cuộn ngang menu (PC), mobile đã vuốt được
 (function(){ var els=document.querySelectorAll('.mchscroll'); for(var n=0;n<els.length;n++){ (function(el){ var down=false,moved=false,sx=0,sl=0;
   el.addEventListener('mousedown',function(e){ down=true;moved=false;sx=e.pageX;sl=el.scrollLeft;el.style.cursor='grabbing'; });
   document.addEventListener('mousemove',function(e){ if(!down)return; var dx=e.pageX-sx; if(Math.abs(dx)>4)moved=true; el.scrollLeft=sl-dx; });
   document.addEventListener('mouseup',function(){ down=false;el.style.cursor=''; });
-  // touch: vuốt bắt đầu NGAY TRÊN ảnh vẫn cuộn được — chỉ tap thật mới mở popup (chặn click sau khi đã kéo)
+  // touch: vuốt bắt đầu NGAY TRÊN ảnh vẫn cuộn được, chỉ tap thật mới mở popup (chặn click sau khi đã kéo)
   var tsx=0,tmoved=false;
   el.addEventListener('touchstart',function(e){ tmoved=false; tsx=e.touches[0].clientX; },{passive:true});
   el.addEventListener('touchmove',function(e){ if(Math.abs(e.touches[0].clientX-tsx)>8) tmoved=true; },{passive:true});
@@ -1090,20 +1090,20 @@ try{ renderTodayDish(); }catch(e){}
   var tx=0,ty=0,ttr=false;
   card.addEventListener('touchstart',function(e){ if(e.touches.length!==1){ ttr=false; return; } ttr=true; tx=e.touches[0].clientX; ty=e.touches[0].clientY; },{passive:true});
   card.addEventListener('touchend',function(e){ if(!ttr) return; ttr=false; var t=e.changedTouches[0]; act(t.clientX-tx, t.clientY-ty); },{passive:true});
-  // mouse-drag (PC) — bỏ qua khi bắt đầu trên ô nhập để không phá chọn text; chặn click nếu đã kéo thành swipe
+  // mouse-drag (PC), bỏ qua khi bắt đầu trên ô nhập để không phá chọn text; chặn click nếu đã kéo thành swipe
   var md=false,mx=0,my=0,mmoved=false;
   card.addEventListener('mousedown',function(e){ if(e.button!==0) return; if(e.target.closest('input,textarea,select')) return; md=true; mmoved=false; mx=e.clientX; my=e.clientY; });
   window.addEventListener('mousemove',function(e){ if(!md) return; if(Math.abs(e.clientX-mx)>6||Math.abs(e.clientY-my)>6) mmoved=true; });
   window.addEventListener('mouseup',function(e){ if(!md) return; md=false; var dx=e.clientX-mx, dy=e.clientY-my; if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)*1.4 && !doneVisible()){ act(dx,dy); if(mmoved){ card.addEventListener('click',function h(ev){ ev.preventDefault(); ev.stopPropagation(); card.removeEventListener('click',h,true); },true); } } });
 })();
-// ===== PWA: cài app Beeps ngay từ trang menu (funnel) — self-contained, guard mọi API trình duyệt =====
+// ===== PWA: cài app Beeps ngay từ trang menu (funnel), self-contained, guard mọi API trình duyệt =====
 var BIP_EVENT=null, PWA_DISMISS=false;
 function pwaStandalone(){ try{ return (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true; }catch(e){ return false; } }
 function pwaIsIOS(){ try{ return /iphone|ipad|ipod/i.test(navigator.userAgent||'') && !(window.MSStream); }catch(e){ return false; } }
 function pwaDismiss(){ PWA_DISMISS=true; try{ sessionStorage.setItem('beeps_pwa_dismiss','1'); }catch(e){} renderPwaSlot(); }
 function installApp(){
   if(BIP_EVENT){ try{ BIP_EVENT.prompt(); var ev=BIP_EVENT; BIP_EVENT=null; if(ev.userChoice){ ev.userChoice.then(function(c){ if(c&&c.outcome==='accepted'){ PWA_DISMISS=true; } renderPwaSlot(); }); } }catch(x){} return; }
-  if(pwaIsIOS()){ alert('Cài Beeps vào Màn hình chính:\n\n1) Bấm nút Chia sẻ ở thanh dưới (hình vuông có mũi tên lên).\n2) Kéo xuống, chọn "Thêm vào Màn hình chính".\n3) Bấm "Thêm" — icon Beeps hiện như một app.'); return; }
+  if(pwaIsIOS()){ alert('Cài Beeps vào Màn hình chính:\n\n1) Bấm nút Chia sẻ ở thanh dưới (hình vuông có mũi tên lên).\n2) Kéo xuống, chọn "Thêm vào Màn hình chính".\n3) Bấm "Thêm", icon Beeps hiện như một app.'); return; }
   alert('Mở menu trình duyệt (biểu tượng ⋮) rồi chọn "Cài đặt ứng dụng" hoặc "Thêm vào Màn hình chính" để cài Beeps nhé.');
 }
 function renderPwaSlot(){
