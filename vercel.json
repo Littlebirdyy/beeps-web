@@ -3,6 +3,9 @@
   "buildCommand": null,
   "outputDirectory": ".",
   "cleanUrls": true,
+  "redirects": [
+    { "source": "/:path*", "has": [{ "type": "host", "value": "thebeeps.vercel.app" }], "destination": "https://thebeeps.fit/:path*", "permanent": true }
+  ],
   "headers": [
     {
       "source": "/(.*)",
