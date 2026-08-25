@@ -156,12 +156,10 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 .hero2 .eb{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--honey);}
 .hero2 h1{font-size:26px;font-weight:800;margin:6px 0 7px;letter-spacing:-.5px;color:#fff;text-wrap:balance;}
 .hero2 p{font-size:13.5px;color:#EAF3EC;margin-bottom:15px;line-height:1.5;}
-.herobtns{display:flex;align-items:center;gap:15px;flex-wrap:wrap;}
-.hbtn{text-align:center;padding:15px 24px;border-radius:13px;font-weight:800;font-size:16px;font-family:inherit;border:none;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;}
+.herobtns{display:flex;gap:10px;}
+.hbtn{flex:1;text-align:center;padding:15px 10px;border-radius:13px;font-weight:800;font-size:16px;font-family:inherit;border:none;cursor:pointer;text-decoration:none;}
 .hbmain{background:var(--honey);color:#3a2a00;box-shadow:0 10px 22px -10px rgba(224,163,46,.9);}
-/* nút phụ = link chữ (không nổi thành nút) */
-.herolink{display:inline-flex;align-items:center;gap:6px;color:#fff;font-weight:700;font-size:14px;font-family:inherit;background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1.5px;text-decoration-color:rgba(255,255,255,.5);}
-.herolink .ic{width:16px;height:16px;}
+.hbsub{background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.55);}
 @media(min-width:600px){ .hero2{min-height:400px;} .hero2 h1{font-size:32px;} }
 /* ===== MÓN NGON HÔM NAY (featured dish), to & nổi bật hơn card menu thường ===== */
 #todaydish{margin:18px 0 4px;}
@@ -304,7 +302,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 .gx .gxi{font-size:19px;flex:none;line-height:1.3;}
 .gx.sep{border-top:2px solid var(--honey);} .gx.sep i{color:var(--soft);font-style:italic;}
 .gsels{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;align-items:stretch;}
-.gsel{position:relative;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:14px 14px 14px 14px;width:100%;font-family:inherit;color:var(--ink);cursor:pointer;}
+.gsel{position:relative;text-align:left;background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:14px 14px 14px 14px;width:100%;font-family:inherit;color:var(--ink);cursor:pointer;box-shadow:var(--shadow);}
 .gsel .gtick{position:absolute;right:12px;top:12px;width:20px;height:20px;border-radius:50%;border:2px solid var(--line);}
 .gsel.on{border-color:var(--honey);background:var(--cream);}
 .gsel.on .gtick{border-color:var(--honey);background:var(--honey);}
@@ -369,7 +367,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 .cachdat{margin:24px 0 6px;}
 .cachdat h3{font-size:16px;font-weight:800;text-align:center;color:var(--ink);margin-bottom:12px;}
 .cdgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
-.cdcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 12px;text-align:center;}
+.cdcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 12px;text-align:center;box-shadow:var(--shadow);}
 .cdcard .cdi{font-size:28px;line-height:1;} .cdcard .cdt{font-weight:800;font-size:13px;color:var(--pine);margin-top:7px;} .cdcard .cds{font-size:11.5px;color:var(--soft);margin-top:3px;line-height:1.4;}
 /* thanh 4 bước */
 .pbar{position:sticky;top:48px;z-index:20;display:flex;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 4px;margin:0 0 14px;box-shadow:var(--shadow);gap:2px;}
@@ -407,9 +405,7 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 .obtn:disabled{opacity:.55;}
 .oerr{color:#C15B5B;font-size:12.5px;margin-top:9px;display:none;font-weight:600;}
 .odone{text-align:center;padding:8px 4px;line-height:1.5;}
-/* nút phụ "Sửa lại" = link chữ, không phải nút nổi */
-.obtn.ghost{background:transparent;color:var(--soft);border:none;margin-top:6px;font-weight:700;font-size:14px;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--line);padding:8px;width:auto;display:block;margin-left:auto;margin-right:auto;}
-.obtn.ghost:hover{color:var(--pine);text-decoration-color:var(--pine);}
+.obtn.ghost{background:transparent;color:var(--pine);border:1.5px solid var(--line);margin-top:9px;}
 .ocrev{background:var(--cream);border:1px solid var(--honey);border-radius:12px;padding:14px 16px;font-size:13.5px;line-height:1.75;margin-bottom:12px;text-align:left;}
 .ocrev b{color:var(--pine);} .ocrev .big{font-size:19px;font-weight:800;color:var(--pine);}
 .ocnote{font-size:12.5px;color:var(--soft);margin-bottom:12px;}
@@ -456,82 +452,6 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
 .educ .ea{padding:0 16px 15px;font-size:13px;color:var(--soft);line-height:1.6;}
 .educ .ea b{color:var(--ink);font-weight:700;}
 @media(min-width:600px){ .gsels{grid-template-columns:repeat(2,1fr);max-width:520px;margin:0 auto;} .hc{width:160px;} .bnr{width:44%;} }
-/* ===== BUTTON POLISH — hệ nút thống nhất: transition mượt, hover nhấc + đổ bóng, nhấn lún, focus ring, mũi tên nhích ===== */
-.hbmain,.pbcta,.gsel,.herolink,.loginlink{ transition:transform .16s cubic-bezier(.2,.7,.3,1), box-shadow .18s ease, background-color .18s ease, border-color .16s ease, color .16s ease, filter .16s ease, text-decoration-color .16s ease; }
-.hbmain .ic,.pbcta .ic{ transition:transform .18s cubic-bezier(.2,.7,.3,1); }
-.hbmain:focus-visible,.pbcta:focus-visible,.pbback:focus-visible,.loginlink:focus-visible,.gsel:focus-visible,.herolink:focus-visible{ outline:3px solid var(--honey); outline-offset:3px; border-radius:6px; }
-/* Primary (honey) — nút chính duy nhất mỗi màn */
-.hbmain:hover{ transform:translateY(-2px); box-shadow:0 18px 32px -12px rgba(224,163,46,.95); filter:brightness(1.04); }
-.hbmain:active{ transform:translateY(0) scale(.98); box-shadow:0 6px 14px -8px rgba(224,163,46,.85); filter:brightness(.99); }
-.hbmain:hover .ic{ transform:translateX(3px); }
-/* Link phụ (không phải nút) — chỉ đổi màu, không nhấc */
-.herolink:hover{ color:var(--honey); text-decoration-color:var(--honey); }
-/* Pricebar CTA (pine) */
-.pbcta:hover{ transform:translateY(-1px); box-shadow:0 14px 26px -12px rgba(44,106,74,.9); filter:brightness(1.06); }
-.pbcta:hover .ic{ transform:translateX(3px); }
-.pbcta:active{ transform:scale(.96); }
-/* Nút back */
-.pbback:hover{ transform:translateY(-1px); background:var(--pine); color:#fff; }
-.pbback:hover .ic{ transform:translateX(-2px); }
-/* Login link (mast) */
-.loginlink:hover{ background:var(--pine); color:#fff; border-color:var(--pine); }
-/* Thẻ chọn gói */
-.gsel:hover{ border-color:var(--pine); transform:translateY(-2px); box-shadow:0 18px 36px -20px rgba(23,30,25,.5); }
-.gsel:active{ transform:translateY(0) scale(.995); }
-/* Primary CTA trong wizard: form submit (pine) + Đặt ngay (honey) */
-.obtn,.hcta{ transition:transform .16s cubic-bezier(.2,.7,.3,1), box-shadow .18s ease, filter .16s ease, background-color .16s ease; }
-.obtn:not(.ghost):hover{ transform:translateY(-2px); box-shadow:0 16px 28px -14px rgba(44,106,74,.85); filter:brightness(1.05); }
-.obtn:not(.ghost):active{ transform:translateY(0) scale(.985); }
-.hcta:hover{ transform:translateY(-2px); box-shadow:0 18px 30px -14px rgba(224,163,46,.95); filter:brightness(1.04); }
-.hcta:active{ transform:translateY(0) scale(.985); }
-.obtn:focus-visible,.hcta:focus-visible{ outline:3px solid var(--honey); outline-offset:3px; }
-/* Control chọn (segmented): phẳng, chỉ đổi viền khi rê, KHÔNG nhấc */
-.goal,.canh,.dur,.hc{ transition:border-color .15s ease, background-color .15s ease, color .15s ease; }
-.goal:hover,.canh:hover,.dur:hover{ border-color:var(--pine); }
-.goal:focus-visible,.canh:focus-visible,.dur:focus-visible{ outline:3px solid var(--honey); outline-offset:2px; }
-@media(prefers-reduced-motion:reduce){
-  .hbmain,.pbcta,.pbback,.loginlink,.gsel,.herolink,.obtn,.hcta,.hbmain .ic,.pbcta .ic{ transition:none; }
-  .hbmain:hover,.pbcta:hover,.pbback:hover,.gsel:hover,.obtn:hover,.hcta:hover,.hbmain:hover .ic,.pbcta:hover .ic{ transform:none; }
-}
-/* ===== FUNNEL desktop (>=960) — layout editorial kiểu Gordon Ramsay: ảnh full-bleed, tiêu đề IN HOA giãn chữ ===== */
-@media(min-width:960px){
-  html, body{ overflow-x:clip; }
-  .doc{ max-width:1000px; padding:0 24px 72px; }
-  .mast{ padding:16px 0; }
-  .mast .wm{ font-size:16px; text-transform:uppercase; letter-spacing:3px; font-weight:800; }
-  .mast .loginlink{ text-transform:uppercase; letter-spacing:1.5px; font-size:11px; border-radius:0; }
-
-  /* HERO: full-bleed, headline IN HOA lớn góc dưới-trái */
-  .hero2{ width:100vw; position:relative; left:50%; transform:translateX(-50%); border-radius:0; min-height:80vh; align-items:flex-end; margin:0 0 4px; }
-  .hero2ov{ width:100%; padding:0 max(40px, calc(50vw - 500px)) 7.5vh; background:linear-gradient(to top, rgba(17,23,15,.92) 0%, rgba(17,23,15,.5) 44%, rgba(17,23,15,.04) 100%); }
-  .hero2 .eb{ font-size:13px; letter-spacing:3.5px; }
-  .hero2 h1{ font-size:clamp(46px,5.6vw,74px); line-height:1.02; letter-spacing:.5px; text-transform:uppercase; font-weight:800; max-width:13em; margin:14px 0 16px; }
-  .hero2 p{ font-size:17px; max-width:540px; margin-bottom:24px; }
-  .herobtns{ max-width:492px; gap:12px; }
-  .hbtn{ padding:17px 26px; font-size:15.5px; text-transform:uppercase; letter-spacing:1.5px; }
-  .herolink{ font-size:14px; text-transform:uppercase; letter-spacing:1.5px; }
-
-  /* Tiêu đề mục IN HOA giãn chữ */
-  .steph h2{ text-transform:uppercase; letter-spacing:2px; font-size:30px; font-weight:800; }
-  .steph .stepn{ border-radius:0; }
-  .cachdat{ margin:44px 0 8px; }
-  .cachdat h3{ text-transform:uppercase; letter-spacing:2.5px; font-size:23px; margin-bottom:20px; }
-  .cdgrid{ gap:16px; }
-  .cdcard{ padding:22px 14px; }
-  .cdcard .cdi{ font-size:34px; }
-  .pstep{ text-transform:uppercase; letter-spacing:1.2px; }
-
-  /* MÓN HÔM NAY: dải full-bleed, ảnh lớn trái + tên món IN HOA phải */
-  #todaydish{ width:100vw; position:relative; left:50%; transform:translateX(-50%); margin-top:38px; }
-  .tdcard{ display:grid; grid-template-columns:1.05fr 1fr; grid-template-areas:'head head' 'img body'; align-items:stretch; border-radius:0; border-left:none; border-right:none; }
-  .tdhead{ grid-area:head; padding:15px max(40px, calc(50vw - 500px)); }
-  .tdhead .tdh{ text-transform:uppercase; letter-spacing:2px; }
-  .tdimg{ grid-area:img; aspect-ratio:auto; min-height:54vh; height:100%; }
-  .tdbody{ grid-area:body; display:flex; flex-direction:column; justify-content:center; padding:40px max(40px, calc(50vw - 500px)) 40px 6vw; }
-  .tdname{ font-size:clamp(30px,3.2vw,44px); text-transform:uppercase; letter-spacing:.4px; line-height:1.06; }
-  .tdmeta{ margin-top:20px; gap:12px; }
-  .tdmeta .tdrow{ font-size:15px; }
-}
 </style>
 
 <div class="doc">
@@ -542,8 +462,8 @@ body{background:var(--paper);color:var(--ink);font-family:"Be Vietnam Pro",sans-
       <h1>Vừa ngon, vừa khỏe, vừa xinh.</h1>
       <p>Ăn healthy là đạt được sự cân bằng giữa dinh dưỡng và hương vị</p>
       <div class="herobtns">
-        <button type="button" class="hbtn hbmain" onclick="openOrder()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" /><path d="M7 2v20" /><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" /></svg> Đặt cơm ngay</button>
-        <a class="herolink" href="https://zalo.me/0941751999" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" /></svg> Tư vấn qua Zalo</a>
+        <a class="hbtn hbsub" href="https://zalo.me/0941751999" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" /></svg> Tư vấn</a>
+        <button type="button" class="hbtn hbmain" onclick="openOrder()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" /><path d="M7 2v20" /><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" /></svg> Đặt ngay</button>
       </div>
     </div>
   </div>
