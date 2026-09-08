@@ -403,7 +403,8 @@ button { font-family:inherit; cursor:pointer; border:none; }
 .ctline{ color:var(--onbg2); } .ctline b{ color:var(--honey); }
 .brandfoot{ border-top-color:var(--lineg); } .brandfoot .ft{ color:#fff; } .brandfoot .fs{ color:var(--onbg2); }
 .lo a{ color:var(--onbg2); }
-.note{ color:var(--onbg2); }
+.note{ color:var(--soft); }  /* mặc định: nâu đậm — đọc được trên thẻ/sheet kem */
+.note.ondark{ color:var(--onbg2); }  /* note nằm trên nền tối (owner/lệnh) -> tan sáng */
 .sect{ color:#fff; }
 .gate p{ color:var(--onbg2); }
 .gate .gtag{ color:var(--honey); }
@@ -1062,7 +1063,7 @@ function ownerHome(){
     ownerYcBox(box)+
     ownerPushBox(box)+
     '<button class="ownbtn" onclick="SHOW_ADMIN=true; route();"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1Z" /><path d="M6 17h12" /></svg> Lệnh sản xuất hôm nay →</button>'+
-    '<div class="note">Lệnh sản xuất tính LIVE từ đơn đã CK + lịch ăn Sheet 3 (ai ăn ngày nào), khẩu phần đo theo từng người.</div>'+
+    '<div class="note ondark">Lệnh sản xuất tính LIVE từ đơn đã CK + lịch ăn Sheet 3 (ai ăn ngày nào), khẩu phần đo theo từng người.</div>'+
     foot()+'</div></div>';
 }
 function isDoniGoi(g){ return /Đo\s*Ni|Do\s*Ni/i.test(String(g||'')); }
@@ -1471,7 +1472,7 @@ function adminView(){
     esc(admGaoLbl(ma))+' (gạo SỐNG): <b>'+comTot+'g</b> · Rau: <b>'+rauTxt+'</b> · Trứng: <b>'+eggQ+' quả</b> (cắt tư = '+quart+' miếng)'+
     (phoiN?'<br><span style="font-size:11px;color:var(--soft)">'+phoiN+' suất món phối, đạm nằm trong món, không cân riêng.</span>':'')+'</div>';
   var table='<div class="sect">B. CHIA HỘP</div><div style="overflow-x:auto"><table class="atbl"><tr><th>Tên</th><th>Đạm</th><th>Cơm</th><th>Rau</th><th>Trứng¼</th><th>Canh</th><th>Địa chỉ</th><th>Ghi chú</th></tr>'+rows+'</table></div>';
-  var note='<div class="note">Đạm = thịt/cá CHÍN theo cân nặng · Cơm = gạo SỐNG · số liệu LIVE từ đơn thật + Sheet 3. Quang Anh (chủ bếp) +1 suất, không thu tiền. Canh: Đo Ni luôn kèm (✓); Vừa Xinh ✓ nếu khách bật canh ngày đó (đọc live từ Log), ✗ nếu không.</div>';
+  var note='<div class="note ondark">Đạm = thịt/cá CHÍN theo cân nặng · Cơm = gạo SỐNG · số liệu LIVE từ đơn thật + Sheet 3. Quang Anh (chủ bếp) +1 suất, không thu tiền. Canh: Đo Ni luôn kèm (✓); Vừa Xinh ✓ nếu khách bật canh ngày đó (đọc live từ Log), ✗ nếu không.</div>';
   var tools='<div class="admtools"><button class="ownbtn" onclick="window.print()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"></svg> In lệnh sản xuất</button></div>';
   return head+'<div class="admgrid"><div class="admrail">'+tools+warnBox+abox+'</div><div class="admmain">'+table+note+'</div></div>'+foot()+'</div></div>';
 }
@@ -1591,7 +1592,7 @@ function upgReceiptCard(){
   else if(UPG_TAB==='suat'){ var sgk=UPG_SUATGOI||gk, sgn=(sgk==='doni'?'Đo Ni':'Vừa Xinh'), n=UDURN[UPG_SUATDUR], pr=(ugSan()?UPGFLOOR[sgk]:UPGP[sgk][UPG_SUATDUR]); title='Mua thêm '+sgn+' · '+UDLB[UPG_SUATDUR]; sub=upgDaysRange(); rows+=upgLiRow('Suất '+sgn, n+' × '+vnd(pr)+(ugSan()?' · giá sàn':''), vnd(a.amt)); if(sgk==='doni') rows+=upgLiRow('Canh','đi kèm mỗi bữa','Miễn phí',true); }
   else { var nd=(UPG_CANHSCOPE==='one'?1:rem); title='Thêm canh'; rows+=upgLiRow('Canh', nd+(UPG_CANHSCOPE==='one'?' bữa':' ngày')+' × '+vnd(5), vnd(a.amt)); }
   if(UPG_GIFT){ var eff=((ugSan()?'giá sàn':'')+(ugCanh()?(ugSan()?', ':'')+'canh miễn phí':''))||'đã áp'; rows+=upgLiRow('Ưu đãi '+UPG_GIFT_CODE, eff, '✓', true); }
-  return '<div style="background:var(--surface,#fff);border:1px solid rgba(0,0,0,.1);border-radius:16px;padding:15px;margin-top:14px">'+
+  return '<div style="background:var(--surface,#fff);color:var(--ink,#1b241d);border:1px solid rgba(0,0,0,.1);border-radius:16px;padding:15px;margin-top:14px">'+
     '<div style="font-size:15.5px;font-weight:900;color:var(--pine,#2C6A4A)">'+title+'</div>'+
     (sub?'<div style="font-size:12px;color:var(--soft,#5A645D);margin:3px 0 8px;display:flex;align-items:center;gap:5px"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><path d="M8 2v3" /><path d="M16 2v3" /><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" /><path d="M8 13h.01" /><path d="M12 13h.01" /><path d="M16 13h.01" /><path d="M8 17h.01" /><path d="M12 17h.01" /><path d="M16 17h.01" /></svg> '+sub+'</div>':'<div style="height:6px"></div>')+
     rows+
@@ -1610,7 +1611,7 @@ function upgradeSheet(){
         '<div style="font-size:12.5px;color:var(--soft,#5A645D);line-height:1.85;margin-bottom:11px"><b style="color:var(--pine,#2C6A4A)">Bước 1:</b> mở app Ngân hàng / ví điện tử<br><b style="color:var(--pine,#2C6A4A)">Bước 2:</b> quét mã bên dưới<br><b style="color:var(--pine,#2C6A4A)">Bước 3:</b> chuyển đúng số tiền và nội dung</div>'+
         '<div style="background:var(--cream,#FDF3DC);border:1.5px solid var(--honey,#C79318);border-radius:14px;padding:10px;text-align:center;margin-bottom:12px"><div style="font-size:11px;font-weight:800;color:var(--soft,#5A645D)">SỐ TIỀN CẦN CHUYỂN</div><div style="font-size:31px;font-weight:900;color:var(--pine,#2C6A4A);line-height:1.15">'+UPG_DONE.amt.toLocaleString('vi-VN')+'đ</div></div>'+
         '<div style="background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:12px;text-align:center;margin-bottom:12px"><img src="'+upgQR(UPG_DONE.amt, UPG_DONE.note)+'" alt="QR chuyển khoản" style="width:190px;height:190px;max-width:80%"></div>'+
-        '<div style="background:var(--surface,#fff);border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:12px;font-size:12.5px;line-height:2;margin-bottom:10px"><div><b style="color:var(--pine,#2C6A4A)">Ngân hàng:</b> VPBank</div><div><b style="color:var(--pine,#2C6A4A)">Số TK:</b> 183037412</div><div><b style="color:var(--pine,#2C6A4A)">Chủ TK:</b> NGUYEN QUANG ANH</div><div><b style="color:var(--pine,#2C6A4A)">Nội dung:</b> '+esc(UPG_DONE.note)+'</div></div>'+
+        '<div style="background:var(--surface,#fff);color:var(--ink,#1b241d);border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:12px;font-size:12.5px;line-height:2;margin-bottom:10px"><div><b style="color:var(--pine,#2C6A4A)">Ngân hàng:</b> <b style="color:var(--ink,#1b241d)">VPBank</b></div><div><b style="color:var(--pine,#2C6A4A)">Số TK:</b> <b style="color:var(--ink,#1b241d)">183037412</b></div><div><b style="color:var(--pine,#2C6A4A)">Chủ TK:</b> <b style="color:var(--ink,#1b241d)">NGUYEN QUANG ANH</b></div><div><b style="color:var(--pine,#2C6A4A)">Nội dung:</b> <b style="color:var(--ink,#1b241d)">'+esc(UPG_DONE.note)+'</b></div></div>'+
         '<div class="note">'+doneNote+'</div>'+
         '<button onclick="closeUpg()" style="display:block;width:100%;margin-top:8px;background:var(--honey,#C79318);color:#3a2a00;font-weight:800;font-size:14px;padding:12px;border-radius:11px;border:none;cursor:pointer"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg> Tôi đã chuyển khoản</button>';
     } else {
@@ -1919,7 +1920,7 @@ function expiredView(o){
 function logout(){ try{ localStorage.removeItem("beeps_phone"); if(WEBORD&&WEBORD.sdt) localStorage.removeItem('beeps_web_'+phoneNorm(WEBORD.sdt)); }catch(e){} CURP=null; WEBORD=null; EXPIRED=null; IS_ADMIN=false; IS_OWNER=false; SHOW_ADMIN=false; CUR_TAB="home"; UPG_OPEN=false; UPG_DONE=null; VIWALLET=null; VI_LOADING=false; NGHI_OPEN=false; ANBU_OPEN=false; NGHI_SEL=null; WELCOME_OPEN=false; WELCOME_CHECKED=false; OWNER_ACTS=null; OWNER_ACTS_LOADING=false; OWNER_YC=null; OWNER_YC_LOADING=false; OWNER_PENDING=null; OWNER_PENDING_LOADING=false; OCREATE_OPEN=false; STATE_SYNCED=false; STATE_SYNCING=false; S3_ENSURED=false; LIVE_MERGED=false; LIVE_MERGING=false; OWNER_WSEC=""; PENDING_ST=null; route(); }
 function doLoginKey(e){ if(e.key==="Enter") doLogin(); }
 
-const BLOBS = [{"s":"qIQ4WqZ2idqlgTPbzftE1A==","iv":"zGBrThSh0OkWk+Ef","ct":"fC2Sj39B2Ux9xOXvbmmYEoxtqv2MwGxE7QYCgGFcDD7SSd8mQNlW7QPPFKj0WmkbMFoejah9tryUMkk6UcRignjFoM3uGAXZyluwIEgC6nn2rU27AyhB7QRElTm40ykEMvyScoEECHeKSUcwGL+nmxzIh1kPcIqf5OdFKDZwRciK4/9hWqJwhP71X+MVCoqbtY3s9slxRJu+HUuv1/RIdg3AruqDs+CpwaiYhNXyssN9Guym04mKTvZYpbIW+hyZ0bGlG45qGRA0U4Y0usNALwnIIy7O76Vetvcs9LhccSMcTVr4cL7WgXDvvE8AegaB2LlVXM1GMqocU0q9ADg0gi7MvsRh/YJNvLJyt0Ee8s9vMpvtJoQ9pHP7FkvtuLFsT8mc0fmvp/e20fJyvfFaJsd0fNnr4RuLf+YnNEuS+0AkTFeL+nDhdtNsJAbMoIwgn3XRcXo08jQauA33J5XfiBzxfNEta5XJ3yUWmjxhCbsB8emx50IwzaXVd9/zY70IorgCB+0CwqZ3E+u2HNRH6Ss/62X8StzeKtgmxahLTrFCWeFva7VJNUNNjG+Yvghmia5p6tYwRbw+CbxnjqNyGNGlvZpm4dBOyHfaHccALV+cJZ+oIGysObBOHWWjY52HhUlNqpsByaQgjq3rxiGknvwfj8DSZamprCTykr3CP6kn6swjhXxnzxAOVN7VxZNrQB6ttpyE26NWm9msoNAC/zyOVNZyE+3dEnOQM61j8+fIvsNjUMxxm1DePqTmYV+s74c7q+3ta6vDAr94Tzg+KeBFGN3Tn+jVlcr8jhvzagKn+wbteJGCTDATvurjwdQmEILP1nJxRx9uUx2Ruv/nWoENBukOPAvJ9eJe/3yuKhCh+rs+s5o/s8pmXAIQDvp/BAU="}];
+const BLOBS = [{"s":"APzaz17rIkKafuEF8YancA==","iv":"YVvjbAfbRuaqLKem","ct":"hvqXavYH9vvJ5vf/Dx7swln42nlFx6KDVeOEgWWpw1uMUyMbCwiHkXVd9qS3xn1r7XpAiXPVmPp7uRzjPmOiyKs3cdlEdVbxWNvkeYrojc21tqG6bPfJcGMnDbJ8wzP+80/EpAcvJI6mdBByAY8S+HmPGoy4wi6IEOMiIlmjvSNvsM5ychDht/2s8lxrZeQNR7KFZLf9XceyudnpY/mGccN8fYzvG3yxt6uZjAQOAlx7DeLj2w+jHkBYF3vWdYJzjHqEksWr7TywOqiPC4DXfQSc9Fmx2GgqZNfws8wsWA12VG/MbauPLiEZ19PyZ5J7dNFzZxqXYTKPUxdJfb1WtJgZNWM7K9C3gno5xuBbrKt5IGVc0h+GOjKAu5NiMlAr6GPCPZu/8CIkWIMK4W2CzHkI/4IIox0TTItsVouQE2r5MAp5vVriHLU+TDivctC6gRL3gvWgYdFxulLFTiAbrcEScQtZ7mGSNUJr0Oxy6rq5MOEj/Oug+6XI3D+k8dQxlu16O/EdqEKbQ5pHH/RpXSxJX/r2NUJvjA71v6gXozEXc7UkYTTGi8s1MlPmggp7Ab6Bl2XsuJpMCoi9uS768eulzpAnYP6J8RQtoK+mvFo1NCCt3DMyk70fYra3ppwsYIp/+cClHo4/lceWU7fl9Y1nQsu0yT31ou8rP3Y4Vx6/tlnymFSR3a7zKWfY/SJ2AETUxlEeLPifCtU7WMtC5n6Pi2HUUfz2uQDDUWnp2lYlMcwVBJDneUR5/KDpnOpH+K4n4LA8nIJsSdjJKhl8grgsCYWdP824XmyxrHAINeeOaTSWn5Ue1UwGZcUn+mM3XH10OfVYOvKAFalcAQ9O53SEeP7iH5+ML4afDDWuTDdGE7htNwYZ5JfQhZmtD0arQrU="}];
 const ITER = 100000;
 const te = new TextEncoder(), td = new TextDecoder();
 function b64d(s){ const bin=atob(s); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; }
